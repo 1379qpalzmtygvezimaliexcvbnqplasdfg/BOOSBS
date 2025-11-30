@@ -1,0 +1,151 @@
+--[[
+    WARNING: Heads up! This script has not been verified by ScriptBlox. Use at your own risk!
+]]
+-- Speed Ramp + Multi-Point Blue Trails + 360° Lightning (Client-side, Delta-friendly)
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local Debris = game:GetService("Debris")
+
+local lp = Players.LocalPlayer
+
+--========== CONFIG ==========
+local INCREMENT = 1
+local INCREMENT_INTERVAL = 0.15
+local MAX_SPEED = 9000
+local RESET_IDLE_TIME = 0.25
+
+local TRAIL_COLOR = Color3.fromRGB(80,170,255)
+local TRAIL_LIFETIME = 0.28
+local TRAIL_EMISSION = 0.8
+local TRAIL_WIDTH_START = 0.5
+local TRAIL_WIDTH_END = 0.0
+
+local LIGHTNING_ENABLED = true
+local LIGHTNING_COLOR = Color3.fromRGB(140,210,255)
+local LIGHTNING_BASE_RATE = 0.20
+local LIGHTNING_MIN_RATE = 0.045
+local LIGHTNING_MAX_RATE = 0.30
+local LIGHTNING_MAIN_COUNT = 2
+local LIGHTNING_BRANCH_CHANCE = 0.45
+local LIGHTNING_SPARKS = true
+local LIGHTNING_SPARK_COUNT = 6
+
+--========== UTIL ==========
+local function qwait(n) if n and n > 0 then task.wait(n) end end
+local function ensurePart(char, names)
+    for _, n in ipairs(names) do
+        local p = char:FindFirstChild(n)
+        if p then return p end
+    end
+end
+
+--========== CHARACTER ==========
+local function getChar()
+    local char = lp.Character or lp.CharacterAdded:Wait()
+    local hum = char:FindFirstChildOfClass("Humanoid") or char:WaitForChild("Humanoid")
+    local hrp = char:FindFirstChild("HumanoidRootPart") or char:WaitForChild("HumanoidRootPart")
+    return char, hum, hrp
+end
+local char, humanoid, hrp = getChar()
+local baseSpeed = humanoid.WalkSpeed
+
+--========== TRAILS ==========
+local allTrails = {}
+local function clearTrails()
+    for _, t in ipairs(allTrails) do
+        pcall(function()
+            if t.trail then t.trail:Destroy() end
+            if t.att0 then t.att0:Destroy() end
+            if t.att1 then t.att1:Destroy() end
+        end)
+    end
+    table.clear(allTrails)
+end
+local function makeTrail(part, id, offA, offB)
+    if not part then return end
+    local att0 = Instance.new("Attachment"); att0.Position = offA; att0.Parent = part
+    local att1 = Instance.new("Attachment"); att1.Position = offB; att1.Parent = part
+    local tr = Instance.new("Trail")
+    tr.Attachment0 = att0; tr.Attachment1 = att1
+    tr.Color = ColorSequence.new(TRAIL_COLOR)
+    tr.Transparency = NumberSequence.new(0.05, 1)
+    tr.WidthScale = NumberSequence.new(TRAIL_WIDTH_START, TRAIL_WIDTH_END)
+    tr.LightEmission = TRAIL_EMISSION
+    tr.Lifetime = TRAIL_LIFETIME
+    tr.Enabled = false
+    tr.Parent = part
+    table.insert(allTrails, {trail=tr, att0=att0, att1=att1})
+end
+local function buildTrails()
+    clearTrails()
+    makeTrail(ensurePart(char,{"LeftFoot","LeftLowerLeg","Left Leg"}),"LF",Vector3.new(-.05,.05,.05),Vector3.new(.05,-.05,-.05))
+    makeTrail(ensurePart(char,{"RightFoot","RightLowerLeg","Right Leg"}),"RF",Vector3.new(.05,.05,.05),Vector3.new(-.05,-.05,-.05))
+    makeTrail(ensurePart(char,{"LeftHand","LeftLowerArm","Left Arm"}),"LH",Vector3.new(-.06,0,.08),Vector3.new(.06,0,-.08))
+    makeTrail(ensurePart(char,{"RightHand","RightLowerArm","Right Arm"}),"RH",Vector3.new(.06,0,.08),Vector3.new(-.06,0,-.08))
+    local torso = ensurePart(char,{"UpperTorso","LowerTorso","Torso"}) or hrp
+    makeTrail(torso,"T1",Vector3.new(-.08,.1,.02),Vector3.new(.08,-.1,-.02))
+    makeTrail(torso,"T2",Vector3.new(.08,.1,-.02),Vector3.new(-.08,-.1,.02))
+end
+local function setTrails(on) for _, t in ipairs(allTrails) do t.trail.Enabled = on end end
+buildTrails()
+
+--========== LIGHTNING ==========
+local function fadeDebris(p,t) TweenService:Create(p,TweenInfo.new(t),{Transparency=1}):Play(); Debris:AddItem(p,t+0.05) end
+local function seg(a,b,th)
+    local s=Instance.new("Part");s.Anchored=true;s.CanCollide=false;s.Material=Enum.Material.Neon;s.Color=LIGHTNING_COLOR
+    local dir=(b-a);s.Size=Vector3.new(th,th,math.max(0.05,dir.Magnitude))
+    s.CFrame=CFrame.new(a,b)*CFrame.new(0,0,-s.Size.Z/2);s.Parent=workspace;return s
+end
+local function sparks(origin)
+    if not LIGHTNING_SPARKS then return end
+    for i=1,LIGHTNING_SPARK_COUNT do
+        local p=Instance.new("Part");p.Anchored=true;p.CanCollide=false;p.Material=Enum.Material.Neon;p.Color=LIGHTNING_COLOR
+        p.Shape=Enum.PartType.Ball;p.Size=Vector3.new(0.08,0.08,0.08)
+        local dir=Vector3.new(math.random()-0.5, math.random()-0.5, math.random()-0.5).Unit
+        p.CFrame=CFrame.new(origin + dir*(math.random()*2.2+0.4))
+        p.Transparency=0.1;p.Parent=workspace;fadeDebris(p,0.12)
+    end
+end
+local function spawnBoltSet()
+    if not LIGHTNING_ENABLED then return end
+    local base=hrp.Position+Vector3.new(0,1.2,0)
+    sparks(hrp.Position+Vector3.new(0,0.2,0))
+    for m=1,LIGHTNING_MAIN_COUNT do
+        local segments=math.random(3,5)
+        local radius=4+math.random()*5
+        local dir=Vector3.new(math.random()-0.5, math.random()-0.5, math.random()-0.5).Unit*radius
+        local prev=base
+        for i=1,segments do
+            local t=i/segments
+            local nextPos=base+dir*t+Vector3.new((math.random()-0.5)*1.2,(math.random()-0.5)*1.0,(math.random()-0.5)*1.2)
+            fadeDebris(seg(prev,nextPos,0.1),0.08)
+            if math.random()<LIGHTNING_BRANCH_CHANCE then
+                local branch=Vector3.new(math.random()-0.5, math.random()-0.5, math.random()-0.5).Unit*(1.5+math.random()*1.5)
+                fadeDebris(seg(nextPos,nextPos+branch,0.08),0.07)
+            end
+            prev=nextPos
+        end
+    end
+end
+
+--========== RESPAWN ==========
+lp.CharacterAdded:Connect(function() qwait(0.1); char, humanoid, hrp=getChar(); baseSpeed=humanoid.WalkSpeed; buildTrails() end)
+
+--========== LOOP ==========
+local incT,idleT,lastL=0,0,0
+RunService.Heartbeat:Connect(function(dt)
+    if not humanoid or humanoid.Health<=0 then return end
+    local moving=humanoid.MoveDirection.Magnitude>0.05
+    if moving then
+        setTrails(true); idleT=0; incT+=dt
+        if incT>=INCREMENT_INTERVAL then incT=0; humanoid.WalkSpeed=math.min(humanoid.WalkSpeed+INCREMENT,MAX_SPEED) end
+        lastL+=dt
+        local rate=math.clamp(LIGHTNING_BASE_RATE - math.clamp((humanoid.WalkSpeed-baseSpeed)/1200,0,1)*(LIGHTNING_BASE_RATE-LIGHTNING_MIN_RATE),LIGHTNING_MIN_RATE,LIGHTNING_MAX_RATE)
+        if lastL>=rate then lastL=0; spawnBoltSet() end
+    else
+        setTrails(false); incT=0; lastL=0; idleT+=dt
+        if idleT>=RESET_IDLE_TIME and humanoid.WalkSpeed~=baseSpeed then humanoid.WalkSpeed=baseSpeed end
+    end
+end)
