@@ -1,6 +1,4 @@
-repeat
-	task.wait()
-until game:IsLoaded()
+repeat task.wait() until game:IsLoaded()
 
 local library = {}
 local toggled = false
@@ -113,18 +111,13 @@ function Ripple(obj)
 	end)
 end
 
--- 设备检测和缩放因子设置
 local UserInputService = services.UserInputService
 local isComputer = not UserInputService.TouchEnabled
 local scaleFactor = isComputer and 1.4 or 0.8
 
-print(string.format("检测到设备类型: %s, 缩放因子: %.2f", isComputer and "电脑" or "移动设备", scaleFactor))
-
--- 3D UI核心变量
 local RunService = services.RunService
 local TS = services.TweenService
 
--- 创建3D载体
 local HttpService = game:GetService("HttpService")
 local generatedName = "LU_"..HttpService:GenerateGUID()
 
@@ -133,29 +126,27 @@ Part.Name = generatedName
 Part.Anchored = true
 Part.CanCollide = false
 Part.Locked = true
-Part.Transparency = 1
-Part.Size = Vector3.new(18 * scaleFactor, 8 * scaleFactor, 2) -- 根据缩放因子调整Part大小
+Part.Transparency = 0
+Part.Size = Vector3.new(18 * scaleFactor, 8 * scaleFactor, 2)
 Part.Parent = workspace
 
 if type(ProtectInstance)=="function" then
     ProtectInstance(Part)
 end
 
--- 创建SurfaceGui
 local SurfaceUI = Instance.new("SurfaceGui")
 SurfaceUI.Adornee = Part
 SurfaceUI.Face = Enum.NormalId.Back
 SurfaceUI.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
 SurfaceUI.ClipsDescendants = true
 SurfaceUI.AlwaysOnTop = true
+SurfaceUI.Enabled = true
 SurfaceUI.Parent = Part
 
--- 3D跟随参数
 local SCALE = 0.01
-local LookView = Vector3.new(0, 0.08 * scaleFactor, -9 * scaleFactor) -- 调整偏移量
+local LookView = Vector3.new(0, 0.08 * scaleFactor, -9 * scaleFactor)
 local PartIncreased = false
 
--- RenderStepped连接
 RunService.RenderStepped:Connect(function(deltaTime)
 	local mouse = services.Players.LocalPlayer:GetMouse()
 	local cam = workspace.CurrentCamera
@@ -169,7 +160,6 @@ RunService.RenderStepped:Connect(function(deltaTime)
 	TS:Create(Part, TweenInfo.new(deltaTime), {CFrame = goalCF}):Play()
 end)
 
--- 呼吸效果
 spawn(function()
 	local X, Y, Z = 0.08 * scaleFactor, 0.08 * scaleFactor, 0.08 * scaleFactor
 	local waitTime = 1
@@ -184,17 +174,14 @@ spawn(function()
 end)
 
 function library.new(library, name, theme)
-	-- 首先定义window，避免nil错误
 	local window = {}
 	
-	-- 清理旧的UI
 	for _, v in next, services.CoreGui:GetChildren() do
 		if v.Name == "REN" then
 			v:Destroy()
 		end
 	end
 	
-	-- 清理旧的3D Part
 	for _, obj in next, workspace:GetChildren() do
 		if obj.Name:match("^LU_") and obj:IsA("Part") then
 			obj:Destroy()
@@ -209,7 +196,6 @@ function library.new(library, name, theme)
 		syn.protect_gui(dogent)
 	end
 	
-	-- 创建3D Frame作为Main的容器
 	local Main3D = Instance.new("Frame")
 	Main3D.Name = "Main3D"
 	Main3D.Parent = SurfaceUI
@@ -240,15 +226,14 @@ function library.new(library, name, theme)
 	MainStroke.Transparency = 0.5
 	MainStroke.Parent = Main
 	
-	-- 添加背景图
 	local BackgroundImage = Instance.new("ImageLabel")
 	BackgroundImage.Name = "BackgroundImage"
 	BackgroundImage.Parent = Main
 	BackgroundImage.Size = UDim2.new(1, 0, 1, 0)
 	BackgroundImage.BackgroundTransparency = 1
 	BackgroundImage.Image = "rbxassetid://102621341311637"
-	BackgroundImage.ImageTransparency = 0.5 -- 半透明
-	BackgroundImage.ZIndex = -1 -- 放在最底层
+	BackgroundImage.ImageTransparency = 0.5
+	BackgroundImage.ZIndex = 0
 	
 	local DropShadowHolder = Instance.new("Frame")
 	DropShadowHolder.Name = "DropShadowHolder"
@@ -431,7 +416,7 @@ function library.new(library, name, theme)
 	SearchBox.TextColor3 = Colors.Text
 	SearchBox.PlaceholderColor3 = Colors.Placeholder
 	SearchBox.TextSize = 14 * scaleFactor
-	SearchBox.ClearTextOnFocus = true  -- 点击清空
+	SearchBox.ClearTextOnFocus = true
 	
 	local Content = Instance.new("Frame")
 	Content.Name = "Content"
@@ -1226,7 +1211,7 @@ function library.new(library, name, theme)
 				TB.TextColor3 = Colors.Text
 				TB.PlaceholderColor3 = Colors.Placeholder
 				TB.TextSize = 14 * scaleFactor
-				TB.ClearTextOnFocus = true  -- 点击清空
+				TB.ClearTextOnFocus = true
 				
 				TextboxBack:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
 					BoxBG.Position = UDim2.new(0.6, 0, 0.5, -14 * scaleFactor)
@@ -1349,7 +1334,7 @@ function library.new(library, name, theme)
 				SliderValue.Text = tostring(default)
 				SliderValue.TextColor3 = Colors.Text
 				SliderValue.TextSize = 14 * scaleFactor
-				SliderValue.ClearTextOnFocus = true  -- 点击清空
+				SliderValue.ClearTextOnFocus = true
 				
 				local MinSlider = Instance.new("TextButton")
 				MinSlider.Name = "MinSlider"
@@ -1504,7 +1489,7 @@ function library.new(library, name, theme)
 				DropdownText.TextColor3 = Colors.Text
 				DropdownText.TextSize = 15 * scaleFactor
 				DropdownText.TextXAlignment = Enum.TextXAlignment.Left
-				DropdownText.ClearTextOnFocus = true  -- 点击清空
+				DropdownText.ClearTextOnFocus = true
 				DropdownText.RichText = false
 				
 				local DropdownOpen = Instance.new("TextButton")
@@ -1547,8 +1532,6 @@ function library.new(library, name, theme)
 						local OptionC = Instance.new("UICorner")
 						OptionC.CornerRadius = UDim.new(0, 6)
 						OptionC.Parent = Option
-						
-						sectionInfo.originalTexts[Option] = option
 						
 						Option.MouseButton1Click:Connect(function()
 							open = false
@@ -1613,8 +1596,7 @@ function library.new(library, name, theme)
 		return tab
 	end
 	
-	-- 确保UI可见
-	Part.Transparency = 1
+	Part.Transparency = 0
 	
 	return window
 end
