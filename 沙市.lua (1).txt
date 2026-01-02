@@ -184,6 +184,9 @@ spawn(function()
 end)
 
 function library.new(library, name, theme)
+	-- 首先定义window，避免nil错误
+	local window = {}
+	
 	-- 清理旧的UI
 	for _, v in next, services.CoreGui:GetChildren() do
 		if v.Name == "REN" then
@@ -236,6 +239,16 @@ function library.new(library, name, theme)
 	MainStroke.Thickness = 1
 	MainStroke.Transparency = 0.5
 	MainStroke.Parent = Main
+	
+	-- 添加背景图
+	local BackgroundImage = Instance.new("ImageLabel")
+	BackgroundImage.Name = "BackgroundImage"
+	BackgroundImage.Parent = Main
+	BackgroundImage.Size = UDim2.new(1, 0, 1, 0)
+	BackgroundImage.BackgroundTransparency = 1
+	BackgroundImage.Image = "rbxassetid://102621341311637"
+	BackgroundImage.ImageTransparency = 0.5 -- 半透明
+	BackgroundImage.ZIndex = -1 -- 放在最底层
 	
 	local DropShadowHolder = Instance.new("Frame")
 	DropShadowHolder.Name = "DropShadowHolder"
@@ -509,6 +522,46 @@ function library.new(library, name, theme)
 	local allTabs = {}
 	local tabInfos = {}
 	
+	local function highlightText(originalText, searchTerm, color)
+		if searchTerm == "" or not originalText:lower():find(searchTerm:lower(), 1, true) then
+			return originalText
+		end
+		
+		local pattern = searchTerm:gsub("([%^%$%(%)%%%.%[%]%*%+%-%?])", "%%%1")
+		local highlighted = originalText:gsub("(" .. pattern .. ")", 
+			'<font color="#4A90E2"><b>%1</b></font>')
+		return highlighted
+	end
+	
+	local switchingTabs = false
+	
+	function switchTab(new)
+		if switchingTabs then return end
+		local old = library.currentTab
+		if old == nil then
+			new.frame.Visible = true
+			library.currentTab = new
+			Tween(new.button, 0.15, "Sine", "Out", { BackgroundTransparency = 0 })
+			Tween(new.button.TabText, 0.15, "Sine", "Out", { TextTransparency = 0 })
+			return
+		end
+		if old.button == new.button then return end
+		
+		switchingTabs = true
+		library.currentTab = new
+		
+		Tween(old.button, 0.15, "Sine", "Out", { BackgroundTransparency = 0.3 })
+		Tween(new.button, 0.15, "Sine", "Out", { BackgroundTransparency = 0 })
+		Tween(old.button.TabText, 0.15, "Sine", "Out", { TextTransparency = 0.3 })
+		Tween(new.button.TabText, 0.15, "Sine", "Out", { TextTransparency = 0 })
+		
+		old.frame.Visible = false
+		new.frame.Visible = true
+		
+		task.wait(0.15)
+		switchingTabs = false
+	end
+	
 	SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
 		local searchText = SearchBox.Text:lower()
 		
@@ -630,46 +683,6 @@ function library.new(library, name, theme)
 			end
 		end
 	end)
-	
-	local function highlightText(originalText, searchTerm, color)
-		if searchTerm == "" or not originalText:lower():find(searchTerm:lower(), 1, true) then
-			return originalText
-		end
-		
-		local pattern = searchTerm:gsub("([%^%$%(%)%%%.%[%]%*%+%-%?])", "%%%1")
-		local highlighted = originalText:gsub("(" .. pattern .. ")", 
-			'<font color="#4A90E2"><b>%1</b></font>')
-		return highlighted
-	end
-	
-	local switchingTabs = false
-	
-	function switchTab(new)
-		if switchingTabs then return end
-		local old = library.currentTab
-		if old == nil then
-			new.frame.Visible = true
-			library.currentTab = new
-			Tween(new.button, 0.15, "Sine", "Out", { BackgroundTransparency = 0 })
-			Tween(new.button.TabText, 0.15, "Sine", "Out", { TextTransparency = 0 })
-			return
-		end
-		if old.button == new.button then return end
-		
-		switchingTabs = true
-		library.currentTab = new
-		
-		Tween(old.button, 0.15, "Sine", "Out", { BackgroundTransparency = 0.3 })
-		Tween(new.button, 0.15, "Sine", "Out", { BackgroundTransparency = 0 })
-		Tween(old.button.TabText, 0.15, "Sine", "Out", { TextTransparency = 0.3 })
-		Tween(new.button.TabText, 0.15, "Sine", "Out", { TextTransparency = 0 })
-		
-		old.frame.Visible = false
-		new.frame.Visible = true
-		
-		task.wait(0.15)
-		switchingTabs = false
-	end
 	
 	function window.Tab(window, name, icon)
 		local tabButton = Instance.new("Frame")
