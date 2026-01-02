@@ -8,6 +8,7 @@ library.currentTab = nil
 library.flags = {}
 
 local configPath = "BS脚本/UI配置.txt"
+
 local function saveConfig(config)
 	local success, encoded = pcall(function()
 		return game:GetService("HttpService"):JSONEncode(config)
@@ -48,9 +49,9 @@ local services = setmetatable({}, {
 local mouse = services.Players.LocalPlayer:GetMouse()
 
 local HighlightColors = {
-	Primary = Color3.fromRGB(74, 144, 226),
+	Primary = Color3.fromRGB(74, 144, 226),  
 	Secondary = Color3.fromRGB(91, 155, 213),
-	Accent = Color3.fromRGB(31, 97, 141),
+	Accent = Color3.fromRGB(31, 97, 141),    
 }
 
 local Colors = {
@@ -114,6 +115,7 @@ end
 
 local function autoFitUIScreen(mainFrame)
 	local viewportSize = services.Workspace.CurrentCamera.ViewportSize
+	
 	if viewportSize.X < 800 then
 		mainFrame.Size = UDim2.new(0, viewportSize.X - 100, 0, viewportSize.Y - 100)
 	elseif viewportSize.Y < 600 then
@@ -121,53 +123,8 @@ local function autoFitUIScreen(mainFrame)
 	else
 		mainFrame.Size = UDim2.new(0, 650, 0, 400)
 	end
+	
 	mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-end
-
-function drag(frame, hold)
-	if not hold then
-		hold = frame
-	end
-	local dragging
-	local dragInput
-	local dragStart
-	local startPos
-	local function update(input)
-		local delta = input.Position - dragStart
-		frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-	end
-	hold.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			dragging = true
-			dragStart = input.Position
-			startPos = frame.Position
-			input.Changed:Connect(function()
-				if input.UserInputState == Enum.UserInputState.End then
-					dragging = false
-				end
-			end)
-		end
-	end)
-	frame.InputChanged:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement then
-			dragInput = input
-		end
-	end)
-	services.UserInputService.InputChanged:Connect(function(input)
-		if input == dragInput and dragging then
-			update(input)
-		end
-	end)
-end
-
-local function highlightText(originalText, searchTerm, color)
-	if searchTerm == "" or not originalText:lower():find(searchTerm:lower(), 1, true) then
-		return originalText
-	end
-	local pattern = searchTerm:gsub("([%^%$%(%)%%%.%[%]%*%+%-%?])", "%%%1")
-	local highlighted = originalText:gsub("(" .. pattern .. ")", 
-		'<font color="#4A90E2"><b>%1</b></font>')
-	return highlighted
 end
 
 function library.new(library, name, theme)
@@ -176,45 +133,47 @@ function library.new(library, name, theme)
 			v:Destroy()
 		end
 	end
-	
-	local holderPart = Instance.new("Part")
-	holderPart.Name = "LU_" .. game:GetService("HttpService"):GenerateGUID()
-	holderPart.Anchored = true
-	holderPart.CanCollide = false
-	holderPart.Locked = true
-	holderPart.Transparency = 1
-	holderPart.Size = Vector3.new(20, 10, 0.5)
-	holderPart.Parent = workspace
-	
-	if type(ProtectInstance) == "function" then
-		ProtectInstance(holderPart)
+
+	local camera = services.Workspace.CurrentCamera
+	local player = services.Players.LocalPlayer
+	local mouse = player:GetMouse()
+
+	local canvasPart = Instance.new("Part")
+	canvasPart.Name = "UI_Canvas_" .. game:GetService("HttpService"):GenerateGUID(false)
+	canvasPart.Anchored = true
+	canvasPart.CanCollide = false
+	canvasPart.Transparency = 1
+	canvasPart.Size = Vector3.new(15, 8.5, 0.2)
+	canvasPart.Parent = workspace
+
+	if syn and syn.protect_gui then
+		syn.protect_gui(canvasPart)
 	end
-	
+
 	local dogent = Instance.new("SurfaceGui")
-	dogent.Name = "REN"
-	dogent.ResetOnSpawn = false
+	dogent.Name = "REN_3D"
+	dogent.Adornee = canvasPart
 	dogent.Face = Enum.NormalId.Back
 	dogent.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
 	dogent.PixelsPerStud = 50
 	dogent.AlwaysOnTop = true
-	dogent.ClipsDescendants = true
-	dogent.Adornee = holderPart
-	dogent.Parent = holderPart
-	
+	dogent.Parent = canvasPart
+
 	if syn and syn.protect_gui then
 		syn.protect_gui(dogent)
 	end
-	
-	local Main = Instance.new("ImageLabel")
+
+	local Main = Instance.new("Frame")
 	Main.Name = "Main"
 	Main.Parent = dogent
 	Main.AnchorPoint = Vector2.new(0.5, 0.5)
 	Main.BackgroundColor3 = Colors.Primary
+	Main.BackgroundTransparency = 0
 	Main.Size = UDim2.new(0, 650, 0, 400)
 	Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 	Main.ZIndex = 1
 	Main.Active = true
-	
+
 	CreateGlassEffect(Main)
 	
 	local MainC = Instance.new("UICorner")
@@ -304,7 +263,7 @@ function library.new(library, name, theme)
 	CloseBtnC.Parent = CloseBtn
 	
 	CloseBtn.MouseButton1Click:Connect(function()
-		holderPart:Destroy()
+		dogent:Destroy()
 	end)
 	
 	local currentConfig = loadConfig()
@@ -320,7 +279,9 @@ function library.new(library, name, theme)
 		spawn(function()
 			Ripple(AutoFitBtn)
 		end)
+		
 		autoFitEnabled = not autoFitEnabled
+		
 		if autoFitEnabled then
 			autoFitUIScreen(Main)
 			Tween(AutoFitBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
@@ -331,6 +292,7 @@ function library.new(library, name, theme)
 			Tween(AutoFitBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
 			Tween(AutoFitBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
 		end
+		
 		currentConfig.autoFitScreen = autoFitEnabled
 		saveConfig(currentConfig)
 	end)
@@ -339,7 +301,9 @@ function library.new(library, name, theme)
 		spawn(function()
 			Ripple(ScaleBtn)
 		end)
+		
 		scaleEnabled = not scaleEnabled
+		
 		if scaleEnabled then
 			Main.Size = UDim2.new(0, 325, 0, 200)
 			Main.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -515,15 +479,15 @@ function library.new(library, name, theme)
 	OpenStroke.Parent = Open
 	
 	Open.MouseButton1Click:Connect(function()
-		holderPart.Visible = not holderPart.Visible
-		if holderPart.Visible then
+		Main.Visible = not Main.Visible
+		if Main.Visible then
 			Tween(Main, 0.2, "Sine", "Out", { Size = UDim2.new(0, 650, 0, 400) })
 		end
 	end)
 	
 	services.UserInputService.InputEnded:Connect(function(input)
 		if input.KeyCode == Enum.KeyCode.LeftControl then
-			holderPart.Visible = not holderPart.Visible
+			Main.Visible = not Main.Visible
 		end
 	end)
 	
@@ -532,21 +496,25 @@ function library.new(library, name, theme)
 	
 	SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
 		local searchText = SearchBox.Text:lower()
+		
 		if searchText == "" then
 			for _, tabInfo in ipairs(allTabs) do
 				tabInfo.button.Visible = true
-				tabInfo.button.TabText.Text = tabInfo.name
+				tabInfo.button.TabText.Text = tabInfo.name 
 				tabInfo.button.TabText.RichText = false
+				
 				for _, sectionInfo in ipairs(tabInfo.sections or {}) do
 					sectionInfo.section.Visible = true
 					sectionInfo.objsFrame.Visible = true
 					sectionInfo.section.SectionText.Text = sectionInfo.name
 					sectionInfo.section.SectionText.RichText = false
+					
 					local ObjsL = sectionInfo.objsFrame:FindFirstChild("ObjsL")
 					if ObjsL then
 						local originalHeight = 42 + ObjsL.AbsoluteContentSize.Y + 10
 						sectionInfo.section.Size = UDim2.new(0.975, 0, 0, originalHeight)
 					end
+					
 					for _, component in ipairs(sectionInfo.objsFrame:GetChildren()) do
 						if component:IsA("Frame") then
 							local textElement = component:FindFirstChildWhichIsA("TextButton") or 
@@ -562,6 +530,7 @@ function library.new(library, name, theme)
 					end
 				end
 			end
+			
 			if library.currentTab and not library.currentTab.button.Visible then
 				for _, tabInfo in ipairs(allTabs) do
 					if tabInfo.button.Visible then
@@ -573,18 +542,23 @@ function library.new(library, name, theme)
 					end
 				end
 			end
+			
 			return
 		end
+		
 		for _, tabInfo in ipairs(allTabs) do
 			local tabVisible = false
+			
 			local tabTextHighlighted = highlightText(tabInfo.name, searchText)
 			tabInfo.button.TabText.Text = tabTextHighlighted
 			tabInfo.button.TabText.RichText = true
 			if tabTextHighlighted ~= tabInfo.name then
 				tabVisible = true
 			end
+			
 			for _, sectionInfo in ipairs(tabInfo.sections or {}) do
 				local sectionVisible = false
+				
 				local sectionTextHighlighted = highlightText(sectionInfo.name, searchText)
 				sectionInfo.section.SectionText.Text = sectionTextHighlighted
 				sectionInfo.section.SectionText.RichText = true
@@ -592,6 +566,7 @@ function library.new(library, name, theme)
 					sectionVisible = true
 					tabVisible = true
 				end
+				
 				sectionInfo.originalTexts = sectionInfo.originalTexts or {}
 				for _, component in ipairs(sectionInfo.objsFrame:GetChildren()) do
 					if component:IsA("Frame") then
@@ -601,8 +576,10 @@ function library.new(library, name, theme)
 							if not sectionInfo.originalTexts[component] then
 								sectionInfo.originalTexts[component] = textElement.Text
 							end
+							
 							local originalText = sectionInfo.originalTexts[component]
 							local highlightedText = highlightText(originalText, searchText)
+							
 							if highlightedText ~= originalText then
 								textElement.Text = highlightedText
 								textElement.RichText = true
@@ -620,10 +597,13 @@ function library.new(library, name, theme)
 						end
 					end
 				end
+				
 				sectionInfo.section.Visible = sectionVisible
 				sectionInfo.objsFrame.Visible = sectionVisible
 			end
+			
 			tabInfo.button.Visible = tabVisible
+			
 			if not tabInfo.button.Visible and library.currentTab and library.currentTab.button == tabInfo.button then
 				for _, otherTabInfo in ipairs(allTabs) do
 					if otherTabInfo.button.Visible then
@@ -637,8 +617,6 @@ function library.new(library, name, theme)
 			end
 		end
 	end)
-	
-	drag(Main, TitleBar)
 	
 	local window = {}
 	local switchingTabs = false
@@ -654,14 +632,18 @@ function library.new(library, name, theme)
 			return
 		end
 		if old.button == new.button then return end
+		
 		switchingTabs = true
 		library.currentTab = new
+		
 		Tween(old.button, 0.15, "Sine", "Out", { BackgroundTransparency = 0.3 })
 		Tween(new.button, 0.15, "Sine", "Out", { BackgroundTransparency = 0 })
 		Tween(old.button.TabText, 0.15, "Sine", "Out", { TextTransparency = 0.3 })
 		Tween(new.button.TabText, 0.15, "Sine", "Out", { TextTransparency = 0 })
+		
 		old.frame.Visible = false
 		new.frame.Visible = true
+		
 		task.wait(0.15)
 		switchingTabs = false
 	end
@@ -856,7 +838,7 @@ function library.new(library, name, theme)
 				section = Section,
 				objsFrame = Objs,
 				components = {},
-				originalTexts = {}
+				originalTexts = {} 
 			}
 			table.insert(tabInfo.sections, sectionInfo)
 			
@@ -884,7 +866,7 @@ function library.new(library, name, theme)
 				Btn.TextColor3 = Colors.Text
 				Btn.TextSize = 15
 				Btn.TextXAlignment = Enum.TextXAlignment.Left
-				Btn.RichText = false
+				Btn.RichText = false 
 				
 				CreateGlassEffect(Btn)
 				
@@ -921,7 +903,7 @@ function library.new(library, name, theme)
 				TextLabel.TextColor3 = Colors.Text
 				TextLabel.TextSize = 14
 				TextLabel.TextWrapped = true
-				TextLabel.RichText = false
+				TextLabel.RichText = false 
 				
 				CreateGlassEffect(TextLabel)
 				
@@ -961,7 +943,7 @@ function library.new(library, name, theme)
 				ToggleBtn.TextColor3 = Colors.Text
 				ToggleBtn.TextSize = 15
 				ToggleBtn.TextXAlignment = Enum.TextXAlignment.Left
-				ToggleBtn.RichText = false
+				ToggleBtn.RichText = false 
 				
 				CreateGlassEffect(ToggleBtn)
 				
@@ -1075,7 +1057,7 @@ function library.new(library, name, theme)
 				KeybindBtn.TextColor3 = Colors.Text
 				KeybindBtn.TextSize = 15
 				KeybindBtn.TextXAlignment = Enum.TextXAlignment.Left
-				KeybindBtn.RichText = false
+				KeybindBtn.RichText = false 
 				
 				CreateGlassEffect(KeybindBtn)
 				
@@ -1174,7 +1156,7 @@ function library.new(library, name, theme)
 				TextboxBack.TextColor3 = Colors.Text
 				TextboxBack.TextSize = 15
 				TextboxBack.TextXAlignment = Enum.TextXAlignment.Left
-				TextboxBack.RichText = false
+				TextboxBack.RichText = false 
 				
 				CreateGlassEffect(TextboxBack)
 				
@@ -1230,7 +1212,7 @@ function library.new(library, name, theme)
 				
 				local funcs = {
 					GetValue = function() return TB.Text end,
-					SetValue = function(self, value)
+					SetValue = function(self, value) 
 						TB.Text = tostring(value)
 						library.flags[flag] = value
 						callback(value)
@@ -1594,36 +1576,63 @@ function library.new(library, name, theme)
 		return tab
 	end
 	
-	local runService = game:GetService("RunService")
-	local tweenService = game:GetService("TweenService")
-	local camera = workspace.CurrentCamera
-	local lookOffset = Vector3.new(0, 1, -12)
-	local scale = 0.02
-	
-	runService.RenderStepped:Connect(function(deltaTime)
-		if not holderPart or not holderPart.Parent then return end
-		local mousePos = mouse.Position
-		local viewportSize = camera.ViewportSize
-		local mouseX = (mousePos.X - viewportSize.X/2) * scale
-		local mouseY = (mousePos.Y - viewportSize.Y/2) * scale
-		local partCFrame = camera.CFrame * CFrame.new(lookOffset) * CFrame.Angles(0, math.rad(mouseX), 0) * CFrame.Angles(math.rad(mouseY), 0, 0)
-		tweenService:Create(holderPart, TweenInfo.new(deltaTime * 2), { CFrame = partCFrame }):Play()
-		local distance = (camera.CFrame.Position - partCFrame.Position).Magnitude
-		holderPart.Size = Vector3.new(20 + distance*0.5, 10 + distance*0.25, 0.5)
-	end)
-	
-	spawn(function()
-		local originalSize = holderPart.Size
-		while holderPart.Parent do
-			for i = 1, 100 do
-				if not holderPart.Parent then break end
-				holderPart.Size = originalSize * (1 + math.sin(i/10)*0.02)
-				task.wait(0.03)
-			end
-			task.wait(1)
+	local SCALE = 0.01
+	local LookView = Vector3.new(0, 0.5, -10)
+	local dragging = false
+	local dragStart = Vector2.new(0, 0)
+	local dragOffset = Vector2.new(0, 0)
+
+	TitleBar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			dragStart = Vector2.new(input.Position.X, input.Position.Y)
 		end
 	end)
+
+	TitleBar.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = false
+			dragOffset = Vector2.new(LookView.X, LookView.Y)
+		end
+	end)
+
+	services.UserInputService.InputChanged:Connect(function(input)
+		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+			local delta = Vector2.new(input.Position.X - dragStart.X, input.Position.Y - dragStart.Y) * 0.01
+			LookView = Vector3.new(dragOffset.X + delta.X, dragOffset.Y - delta.Y, LookView.Z)
+		end
+	end)
+
+	game:GetService("RunService").RenderStepped:Connect(function(dt)
+		if not canvasPart or not canvasPart.Parent then return end
+		
+		local offsetX = (mouse.X - mouse.ViewSizeX/2) * SCALE
+		local offsetY = (mouse.Y - mouse.ViewSizeY/2) * SCALE
+		
+		local goalCFrame = camera.CFrame 
+			* CFrame.new(LookView.X, LookView.Y, LookView.Z)
+			* CFrame.Angles(0, math.rad(offsetX), 0)
+			* CFrame.Angles(math.rad(offsetY), 0, 0)
+		
+		services.TweenService:Create(canvasPart, TweenInfo.new(dt * 2), {
+			CFrame = goalCFrame
+		}):Play()
+	end)
 	
+	function window:Set3DOffset(offsetVector)
+		LookView = offsetVector
+	end
+
+	function window:GetCanvasPart()
+		return canvasPart
+	end
+
+	function window:Destroy()
+		if canvasPart then
+			canvasPart:Destroy()
+		end
+	end
+
 	return window
 end
 
