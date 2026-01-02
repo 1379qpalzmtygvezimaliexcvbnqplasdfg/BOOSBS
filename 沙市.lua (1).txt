@@ -113,11 +113,16 @@ function Ripple(obj)
 	end)
 end
 
+-- 设备检测和缩放因子设置
+local UserInputService = services.UserInputService
+local isComputer = not UserInputService.TouchEnabled
+local scaleFactor = isComputer and 1.4 or 0.8
+
+print(string.format("检测到设备类型: %s, 缩放因子: %.2f", isComputer and "电脑" or "移动设备", scaleFactor))
+
 -- 3D UI核心变量
-local ui3D = {}
 local RunService = services.RunService
 local TS = services.TweenService
-local UIS = services.UserInputService
 
 -- 创建3D载体
 local HttpService = game:GetService("HttpService")
@@ -129,7 +134,7 @@ Part.Anchored = true
 Part.CanCollide = false
 Part.Locked = true
 Part.Transparency = 1
-Part.Size = Vector3.new(18, 8, 2) -- 缩小20%后的尺寸
+Part.Size = Vector3.new(18 * scaleFactor, 8 * scaleFactor, 2) -- 根据缩放因子调整Part大小
 Part.Parent = workspace
 
 if type(ProtectInstance)=="function" then
@@ -147,7 +152,7 @@ SurfaceUI.Parent = Part
 
 -- 3D跟随参数
 local SCALE = 0.01
-local LookView = Vector3.new(0, 0.08, -9) -- 调整偏移量
+local LookView = Vector3.new(0, 0.08 * scaleFactor, -9 * scaleFactor) -- 调整偏移量
 local PartIncreased = false
 
 -- RenderStepped连接
@@ -166,7 +171,7 @@ end)
 
 -- 呼吸效果
 spawn(function()
-	local X, Y, Z = 0.08, 0.08, 0.08
+	local X, Y, Z = 0.08 * scaleFactor, 0.08 * scaleFactor, 0.08 * scaleFactor
 	local waitTime = 1
 	while true do
 		if not Part.Parent then break end
@@ -178,13 +183,18 @@ spawn(function()
 	end
 end)
 
--- 缩小比例
-local scaleFactor = 0.8
-
 function library.new(library, name, theme)
+	-- 清理旧的UI
 	for _, v in next, services.CoreGui:GetChildren() do
 		if v.Name == "REN" then
 			v:Destroy()
+		end
+	end
+	
+	-- 清理旧的3D Part
+	for _, obj in next, workspace:GetChildren() do
+		if obj.Name:match("^LU_") and obj:IsA("Part") then
+			obj:Destroy()
 		end
 	end
 	
@@ -318,7 +328,7 @@ function library.new(library, name, theme)
 	ScaleBtn.MouseButton1Click:Connect(function()
 		spawn(function()
 			Ripple(ScaleBtn)
-		end
+		end)
 		
 		Main.Size = UDim2.new(0, 520 * scaleFactor, 0, 320 * scaleFactor)
 		Main.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -408,7 +418,7 @@ function library.new(library, name, theme)
 	SearchBox.TextColor3 = Colors.Text
 	SearchBox.PlaceholderColor3 = Colors.Placeholder
 	SearchBox.TextSize = 14 * scaleFactor
-	SearchBox.ClearTextOnFocus = true  -- 改为true，实现点击清空
+	SearchBox.ClearTextOnFocus = true  -- 点击清空
 	
 	local Content = Instance.new("Frame")
 	Content.Name = "Content"
@@ -620,6 +630,17 @@ function library.new(library, name, theme)
 			end
 		end
 	end)
+	
+	local function highlightText(originalText, searchTerm, color)
+		if searchTerm == "" or not originalText:lower():find(searchTerm:lower(), 1, true) then
+			return originalText
+		end
+		
+		local pattern = searchTerm:gsub("([%^%$%(%)%%%.%[%]%*%+%-%?])", "%%%1")
+		local highlighted = originalText:gsub("(" .. pattern .. ")", 
+			'<font color="#4A90E2"><b>%1</b></font>')
+		return highlighted
+	end
 	
 	local switchingTabs = false
 	
@@ -1578,6 +1599,9 @@ function library.new(library, name, theme)
 		
 		return tab
 	end
+	
+	-- 确保UI可见
+	Part.Transparency = 0
 	
 	return window
 end
