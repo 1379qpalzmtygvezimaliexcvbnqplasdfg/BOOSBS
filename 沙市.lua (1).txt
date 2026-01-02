@@ -8,7 +8,6 @@ library.currentTab = nil
 library.flags = {}
 
 local configPath = "BS脚本/UI配置.txt"
-local colorPresetsPath = "BS脚本/颜色预设.txt"
 
 local function saveConfig(config)
 	local success, encoded = pcall(function()
@@ -42,46 +41,6 @@ local function loadConfig()
 	}
 end
 
-local function saveColorPresets(presets)
-	local success, encoded = pcall(function()
-		return game:GetService("HttpService"):JSONEncode(presets)
-	end)
-	if success then
-		if isfolder("BS脚本") then
-			if isfile(colorPresetsPath) then
-				delfile(colorPresetsPath)
-			end
-		else
-			makefolder("BS脚本")
-		end
-		writefile(colorPresetsPath, encoded)
-	end
-end
-
-local function loadColorPresets()
-	if isfile(colorPresetsPath) then
-		local success, presets = pcall(function()
-			return game:GetService("HttpService"):JSONDecode(readfile(colorPresetsPath))
-		end)
-		if success then
-			return presets
-		end
-	end
-	return {
-		presets = {
-			Color3.fromRGB(255, 0, 0),
-			Color3.fromRGB(0, 255, 0),
-			Color3.fromRGB(0, 0, 255),
-			Color3.fromRGB(255, 255, 0),
-			Color3.fromRGB(255, 0, 255),
-			Color3.fromRGB(0, 255, 255),
-			Color3.fromRGB(255, 255, 255),
-			Color3.fromRGB(0, 0, 0)
-		},
-		recent = {}
-	}
-end
-
 local services = setmetatable({}, {
 	__index = function(t, k)
 		return game.GetService(game, k)
@@ -102,10 +61,10 @@ local Colors = {
 	Text = Color3.fromRGB(240, 240, 240),
 	Placeholder = Color3.fromRGB(150, 150, 150),
 	White = Color3.fromRGB(255, 255, 255),
-	Transparent = 0.25,
+	Transparent = 0.15, -- 更透明的背景
 }
 
-local function CreateGlassEffect(instance, transparency)
+local function CreateEnhancedGlassEffect(instance, transparency)
 	instance.BackgroundTransparency = transparency or Colors.Transparent
 	if not instance:FindFirstChild("GlassEffect") then
 		local blur = Instance.new("ImageLabel")
@@ -113,8 +72,16 @@ local function CreateGlassEffect(instance, transparency)
 		blur.BackgroundTransparency = 1
 		blur.Size = UDim2.new(1, 0, 1, 0)
 		blur.Image = "rbxassetid://5554237735"
-		blur.ImageTransparency = 0.95
+		blur.ImageTransparency = 0.92 -- 更柔和的模糊
 		blur.Parent = instance
+		
+		-- 添加发光边缘
+		local glow = Instance.new("UIStroke")
+		glow.Name = "GlowEffect"
+		glow.Color = Color3.fromRGB(100, 100, 100)
+		glow.Thickness = 1
+		glow.Transparency = 0.8
+		glow.Parent = instance
 	end
 end
 
@@ -273,31 +240,36 @@ function library.new(library, name, theme)
 	local player = services.Players.LocalPlayer
 	local mouse = player:GetMouse()
 
+	-- 创建3D画布
 	local canvasPart = Instance.new("Part")
 	canvasPart.Name = "UI_Canvas_" .. game:GetService("HttpService"):GenerateGUID(false)
 	canvasPart.Anchored = true
 	canvasPart.CanCollide = false
 	canvasPart.Transparency = 1
-	canvasPart.Size = Vector3.new(15, 8.5, 0.2)
+	canvasPart.Size = Vector3.new(12, 7, 0.15) -- 更薄的画布
+	canvasPart.Material = Enum.Material.Glass -- 玻璃材质
 	canvasPart.Parent = workspace
 
 	if syn and syn.protect_gui then
 		syn.protect_gui(canvasPart)
 	end
 
+	-- 创建3D表面GUI
 	local dogent = Instance.new("SurfaceGui")
 	dogent.Name = "REN_3D"
 	dogent.Adornee = canvasPart
 	dogent.Face = Enum.NormalId.Back
 	dogent.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-	dogent.PixelsPerStud = 50
+	dogent.PixelsPerStud = 60 -- 更高的分辨率
 	dogent.AlwaysOnTop = true
+	dogent.LightInfluence = 0 -- 不受环境光影响
 	dogent.Parent = canvasPart
 
 	if syn and syn.protect_gui then
 		syn.protect_gui(dogent)
 	end
 
+	-- 创建切换按钮
 	local switchGui = Instance.new("ScreenGui")
 	switchGui.Name = "UI_Switch"
 	switchGui.Parent = services.CoreGui
@@ -310,7 +282,7 @@ function library.new(library, name, theme)
 	Open.Name = "Open"
 	Open.Parent = switchGui
 	Open.BackgroundColor3 = Colors.Primary
-	Open.BackgroundTransparency = Colors.Transparent
+	Open.BackgroundTransparency = 0.2 -- 更半透明
 	Open.Position = UDim2.new(0.01, 0, 0.3, 0)
 	Open.Size = UDim2.new(0, 70, 0, 35)
 	Open.Font = Enum.Font.GothamBold
@@ -325,7 +297,7 @@ function library.new(library, name, theme)
 	OpenC.CornerRadius = UDim.new(0, 6)
 	OpenC.Parent = Open
 	
-	CreateGlassEffect(Open)
+	CreateEnhancedGlassEffect(Open)
 	
 	local OpenStroke = Instance.new("UIStroke")
 	OpenStroke.Color = Colors.Secondary
@@ -333,29 +305,32 @@ function library.new(library, name, theme)
 	OpenStroke.Transparency = 0.5
 	OpenStroke.Parent = Open
 
+	-- 主窗口
 	local Main = Instance.new("Frame")
 	Main.Name = "Main"
 	Main.Parent = dogent
 	Main.AnchorPoint = Vector2.new(0.5, 0.5)
 	Main.BackgroundColor3 = Colors.Primary
-	Main.BackgroundTransparency = 0
+	Main.BackgroundTransparency = 0 -- 基础透明度
 	Main.Size = UDim2.new(0, 650, 0, 400)
 	Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 	Main.ZIndex = 1
 	Main.Active = true
 
-	CreateGlassEffect(Main)
+	CreateEnhancedGlassEffect(Main)
 	
 	local MainC = Instance.new("UICorner")
 	MainC.CornerRadius = UDim.new(0, 8)
 	MainC.Parent = Main
 	
+	-- 更柔和的边框
 	local MainStroke = Instance.new("UIStroke")
 	MainStroke.Color = Colors.Secondary
 	MainStroke.Thickness = 1
-	MainStroke.Transparency = 0.5
+	MainStroke.Transparency = 0.6
 	MainStroke.Parent = Main
 	
+	-- 3D阴影效果
 	local DropShadowHolder = Instance.new("Frame")
 	DropShadowHolder.Name = "DropShadowHolder"
 	DropShadowHolder.Parent = Main
@@ -372,16 +347,17 @@ function library.new(library, name, theme)
 	DropShadow.Size = UDim2.new(1, 47, 1, 47)
 	DropShadow.ZIndex = 0
 	DropShadow.Image = "rbxassetid://6015897843"
-	DropShadow.ImageColor3 = Colors.Primary
-	DropShadow.ImageTransparency = 0.7
+	DropShadow.ImageColor3 = Color3.fromRGB(0, 0, 0) -- 纯黑阴影
+	DropShadow.ImageTransparency = 0.75 -- 更淡的阴影
 	DropShadow.ScaleType = Enum.ScaleType.Slice
 	DropShadow.SliceCenter = Rect.new(49, 49, 450, 450)
 	
+	-- 控制按钮
 	local AutoFitBtn = Instance.new("ImageButton")
 	AutoFitBtn.Name = "AutoFitBtn"
 	AutoFitBtn.Parent = Main
 	AutoFitBtn.BackgroundColor3 = Colors.Secondary
-	AutoFitBtn.BackgroundTransparency = Colors.Transparent
+	AutoFitBtn.BackgroundTransparency = 0.2
 	AutoFitBtn.Position = UDim2.new(1, -95, 0, 10)
 	AutoFitBtn.Size = UDim2.new(0, 25, 0, 25)
 	AutoFitBtn.Image = "rbxassetid://3926305904"
@@ -394,13 +370,13 @@ function library.new(library, name, theme)
 	AutoFitBtnC.CornerRadius = UDim.new(0, 6)
 	AutoFitBtnC.Parent = AutoFitBtn
 	
-	CreateGlassEffect(AutoFitBtn)
+	CreateEnhancedGlassEffect(AutoFitBtn)
 	
 	local ScaleBtn = Instance.new("ImageButton")
 	ScaleBtn.Name = "ScaleBtn"
 	ScaleBtn.Parent = Main
 	ScaleBtn.BackgroundColor3 = Colors.Secondary
-	ScaleBtn.BackgroundTransparency = Colors.Transparent
+	ScaleBtn.BackgroundTransparency = 0.2
 	ScaleBtn.Position = UDim2.new(1, -65, 0, 10)
 	ScaleBtn.Size = UDim2.new(0, 25, 0, 25)
 	ScaleBtn.Image = "rbxassetid://3926305904"
@@ -413,13 +389,13 @@ function library.new(library, name, theme)
 	ScaleBtnC.CornerRadius = UDim.new(0, 6)
 	ScaleBtnC.Parent = ScaleBtn
 	
-	CreateGlassEffect(ScaleBtn)
+	CreateEnhancedGlassEffect(ScaleBtn)
 	
 	local CloseBtn = Instance.new("TextButton")
 	CloseBtn.Name = "CloseBtn"
 	CloseBtn.Parent = Main
 	CloseBtn.BackgroundColor3 = Colors.Secondary
-	CloseBtn.BackgroundTransparency = Colors.Transparent
+	CloseBtn.BackgroundTransparency = 0.2
 	CloseBtn.Position = UDim2.new(1, -35, 0, 10)
 	CloseBtn.Size = UDim2.new(0, 25, 0, 25)
 	CloseBtn.Font = Enum.Font.GothamBold
@@ -431,6 +407,8 @@ function library.new(library, name, theme)
 	local CloseBtnC = Instance.new("UICorner")
 	CloseBtnC.CornerRadius = UDim.new(0, 6)
 	CloseBtnC.Parent = CloseBtn
+	
+	CreateEnhancedGlassEffect(CloseBtn)
 	
 	Open.MouseButton1Click:Connect(function()
 		Main.Visible = not Main.Visible
@@ -469,7 +447,7 @@ function library.new(library, name, theme)
 			Main.Size = UDim2.new(0, 650, 0, 400)
 			Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 			Tween(AutoFitBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
-			Tween(AutoFitBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
+			Tween(AutoFitBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.2 })
 		end
 		
 		currentConfig.autoFitScreen = autoFitEnabled
@@ -492,7 +470,7 @@ function library.new(library, name, theme)
 			Main.Size = UDim2.new(0, 650, 0, 400)
 			Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 			Tween(ScaleBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
-			Tween(ScaleBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
+			Tween(ScaleBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.2 })
 		end
 	end)
 	
@@ -501,19 +479,22 @@ function library.new(library, name, theme)
 		AutoFitBtn.BackgroundTransparency = 0
 	else
 		Tween(AutoFitBtn, 0, "Sine", "Out", { ImageColor3 = Colors.Text })
-		Tween(AutoFitBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
+		Tween(AutoFitBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.2 })
 	end
 	
+	-- 标题栏
 	local TitleBar = Instance.new("Frame")
 	TitleBar.Name = "TitleBar"
 	TitleBar.Parent = Main
 	TitleBar.BackgroundColor3 = Colors.Secondary
-	TitleBar.BackgroundTransparency = Colors.Transparent
+	TitleBar.BackgroundTransparency = 0.15 -- 更半透明
 	TitleBar.Size = UDim2.new(1, 0, 0, 45)
 	
 	local TitleBarC = Instance.new("UICorner")
 	TitleBarC.CornerRadius = UDim.new(0, 8)
 	TitleBarC.Parent = TitleBar
+	
+	CreateEnhancedGlassEffect(TitleBar)
 	
 	local Title = Instance.new("TextLabel")
 	Title.Name = "ScriptTitle"
@@ -527,6 +508,7 @@ function library.new(library, name, theme)
 	Title.TextSize = 18
 	Title.TextXAlignment = Enum.TextXAlignment.Left
 	
+	-- 渐变动画
 	local TitleGradient = Instance.new("UIGradient")
 	TitleGradient.Color = ColorSequence.new({
 		ColorSequenceKeypoint.new(0.00, Color3.fromRGB(52, 152, 219)),
@@ -543,11 +525,12 @@ function library.new(library, name, theme)
 		end
 	end)()
 	
+	-- 搜索栏
 	local SearchBar = Instance.new("Frame")
 	SearchBar.Name = "SearchBar"
 	SearchBar.Parent = Main
 	SearchBar.BackgroundColor3 = Colors.Secondary
-	SearchBar.BackgroundTransparency = Colors.Transparent
+	SearchBar.BackgroundTransparency = 0.15
 	SearchBar.Position = UDim2.new(0, 15, 0, 55)
 	SearchBar.Size = UDim2.new(1, -30, 0, 35)
 	
@@ -555,7 +538,7 @@ function library.new(library, name, theme)
 	SearchBarC.CornerRadius = UDim.new(0, 6)
 	SearchBarC.Parent = SearchBar
 	
-	CreateGlassEffect(SearchBar)
+	CreateEnhancedGlassEffect(SearchBar)
 	
 	local SearchIcon = Instance.new("ImageLabel")
 	SearchIcon.Name = "SearchIcon"
@@ -582,6 +565,7 @@ function library.new(library, name, theme)
 	SearchBox.TextSize = 14
 	SearchBox.ClearTextOnFocus = false
 	
+	-- 内容区域
 	local Content = Instance.new("Frame")
 	Content.Name = "Content"
 	Content.Parent = Main
@@ -589,18 +573,19 @@ function library.new(library, name, theme)
 	Content.Position = UDim2.new(0, 0, 0, 100)
 	Content.Size = UDim2.new(1, 0, 1, -100)
 	
+	-- 侧边栏
 	local SideBar = Instance.new("Frame")
 	SideBar.Name = "SideBar"
 	SideBar.Parent = Content
 	SideBar.BackgroundColor3 = Colors.Secondary
-	SideBar.BackgroundTransparency = Colors.Transparent
+	SideBar.BackgroundTransparency = 0.15
 	SideBar.Size = UDim2.new(0, 140, 1, 0)
 	
 	local SideBarC = Instance.new("UICorner")
 	SideBarC.CornerRadius = UDim.new(0, 8)
 	SideBarC.Parent = SideBar
 	
-	CreateGlassEffect(SideBar)
+	CreateEnhancedGlassEffect(SideBar)
 	
 	local TabButtons = Instance.new("ScrollingFrame")
 	TabButtons.Name = "TabBts"
@@ -612,7 +597,8 @@ function library.new(library, name, theme)
 	TabButtons.Size = UDim2.new(1, -10, 1, -10)
 	TabButtons.CanvasSize = UDim2.new(0, 0, 0, 0)
 	TabButtons.ScrollBarThickness = 2
-	TabButtons.ScrollBarImageColor3 = Colors.Secondary
+	TabButtons.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+	TabButtons.ScrollBarImageTransparency = 0.7
 	
 	local TabButtonsL = Instance.new("UIListLayout")
 	TabButtonsL.Name = "TabBtsL"
@@ -634,6 +620,7 @@ function library.new(library, name, theme)
 	local allTabs = {}
 	local tabInfos = {}
 	
+	-- 搜索功能
 	SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
 		local searchText = SearchBox.Text:lower()
 		
@@ -800,7 +787,7 @@ function library.new(library, name, theme)
 		tabButtonC.CornerRadius = UDim.new(0, 6)
 		tabButtonC.Parent = tabButton
 		
-		CreateGlassEffect(tabButton)
+		CreateEnhancedGlassEffect(tabButton)
 		
 		local tabIcon = Instance.new("ImageLabel")
 		tabIcon.Name = "TabIcon"
@@ -878,19 +865,17 @@ function library.new(library, name, theme)
 		local tab = {}
 		tab._info = tabInfo
 		
-		local colorPresetsData = loadColorPresets()
-		
 		function tab.section(tab, name, TabVal)
 			local Section = Instance.new("Frame")
 			Section.Name = "Section"
 			Section.Parent = tabFrame
 			Section.BackgroundColor3 = Colors.Secondary
-			Section.BackgroundTransparency = Colors.Transparent
+			Section.BackgroundTransparency = 0.15
 			Section.BorderSizePixel = 0
 			Section.ClipsDescendants = true
 			Section.Size = UDim2.new(0.975, 0, 0, 42)
 			
-			CreateGlassEffect(Section)
+			CreateEnhancedGlassEffect(Section)
 			
 			local SectionC = Instance.new("UICorner")
 			SectionC.CornerRadius = UDim.new(0, 8)
@@ -899,7 +884,7 @@ function library.new(library, name, theme)
 			local SectionStroke = Instance.new("UIStroke")
 			SectionStroke.Color = Colors.Primary
 			SectionStroke.Thickness = 1
-			SectionStroke.Transparency = 0.5
+			SectionStroke.Transparency = 0.6
 			SectionStroke.Parent = Section
 			
 			local SectionText = Instance.new("TextLabel")
@@ -967,7 +952,7 @@ function library.new(library, name, theme)
 				Section.Size = UDim2.new(0.975, 0, 0, open and 42 + ObjsL.AbsoluteContentSize.Y + 10 or 42)
 				SectionOpened.ImageTransparency = (open and 0 or 1)
 				SectionOpen.ImageTransparency = (open and 1 or 0)
-				Tween(Section, 0.2, "Sine", "Out", { BackgroundTransparency = open and 0.25 or 0 })
+				Tween(Section, 0.2, "Sine", "Out", { BackgroundTransparency = open and 0.15 or 0 })
 			end)
 			
 			ObjsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
@@ -1000,7 +985,7 @@ function library.new(library, name, theme)
 				Btn.Name = "Btn"
 				Btn.Parent = BtnModule
 				Btn.BackgroundColor3 = Colors.Secondary
-				Btn.BackgroundTransparency = 0.3
+				Btn.BackgroundTransparency = 0.2 -- 更透明
 				Btn.Size = UDim2.new(1, 0, 1, 0)
 				Btn.AutoButtonColor = false
 				Btn.Font = Enum.Font.GothamSemibold
@@ -1010,7 +995,7 @@ function library.new(library, name, theme)
 				Btn.TextXAlignment = Enum.TextXAlignment.Left
 				Btn.RichText = false 
 				
-				CreateGlassEffect(Btn)
+				CreateEnhancedGlassEffect(Btn)
 				
 				local BtnC = Instance.new("UICorner")
 				BtnC.CornerRadius = UDim.new(0, 6)
@@ -1038,7 +1023,7 @@ function library.new(library, name, theme)
 				local TextLabel = Instance.new("TextLabel")
 				TextLabel.Parent = LabelModule
 				TextLabel.BackgroundColor3 = Colors.Secondary
-				TextLabel.BackgroundTransparency = 0.3
+				TextLabel.BackgroundTransparency = 0.2
 				TextLabel.Size = UDim2.new(1, 0, 1, 0)
 				TextLabel.Font = Enum.Font.GothamSemibold
 				TextLabel.Text = text
@@ -1047,7 +1032,7 @@ function library.new(library, name, theme)
 				TextLabel.TextWrapped = true
 				TextLabel.RichText = false 
 				
-				CreateGlassEffect(TextLabel)
+				CreateEnhancedGlassEffect(TextLabel)
 				
 				local LabelC = Instance.new("UICorner")
 				LabelC.CornerRadius = UDim.new(0, 6)
@@ -1077,7 +1062,7 @@ function library.new(library, name, theme)
 				ToggleBtn.Name = "ToggleBtn"
 				ToggleBtn.Parent = ToggleModule
 				ToggleBtn.BackgroundColor3 = Colors.Secondary
-				ToggleBtn.BackgroundTransparency = 0.3
+				ToggleBtn.BackgroundTransparency = 0.2
 				ToggleBtn.Size = UDim2.new(1, 0, 1, 0)
 				ToggleBtn.AutoButtonColor = false
 				ToggleBtn.Font = Enum.Font.GothamSemibold
@@ -1087,7 +1072,7 @@ function library.new(library, name, theme)
 				ToggleBtn.TextXAlignment = Enum.TextXAlignment.Left
 				ToggleBtn.RichText = false 
 				
-				CreateGlassEffect(ToggleBtn)
+				CreateEnhancedGlassEffect(ToggleBtn)
 				
 				local ToggleBtnC = Instance.new("UICorner")
 				ToggleBtnC.CornerRadius = UDim.new(0, 6)
@@ -1099,7 +1084,7 @@ function library.new(library, name, theme)
 				ToggleDisable.Name = "ToggleDisable"
 				ToggleDisable.Parent = ToggleBtn
 				ToggleDisable.BackgroundColor3 = Colors.Primary
-				ToggleDisable.BackgroundTransparency = 0.5
+				ToggleDisable.BackgroundTransparency = 0.4 -- 更透明
 				ToggleDisable.BorderSizePixel = 0
 				ToggleDisable.Position = UDim2.new(1, -38, 0.5, -13)
 				ToggleDisable.Size = UDim2.new(0, 26, 0, 26)
@@ -1191,7 +1176,7 @@ function library.new(library, name, theme)
 				KeybindBtn.Name = "KeybindBtn"
 				KeybindBtn.Parent = KeybindModule
 				KeybindBtn.BackgroundColor3 = Colors.Secondary
-				KeybindBtn.BackgroundTransparency = 0.3
+				KeybindBtn.BackgroundTransparency = 0.2
 				KeybindBtn.Size = UDim2.new(1, 0, 1, 0)
 				KeybindBtn.AutoButtonColor = false
 				KeybindBtn.Font = Enum.Font.GothamSemibold
@@ -1201,7 +1186,7 @@ function library.new(library, name, theme)
 				KeybindBtn.TextXAlignment = Enum.TextXAlignment.Left
 				KeybindBtn.RichText = false 
 				
-				CreateGlassEffect(KeybindBtn)
+				CreateEnhancedGlassEffect(KeybindBtn)
 				
 				local KeybindBtnC = Instance.new("UICorner")
 				KeybindBtnC.CornerRadius = UDim.new(0, 6)
@@ -1213,7 +1198,7 @@ function library.new(library, name, theme)
 				KeybindValue.Name = "KeybindValue"
 				KeybindValue.Parent = KeybindBtn
 				KeybindValue.BackgroundColor3 = Colors.Primary
-				KeybindValue.BackgroundTransparency = 0.5
+				KeybindValue.BackgroundTransparency = 0.4
 				KeybindValue.Position = UDim2.new(1, -60, 0.5, -14)
 				KeybindValue.Size = UDim2.new(0, 55, 0, 28)
 				KeybindValue.AutoButtonColor = false
@@ -1290,7 +1275,7 @@ function library.new(library, name, theme)
 				TextboxBack.Name = "TextboxBack"
 				TextboxBack.Parent = TextboxModule
 				TextboxBack.BackgroundColor3 = Colors.Secondary
-				TextboxBack.BackgroundTransparency = 0.3
+				TextboxBack.BackgroundTransparency = 0.2
 				TextboxBack.Size = UDim2.new(1, 0, 1, 0)
 				TextboxBack.AutoButtonColor = false
 				TextboxBack.Font = Enum.Font.GothamSemibold
@@ -1300,7 +1285,7 @@ function library.new(library, name, theme)
 				TextboxBack.TextXAlignment = Enum.TextXAlignment.Left
 				TextboxBack.RichText = false 
 				
-				CreateGlassEffect(TextboxBack)
+				CreateEnhancedGlassEffect(TextboxBack)
 				
 				local TextboxBackC = Instance.new("UICorner")
 				TextboxBackC.CornerRadius = UDim.new(0, 6)
@@ -1312,7 +1297,7 @@ function library.new(library, name, theme)
 				BoxBG.Name = "BoxBG"
 				BoxBG.Parent = TextboxBack
 				BoxBG.BackgroundColor3 = Colors.Primary
-				BoxBG.BackgroundTransparency = 0.5
+				BoxBG.BackgroundTransparency = 0.4
 				BoxBG.Position = UDim2.new(1, -100, 0.5, -14)
 				BoxBG.Size = UDim2.new(0, 90, 0, 28)
 				BoxBG.AutoButtonColor = false
@@ -1389,7 +1374,7 @@ function library.new(library, name, theme)
 				SliderBack.Name = "SliderBack"
 				SliderBack.Parent = SliderModule
 				SliderBack.BackgroundColor3 = Colors.Secondary
-				SliderBack.BackgroundTransparency = 0.3
+				SliderBack.BackgroundTransparency = 0.2
 				SliderBack.Size = UDim2.new(1, 0, 1, 0)
 				SliderBack.AutoButtonColor = false
 				SliderBack.Font = Enum.Font.GothamSemibold
@@ -1399,7 +1384,7 @@ function library.new(library, name, theme)
 				SliderBack.TextXAlignment = Enum.TextXAlignment.Left
 				SliderBack.RichText = false
 				
-				CreateGlassEffect(SliderBack)
+				CreateEnhancedGlassEffect(SliderBack)
 				
 				local SliderBackC = Instance.new("UICorner")
 				SliderBackC.CornerRadius = UDim.new(0, 6)
@@ -1412,7 +1397,7 @@ function library.new(library, name, theme)
 				SliderBar.Parent = SliderBack
 				SliderBar.AnchorPoint = Vector2.new(0, 0.5)
 				SliderBar.BackgroundColor3 = Colors.Primary
-				SliderBar.BackgroundTransparency = 0.5
+				SliderBar.BackgroundTransparency = 0.4
 				SliderBar.BorderSizePixel = 0
 				SliderBar.Position = UDim2.new(0.5, -60, 0.5, 0)
 				SliderBar.Size = UDim2.new(0, 120, 0, 6)
@@ -1435,7 +1420,7 @@ function library.new(library, name, theme)
 				SliderValBG.Name = "SliderValBG"
 				SliderValBG.Parent = SliderBack
 				SliderValBG.BackgroundColor3 = Colors.Primary
-				SliderValBG.BackgroundTransparency = 0.5
+				SliderValBG.BackgroundTransparency = 0.4
 				SliderValBG.Position = UDim2.new(1, -45, 0.5, -14)
 				SliderValBG.Size = UDim2.new(0, 40, 0, 28)
 				SliderValBG.AutoButtonColor = false
@@ -1443,49 +1428,49 @@ function library.new(library, name, theme)
 				SliderValBG.Text = ""
 				
 				local SliderValBGC = Instance.new("UICorner")
-				SliderValBGC.CornerRadius = UDim.new(0, 6)
-				SliderValBGC.Parent = SliderValBG
-				
-				local SliderValue = Instance.new("TextBox")
-				SliderValue.Name = "SliderValue"
-				SliderValue.Parent = SliderValBG
-				SliderValue.BackgroundTransparency = 1
-				SliderValue.Size = UDim2.new(1, 0, 1, 0)
-				SliderValue.Font = Enum.Font.GothamSemibold
-				SliderValue.Text = tostring(default)
-				SliderValue.TextColor3 = Colors.Text
-				SliderValue.TextSize = 14
-				
-				local MinSlider = Instance.new("TextButton")
-				MinSlider.Name = "MinSlider"
-				MinSlider.Parent = SliderBack
-				MinSlider.BackgroundTransparency = 1
-				MinSlider.Position = UDim2.new(0.5, -85, 0.5, -10)
-				MinSlider.Size = UDim2.new(0, 20, 0, 20)
-				MinSlider.Font = Enum.Font.GothamBold
-				MinSlider.Text = "-"
-				MinSlider.TextColor3 = Colors.Text
-				MinSlider.TextSize = 20
-				
-				local AddSlider = Instance.new("TextButton")
-				AddSlider.Name = "AddSlider"
-				AddSlider.Parent = SliderBack
-				AddSlider.AnchorPoint = Vector2.new(0, 0.5)
-				AddSlider.BackgroundTransparency = 1
-				AddSlider.Position = UDim2.new(0.5, 70, 0.5, -10)
-				AddSlider.Size = UDim2.new(0, 20, 0, 20)
-				AddSlider.Font = Enum.Font.GothamBold
-				AddSlider.Text = "+"
-				AddSlider.TextColor3 = Colors.Text
-				AddSlider.TextSize = 20
-				
-				local funcs = {
-					SetValue = function(self, value)
-						local percent = (mouse.X - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X
-						if value then
-							percent = (value - min) / (max - min)
-						end
-						percent = math.clamp(percent, 0, 1)
+			SliderValBGC.CornerRadius = UDim.new(0, 6)
+			SliderValBGC.Parent = SliderValBG
+			
+			local SliderValue = Instance.new("TextBox")
+			SliderValue.Name = "SliderValue"
+			SliderValue.Parent = SliderValBG
+			SliderValue.BackgroundTransparency = 1
+			SliderValue.Size = UDim2.new(1, 0, 1, 0)
+			SliderValue.Font = Enum.Font.GothamSemibold
+			SliderValue.Text = tostring(default)
+			SliderValue.TextColor3 = Colors.Text
+			SliderValue.TextSize = 14
+			
+			local MinSlider = Instance.new("TextButton")
+			MinSlider.Name = "MinSlider"
+			MinSlider.Parent = SliderBack
+			MinSlider.BackgroundTransparency = 1
+			MinSlider.Position = UDim2.new(0.5, -85, 0.5, -10)
+			MinSlider.Size = UDim2.new(0, 20, 0, 20)
+			MinSlider.Font = Enum.Font.GothamBold
+			MinSlider.Text = "-"
+			MinSlider.TextColor3 = Colors.Text
+			MinSlider.TextSize = 20
+			
+			local AddSlider = Instance.new("TextButton")
+			AddSlider.Name = "AddSlider"
+			AddSlider.Parent = SliderBack
+			AddSlider.AnchorPoint = Vector2.new(0, 0.5)
+			AddSlider.BackgroundTransparency = 1
+			AddSlider.Position = UDim2.new(0.5, 70, 0.5, -10)
+			AddSlider.Size = UDim2.new(0, 20, 0, 20)
+			AddSlider.Font = Enum.Font.GothamBold
+			AddSlider.Text = "+"
+			AddSlider.TextColor3 = Colors.Text
+			AddSlider.TextSize = 20
+			
+			local funcs = {
+				SetValue = function(self, value)
+					local percent = (mouse.X - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X
+					if value then
+						percent = (value - min) / (max - min)
+					end
+					percent = math.clamp(percent,0, 1)
 						if precise then
 							value = value or tonumber(string.format("%.1f", tostring(min + (max - min) * percent)))
 						else
@@ -1583,7 +1568,7 @@ function library.new(library, name, theme)
 				DropdownTop.Name = "DropdownTop"
 				DropdownTop.Parent = DropdownModule
 				DropdownTop.BackgroundColor3 = Colors.Secondary
-				DropdownTop.BackgroundTransparency = 0.3
+				DropdownTop.BackgroundTransparency = 0.2
 				DropdownTop.Size = UDim2.new(1, 0, 0, 40)
 				DropdownTop.AutoButtonColor = false
 				DropdownTop.Font = Enum.Font.GothamSemibold
@@ -1591,7 +1576,7 @@ function library.new(library, name, theme)
 				DropdownTop.TextXAlignment = Enum.TextXAlignment.Left
 				DropdownTop.RichText = false
 				
-				CreateGlassEffect(DropdownTop)
+				CreateEnhancedGlassEffect(DropdownTop)
 				
 				local DropdownTopC = Instance.new("UICorner")
 				DropdownTopC.CornerRadius = UDim.new(0, 6)
@@ -1638,7 +1623,7 @@ function library.new(library, name, theme)
 						Option.Name = "Option_" .. option
 						Option.Parent = DropdownModule
 						Option.BackgroundColor3 = Colors.Secondary
-						Option.BackgroundTransparency = 0.3
+						Option.BackgroundTransparency = 0.2
 						Option.Size = UDim2.new(1, 0, 0, 32)
 						Option.AutoButtonColor = false
 						Option.Font = Enum.Font.Gotham
@@ -1647,7 +1632,151 @@ function library.new(library, name, theme)
 						Option.TextSize = 14
 						Option.RichText = false
 						
-						CreateGlassEffect(Option)
+						CreateEnhancedGlassEffect(Option)
+						
+						local OptionC = Instance.new("UICorner")
+						OptionC.CornerRadius = UDim.new(0, 6)
+						OptionC.Parent = Option
+						
+						sectionInfo.originalTexts[Option] = option
+						
+						Option.MouseButton1Click:Connect(function()
+							open = false
+							DropdownOpen.Text = "+"
+							Tween(DropdownModule, 0.2, "Sine", "Out", { Size = UDim2.new(1, 0, 0, 40) })
+							callback(Option.Text)
+							DropdownText.Text = Option.Text
+							library.flags[flag] = Option.Text
+						end)
+					end,
+					
+					RemoveOption = function(self, option)
+						local option = DropdownModule:FindFirstChild("Option_" .. option)
+						if option then
+							option:Destroy()
+						end
+					end,
+					
+					SetOptions = function(self, options)
+						if not options or typeof(options) ~= "table" then return end
+						for _, v in next, DropdownModule:GetChildren() do
+							if v.Name:match("Option_") then
+								v:Destroy()
+							end
+						end
+						for _, v in next, options do
+							self:AddOption(v)
+						end
+					end,
+					
+					ToggleDropVis = function()
+						open = not open
+						DropdownOpen.Text = (open and "-" or "+")
+						Tween(DropdownModule, 0.2, "Sine", "Out", {
+							Size = UDim2.new(1, 0, 0, (open and DropdownModuleL.AbsoluteContentSize.Y + 4 or 40))
+						})
+					end
+				}
+				
+				DropdownOpen.MouseButton1Click:Connect(function()
+					funcs:ToggleDropVis()
+				end)
+				
+				DropdownModuleL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+					if open then
+						Tween(DropdownModule, 0.2, "Sine", "Out", { Size = UDim2.new(1, 0, 0, DropdownModuleL.AbsoluteContentSize.Y + 4) })
+					end
+				end)
+				
+				funcs:SetOptions(options)
+				return funcs
+			end
+			
+			function section.Dropdown(section, text, flag, options, callback)
+				local callback = callback or function() end
+				local options = options or {}
+				assert(text, "No text provided")
+				assert(flag, "No flag provided")
+				library.flags[flag] = nil
+				table.insert(tabInfo.searchableComponents, text)
+				table.insert(sectionInfo.components, text)
+				
+				local DropdownModule = Instance.new("Frame")
+				DropdownModule.Name = "DropdownModule"
+				DropdownModule.Parent = Objs
+				DropdownModule.BackgroundTransparency = 1
+				DropdownModule.ClipsDescendants = true
+				DropdownModule.Size = UDim2.new(1, 0, 0, 40)
+				
+				local DropdownTop = Instance.new("TextButton")
+				DropdownTop.Name = "DropdownTop"
+				DropdownTop.Parent = DropdownModule
+				DropdownTop.BackgroundColor3 = Colors.Secondary
+				DropdownTop.BackgroundTransparency = 0.2
+				DropdownTop.Size = UDim2.new(1, 0, 0, 40)
+				DropdownTop.AutoButtonColor = false
+				DropdownTop.Font = Enum.Font.GothamSemibold
+				DropdownTop.Text = ""
+				DropdownTop.TextXAlignment = Enum.TextXAlignment.Left
+				DropdownTop.RichText = false
+				
+				CreateEnhancedGlassEffect(DropdownTop)
+				
+				local DropdownTopC = Instance.new("UICorner")
+				DropdownTopC.CornerRadius = UDim.new(0, 6)
+				DropdownTopC.Parent = DropdownTop
+				
+				local DropdownText = Instance.new("TextBox")
+				DropdownText.Name = "DropdownText"
+				DropdownText.Parent = DropdownTop
+				DropdownText.BackgroundTransparency = 1
+				DropdownText.Position = UDim2.new(0, 40, 0, 0)
+				DropdownText.Size = UDim2.new(1, -70, 1, 0)
+				DropdownText.Font = Enum.Font.GothamSemibold
+				DropdownText.PlaceholderText = text
+				DropdownText.Text = ""
+				DropdownText.TextColor3 = Colors.Text
+				DropdownText.TextSize = 15
+				DropdownText.TextXAlignment = Enum.TextXAlignment.Left
+				DropdownText.ClearTextOnFocus = false
+				DropdownText.RichText = false
+				
+				local DropdownOpen = Instance.new("TextButton")
+				DropdownOpen.Name = "DropdownOpen"
+				DropdownOpen.Parent = DropdownTop
+				DropdownOpen.AnchorPoint = Vector2.new(0, 0.5)
+				DropdownOpen.BackgroundTransparency = 1
+				DropdownOpen.Position = UDim2.new(1, -30, 0.5, 0)
+				DropdownOpen.Size = UDim2.new(0, 20, 0, 20)
+				DropdownOpen.Font = Enum.Font.GothamBold
+				DropdownOpen.Text = "+"
+				DropdownOpen.TextColor3 = Colors.Text
+				DropdownOpen.TextSize = 20
+				
+				local DropdownModuleL = Instance.new("UIListLayout")
+				DropdownModuleL.Name = "DropdownModuleL"
+				DropdownModuleL.Parent = DropdownModule
+				DropdownModuleL.SortOrder = Enum.SortOrder.LayoutOrder
+				DropdownModuleL.Padding = UDim.new(0, 4)
+				
+				local open = false
+				local funcs = {
+					AddOption = function(self, option)
+						table.insert(sectionInfo.components, option)
+						local Option = Instance.new("TextButton")
+						Option.Name = "Option_" .. option
+						Option.Parent = DropdownModule
+						Option.BackgroundColor3 = Colors.Secondary
+						Option.BackgroundTransparency = 0.2
+						Option.Size = UDim2.new(1, 0, 0, 32)
+						Option.AutoButtonColor = false
+						Option.Font = Enum.Font.Gotham
+						Option.Text = option
+						Option.TextColor3 = Colors.Text
+						Option.TextSize = 14
+						Option.RichText = false
+						
+						CreateEnhancedGlassEffect(Option)
 						
 						local OptionC = Instance.new("UICorner")
 						OptionC.CornerRadius = UDim.new(0, 6)
@@ -1715,9 +1844,6 @@ function library.new(library, name, theme)
 				table.insert(tabInfo.searchableComponents, text)
 				table.insert(sectionInfo.components, text)
 				
-				local colorPresets = colorPresetsData.presets or {}
-				local recentColors = colorPresetsData.recent or {}
-				
 				local ColorModule = Instance.new("Frame")
 				ColorModule.Name = "ColorPickerModule"
 				ColorModule.Parent = Objs
@@ -1729,7 +1855,7 @@ function library.new(library, name, theme)
 				ColorBack.Name = "ColorBack"
 				ColorBack.Parent = ColorModule
 				ColorBack.BackgroundColor3 = Colors.Secondary
-				ColorBack.BackgroundTransparency = 0.3
+				ColorBack.BackgroundTransparency = 0.2
 				ColorBack.Size = UDim2.new(1, 0, 1, 0)
 				ColorBack.AutoButtonColor = false
 				ColorBack.Font = Enum.Font.GothamSemibold
@@ -1739,7 +1865,7 @@ function library.new(library, name, theme)
 				ColorBack.TextXAlignment = Enum.TextXAlignment.Left
 				ColorBack.RichText = false
 				
-				CreateGlassEffect(ColorBack)
+				CreateEnhancedGlassEffect(ColorBack)
 				
 				local ColorBackC = Instance.new("UICorner")
 				ColorBackC.CornerRadius = UDim.new(0, 6)
@@ -1763,11 +1889,11 @@ function library.new(library, name, theme)
 				ColorPickerFrame.Name = "ColorPickerFrame"
 				ColorPickerFrame.Parent = ColorModule
 				ColorPickerFrame.BackgroundColor3 = Colors.Secondary
-				ColorPickerFrame.BackgroundTransparency = 0.2
-				ColorPickerFrame.Size = UDim2.new(1, 0, 0, 280)
+				ColorPickerFrame.BackgroundTransparency = 0.1 -- 更半透明
+				ColorPickerFrame.Size = UDim2.new(1, 0, 0, 180)
 				ColorPickerFrame.Position = UDim2.new(0, 0, 0, 40)
 				ColorPickerFrame.Visible = false
-				ColorPickerFrame.ZIndex = 10
+				ColorPickerFrame.ZIndex = 5
 				
 				local ColorPickerFrameC = Instance.new("UICorner")
 				ColorPickerFrameC.CornerRadius = UDim.new(0, 8)
@@ -1780,8 +1906,8 @@ function library.new(library, name, theme)
 				HueWheel.Position = UDim2.new(0, 10, 0, 10)
 				HueWheel.Size = UDim2.new(0, 120, 0, 120)
 				HueWheel.Image = "rbxassetid://6020299385"
-				HueWheel.ImageTransparency = 0.2
-				HueWheel.ZIndex = 11
+				HueWheel.ImageTransparency = 0.1 -- 更清晰
+				HueWheel.ZIndex = 6
 				
 				local HueWheelC = Instance.new("UICorner")
 				HueWheelC.CornerRadius = UDim.new(0, 60)
@@ -1794,7 +1920,7 @@ function library.new(library, name, theme)
 				HuePicker.BackgroundTransparency = 0.3
 				HuePicker.BorderSizePixel = 0
 				HuePicker.Size = UDim2.new(0, 8, 0, 8)
-				HuePicker.ZIndex = 12
+				HuePicker.ZIndex = 7
 				local HuePickerC = Instance.new("UICorner")
 				HuePickerC.CornerRadius = UDim.new(0, 4)
 				HuePickerC.Parent = HuePicker
@@ -1805,7 +1931,7 @@ function library.new(library, name, theme)
 				BrightnessBar.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 				BrightnessBar.Position = UDim2.new(0, 140, 0, 10)
 				BrightnessBar.Size = UDim2.new(0, 20, 0, 120)
-				BrightnessBar.ZIndex = 11
+				BrightnessBar.ZIndex = 6
 				local BrightnessBarC = Instance.new("UICorner")
 				BrightnessBarC.CornerRadius = UDim.new(0, 4)
 				BrightnessBarC.Parent = BrightnessBar
@@ -1826,7 +1952,7 @@ function library.new(library, name, theme)
 				BrightnessPicker.BorderSizePixel = 0
 				BrightnessPicker.Size = UDim2.new(1, 0, 0, 4)
 				BrightnessPicker.Position = UDim2.new(0, 0, 0, 0)
-				BrightnessPicker.ZIndex = 12
+				BrightnessPicker.ZIndex = 7
 				local BrightnessPickerC = Instance.new("UICorner")
 				BrightnessPickerC.CornerRadius = UDim.new(0, 2)
 				BrightnessPickerC.Parent = BrightnessPicker
@@ -1837,7 +1963,7 @@ function library.new(library, name, theme)
 				RGBInputs.BackgroundTransparency = 1
 				RGBInputs.Position = UDim2.new(0, 10, 0, 140)
 				RGBInputs.Size = UDim2.new(1, -20, 0, 30)
-				RGBInputs.ZIndex = 11
+				RGBInputs.ZIndex = 6
 				
 				local RGBLayout = Instance.new("UIListLayout")
 				RGBLayout.Parent = RGBInputs
@@ -1908,138 +2034,6 @@ function library.new(library, name, theme)
 				local HexBoxC = Instance.new("UICorner")
 				HexBoxC.CornerRadius = UDim.new(0, 4)
 				HexBoxC.Parent = HexBox
-				
-				local PresetsLabel = Instance.new("TextLabel")
-				PresetsLabel.Name = "PresetsLabel"
-				PresetsLabel.Parent = ColorPickerFrame
-				PresetsLabel.BackgroundTransparency = 1
-				PresetsLabel.Position = UDim2.new(0, 10, 0, 180)
-				PresetsLabel.Size = UDim2.new(1, -20, 0, 20)
-				PresetsLabel.Font = Enum.Font.GothamSemibold
-				PresetsLabel.Text = "预设颜色:"
-				PresetsLabel.TextColor3 = Colors.Text
-				PresetsLabel.TextSize = 14
-				PresetsLabel.TextXAlignment = Enum.TextXAlignment.Left
-				PresetsLabel.ZIndex = 11
-				
-				local PresetsGrid = Instance.new("Frame")
-				PresetsGrid.Name = "PresetsGrid"
-				PresetsGrid.Parent = ColorPickerFrame
-				PresetsGrid.BackgroundTransparency = 1
-				PresetsGrid.Position = UDim2.new(0, 10, 0, 205)
-				PresetsGrid.Size = UDim2.new(1, -20, 0, 30)
-				PresetsGrid.ZIndex = 11
-				
-				local PresetsLayout = Instance.new("UIGridLayout")
-				PresetsLayout.Parent = PresetsGrid
-				PresetsLayout.CellPadding = UDim2.new(0, 5, 0, 5)
-				PresetsLayout.CellSize = UDim2.new(0, 30, 0, 30)
-				PresetsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-				PresetsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-				
-				local RecentLabel = Instance.new("TextLabel")
-				RecentLabel.Name = "RecentLabel"
-				RecentLabel.Parent = ColorPickerFrame
-				RecentLabel.BackgroundTransparency = 1
-				RecentLabel.Position = UDim2.new(0, 10, 0, 245)
-				RecentLabel.Size = UDim2.new(1, -20, 0, 20)
-				RecentLabel.Font = Enum.Font.GothamSemibold
-				RecentLabel.Text = "最近使用:"
-				RecentLabel.TextColor3 = Colors.Text
-				RecentLabel.TextSize = 14
-				RecentLabel.TextXAlignment = Enum.TextXAlignment.Left
-				RecentLabel.ZIndex = 11
-				
-				local RecentGrid = Instance.new("Frame")
-				RecentGrid.Name = "RecentGrid"
-				RecentGrid.Parent = ColorPickerFrame
-				RecentGrid.BackgroundTransparency = 1
-				RecentGrid.Position = UDim2.new(0, 10, 0, 265)
-				RecentGrid.Size = UDim2.new(1, -20, 0, 0)
-				RecentGrid.ZIndex = 11
-				
-				local RecentLayout = Instance.new("UIGridLayout")
-				RecentLayout.Parent = RecentGrid
-				RecentLayout.CellPadding = UDim2.new(0, 5, 0, 5)
-				RecentLayout.CellSize = UDim2.new(0, 30, 0, 30)
-				RecentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-				RecentLayout.SortOrder = Enum.SortOrder.LayoutOrder
-				
-				local SaveColorBtn = Instance.new("TextButton")
-				SaveColorBtn.Name = "SaveColorBtn"
-				SaveColorBtn.Parent = ColorPickerFrame
-				SaveColorBtn.BackgroundColor3 = Colors.Accent
-				SaveColorBtn.BackgroundTransparency = 0.3
-				SaveColorBtn.Position = UDim2.new(0.5, 0, 0, 240)
-				SaveColorBtn.Size = UDim2.new(0, 80, 0, 25)
-				SaveColorBtn.Font = Enum.Font.GothamSemibold
-				SaveColorBtn.Text = "保存颜色"
-				SaveColorBtn.TextColor3 = Colors.White
-				SaveColorBtn.TextSize = 12
-				SaveColorBtn.ZIndex = 11
-				
-				local SaveColorBtnC = Instance.new("UICorner")
-				SaveColorBtnC.CornerRadius = UDim.new(0, 6)
-				SaveColorBtnC.Parent = SaveColorBtn
-				
-				local function createColorButton(parent, color, index)
-					local colorBtn = Instance.new("TextButton")
-					colorBtn.Name = "Color_" .. index
-					colorBtn.Parent = parent
-					colorBtn.BackgroundColor3 = color
-					colorBtn.BorderSizePixel = 0
-					colorBtn.Text = ""
-					colorBtn.ZIndex = 12
-					
-					local colorBtnC = Instance.new("UICorner")
-					colorBtnC.CornerRadius = UDim.new(0, 6)
-					colorBtnC.Parent = colorBtn
-					
-					local colorStroke = Instance.new("UIStroke")
-					colorStroke.Color = Colors.Text
-					colorStroke.Thickness = 1
-					colorStroke.Transparency = 0.7
-					colorStroke.Parent = colorBtn
-					
-					colorBtn.MouseButton1Click:Connect(function()
-						funcs:SetValue(color)
-					end)
-					
-					return colorBtn
-				end
-				
-				local function updatePresets()
-					for _, child in pairs(PresetsGrid:GetChildren()) do
-						if child:IsA("TextButton") then
-							child:Destroy()
-						end
-					end
-					
-					for i, color in ipairs(colorPresets) do
-						createColorButton(PresetsGrid, color, i)
-					end
-				end
-				
-				local function updateRecent()
-					for _, child in pairs(RecentGrid:GetChildren()) do
-						if child:IsA("TextButton") then
-							child:Destroy()
-						end
-					end
-					
-					for i = 1, math.min(#recentColors, 8) do
-						createColorButton(RecentGrid, recentColors[i], i)
-					end
-					
-					if #recentColors > 0 then
-						RecentGrid.Size = UDim2.new(1, -20, 0, math.ceil(math.min(#recentColors, 8) / 5) * 35)
-					else
-						RecentGrid.Size = UDim2.new(1, -20, 0, 0)
-					end
-				end
-				
-				updatePresets()
-				updateRecent()
 				
 				local currentHSV = {0, 1, 1}
 				local currentColor = Color3.fromRGB(255, 255, 255)
@@ -2174,46 +2168,10 @@ function library.new(library, name, theme)
 				ColorBack.MouseButton1Click:Connect(function()
 					ColorPickerFrame.Visible = not ColorPickerFrame.Visible
 					if ColorPickerFrame.Visible then
-						ColorModule.Size = UDim2.new(1, 0, 0, 320)
+						ColorModule.Size = UDim2.new(1, 0, 0, 220)
 					else
 						ColorModule.Size = UDim2.new(1, 0, 0, 40)
 					end
-				end)
-				
-				SaveColorBtn.MouseButton1Click:Connect(function()
-					table.insert(colorPresets, currentColor)
-					if #colorPresets > 16 then
-						table.remove(colorPresets, 1)
-					end
-					
-					local found = false
-					for i, color in ipairs(recentColors) do
-						if math.floor(color.R * 255) == math.floor(currentColor.R * 255) and
-						   math.floor(color.G * 255) == math.floor(currentColor.G * 255) and
-						   math.floor(color.B * 255) == math.floor(currentColor.B * 255) then
-							found = true
-							break
-						end
-					end
-					
-					if not found then
-						table.insert(recentColors, 1, currentColor)
-						if #recentColors > 8 then
-							table.remove(recentColors, 9)
-						end
-					end
-					
-					saveColorPresets({
-						presets = colorPresets,
-						recent = recentColors
-					})
-					
-					updatePresets()
-					updateRecent()
-					
-					spawn(function()
-						Ripple(SaveColorBtn)
-					end)
 				end)
 				
 				updateColorFromHSV()
@@ -2254,150 +2212,6 @@ function library.new(library, name, theme)
 				return funcs
 			end
 			
-			function section.Dropdown(section, text, flag, options, callback)
-				local callback = callback or function() end
-				local options = options or {}
-				assert(text, "No text provided")
-				assert(flag, "No flag provided")
-				library.flags[flag] = nil
-				table.insert(tabInfo.searchableComponents, text)
-				table.insert(sectionInfo.components, text)
-				
-				local DropdownModule = Instance.new("Frame")
-				DropdownModule.Name = "DropdownModule"
-				DropdownModule.Parent = Objs
-				DropdownModule.BackgroundTransparency = 1
-				DropdownModule.ClipsDescendants = true
-				DropdownModule.Size = UDim2.new(1, 0, 0, 40)
-				
-				local DropdownTop = Instance.new("TextButton")
-				DropdownTop.Name = "DropdownTop"
-				DropdownTop.Parent = DropdownModule
-				DropdownTop.BackgroundColor3 = Colors.Secondary
-				DropdownTop.BackgroundTransparency = 0.3
-				DropdownTop.Size = UDim2.new(1, 0, 0, 40)
-				DropdownTop.AutoButtonColor = false
-				DropdownTop.Font = Enum.Font.GothamSemibold
-				DropdownTop.Text = ""
-				DropdownTop.TextXAlignment = Enum.TextXAlignment.Left
-				DropdownTop.RichText = false
-				
-				CreateGlassEffect(DropdownTop)
-				
-				local DropdownTopC = Instance.new("UICorner")
-				DropdownTopC.CornerRadius = UDim.new(0, 6)
-				DropdownTopC.Parent = DropdownTop
-				
-				local DropdownText = Instance.new("TextBox")
-				DropdownText.Name = "DropdownText"
-				DropdownText.Parent = DropdownTop
-				DropdownText.BackgroundTransparency = 1
-				DropdownText.Position = UDim2.new(0, 40, 0, 0)
-				DropdownText.Size = UDim2.new(1, -70, 1, 0)
-				DropdownText.Font = Enum.Font.GothamSemibold
-				DropdownText.PlaceholderText = text
-				DropdownText.Text = ""
-				DropdownText.TextColor3 = Colors.Text
-				DropdownText.TextSize = 15
-				DropdownText.TextXAlignment = Enum.TextXAlignment.Left
-				DropdownText.ClearTextOnFocus = false
-				DropdownText.RichText = false
-				
-				local DropdownOpen = Instance.new("TextButton")
-				DropdownOpen.Name = "DropdownOpen"
-				DropdownOpen.Parent = DropdownTop
-				DropdownOpen.AnchorPoint = Vector2.new(0, 0.5)
-				DropdownOpen.BackgroundTransparency = 1
-				DropdownOpen.Position = UDim2.new(1, -30, 0.5, 0)
-				DropdownOpen.Size = UDim2.new(0, 20, 0, 20)
-				DropdownOpen.Font = Enum.Font.GothamBold
-				DropdownOpen.Text = "+"
-				DropdownOpen.TextColor3 = Colors.Text
-				DropdownOpen.TextSize = 20
-				
-				local DropdownModuleL = Instance.new("UIListLayout")
-				DropdownModuleL.Name = "DropdownModuleL"
-				DropdownModuleL.Parent = DropdownModule
-				DropdownModuleL.SortOrder = Enum.SortOrder.LayoutOrder
-				DropdownModuleL.Padding = UDim.new(0, 4)
-				
-				local open = false
-				local funcs = {
-					AddOption = function(self, option)
-						table.insert(sectionInfo.components, option)
-						local Option = Instance.new("TextButton")
-						Option.Name = "Option_" .. option
-						Option.Parent = DropdownModule
-						Option.BackgroundColor3 = Colors.Secondary
-						Option.BackgroundTransparency = 0.3
-						Option.Size = UDim2.new(1, 0, 0, 32)
-						Option.AutoButtonColor = false
-						Option.Font = Enum.Font.Gotham
-						Option.Text = option
-						Option.TextColor3 = Colors.Text
-						Option.TextSize = 14
-						Option.RichText = false
-						
-						CreateGlassEffect(Option)
-						
-						local OptionC = Instance.new("UICorner")
-						OptionC.CornerRadius = UDim.new(0, 6)
-						OptionC.Parent = Option
-						
-						sectionInfo.originalTexts[Option] = option
-						
-						Option.MouseButton1Click:Connect(function()
-							open = false
-							DropdownOpen.Text = "+"
-							Tween(DropdownModule, 0.2, "Sine", "Out", { Size = UDim2.new(1, 0, 0, 40) })
-							callback(Option.Text)
-							DropdownText.Text = Option.Text
-							library.flags[flag] = Option.Text
-						end)
-					end,
-					
-					RemoveOption = function(self, option)
-						local option = DropdownModule:FindFirstChild("Option_" .. option)
-						if option then
-							option:Destroy()
-						end
-					end,
-					
-					SetOptions = function(self, options)
-						if not options or typeof(options) ~= "table" then return end
-						for _, v in next, DropdownModule:GetChildren() do
-							if v.Name:match("Option_") then
-								v:Destroy()
-							end
-						end
-						for _, v in next, options do
-							self:AddOption(v)
-						end
-					end,
-					
-					ToggleDropVis = function()
-						open = not open
-						DropdownOpen.Text = (open and "-" or "+")
-						Tween(DropdownModule, 0.2, "Sine", "Out", {
-							Size = UDim2.new(1, 0, 0, (open and DropdownModuleL.AbsoluteContentSize.Y + 4 or 40))
-						})
-					end
-				}
-				
-				DropdownOpen.MouseButton1Click:Connect(function()
-					funcs:ToggleDropVis()
-				end)
-				
-				DropdownModuleL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-					if open then
-						Tween(DropdownModule, 0.2, "Sine", "Out", { Size = UDim2.new(1, 0, 0, DropdownModuleL.AbsoluteContentSize.Y + 4) })
-					end
-				end)
-				
-				funcs:SetOptions(options)
-				return funcs
-			end
-			
 			section.TextBox = section.Textbox
 			section.textbox = section.Textbox
 			section.KeyBind = section.Keybind
@@ -2411,64 +2225,67 @@ function library.new(library, name, theme)
 		return tab
 	end
 	
-	local SCALE = 0.008
-	local LookView = Vector3.new(0, 0.5, -10)
+	-- 增强的3D控制
+	local SCALE = 0.008 -- 更平滑的缩放
+	local LookView = Vector3.new(0, 0.3, -8) -- 更好的初始视角
 	local dragOffset3D = Vector2.new(0, 0)
 	local dragging3D = false
 	local dragStart3D = Vector2.new(0, 0)
-	local isMouseOverUI = false
-	local lastMousePosition = Vector2.new(0, 0)
-
+	
+	-- 自动旋转动画
+	local autoRotate = true
+	local rotationSpeed = 0.1
+	
 	TitleBar.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
 			dragging3D = true
 			dragStart3D = Vector2.new(input.Position.X, input.Position.Y)
 			dragOffset3D = Vector2.new(LookView.X, LookView.Y)
+			autoRotate = false -- 手动控制时停止自动旋转
 		end
 	end)
 
 	TitleBar.InputEnded:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
 			dragging3D = false
+			task.delay(2, function() -- 2秒后恢复自动旋转
+				autoRotate = true
+			end)
 		end
 	end)
 
 	services.UserInputService.InputChanged:Connect(function(input)
 		if dragging3D and input.UserInputType == Enum.UserInputType.MouseMovement then
-			local delta = Vector2.new(input.Position.X - dragStart3D.X, input.Position.Y - dragStart3D.Y) * 0.008
+			local delta = Vector2.new(input.Position.X - dragStart3D.X, input.Position.Y - dragStart3D.Y) * 0.01
 			LookView = Vector3.new(dragOffset3D.X + delta.X, dragOffset3D.Y - delta.Y, LookView.Z)
 		end
 	end)
 
-	Main.InputEnter:Connect(function()
-		isMouseOverUI = true
-	end)
-	
-	Main.InputLeave:Connect(function()
-		isMouseOverUI = false
-	end)
-
+	-- 3D渲染循环
 	game:GetService("RunService").RenderStepped:Connect(function(dt)
 		if not canvasPart or not canvasPart.Parent then return end
 		
-		if isMouseOverUI then
-			lastMousePosition = Vector2.new(mouse.X, mouse.Y)
+		-- 自动旋转
+		if autoRotate then
+			LookView = Vector3.new(LookView.X + rotationSpeed * dt, LookView.Y, LookView.Z)
 		end
 		
-		local offsetX = (lastMousePosition.X - mouse.ViewSizeX/2) * SCALE * 0.5
-		local offsetY = (lastMousePosition.Y - mouse.ViewSizeY/2) * SCALE * 0.5
+		-- 鼠标视差效果
+		local offsetX = (mouse.X - mouse.ViewSizeX/2) * SCALE
+		local offsetY = (mouse.Y - mouse.ViewSizeY/2) * SCALE
 		
-		local time = tick() * 0.5
-		local floatY = math.sin(time) * 0.1
-		local floatRotate = math.sin(time * 0.7) * 2
-		
+		-- 平滑的3D变换
 		local goalCFrame = camera.CFrame 
-			* CFrame.new(LookView.X, LookView.Y + floatY, LookView.Z)
+			* CFrame.new(LookView.X, LookView.Y, LookView.Z)
 			* CFrame.Angles(0, math.rad(offsetX), 0)
-			* CFrame.Angles(math.rad(offsetY + floatRotate * 0.1), math.rad(floatRotate), 0)
+			* CFrame.Angles(math.rad(offsetY), 0, 0)
 		
-		services.TweenService:Create(canvasPart, TweenInfo.new(dt * 3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-			CFrame = goalCFrame
+		-- 添加微妙的缩放效果
+		local distance = LookView.Z + math.sin(tick() * 0.5) * 0.1
+		
+		services.TweenService:Create(canvasPart, TweenInfo.new(dt * 3, Enum.EasingStyle.Linear), {
+			CFrame = goalCFrame,
+			Size = Vector3.new(12, 7, 0.15)
 		}):Play()
 	end)
 	
@@ -2484,6 +2301,15 @@ function library.new(library, name, theme)
 		if canvasPart then
 			canvasPart:Destroy()
 		end
+	end
+	
+	-- 添加3D效果切换
+	function window:Toggle3DEffects(enabled)
+		autoRotate = enabled
+	end
+	
+	function window:SetRotationSpeed(speed)
+		rotationSpeed = speed
 	end
 
 	return window
