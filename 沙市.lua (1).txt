@@ -8,16 +8,6 @@ library.currentTab = nil
 library.flags = {}
 
 local configPath = "BS脚本/UI配置.txt"
-
--- 新增：3D效果相关变量
-local is3DMode = false
-local renderConnection = nil
-local part3D = nil
-local surfaceGui3D = nil
-local clonedMain = nil
-local originalMainParent = nil
-local originalMainPosition = nil
-
 local function saveConfig(config)
 	local success, encoded = pcall(function()
 		return game:GetService("HttpService"):JSONEncode(config)
@@ -46,8 +36,7 @@ local function loadConfig()
 	return {
 		autoFitScreen = false,
 		windowSize = {650, 400},
-		windowPosition = {0.5, 0.5},
-		is3DMode = false  -- 新增：保存3D模式状态
+		windowPosition = {0.5, 0.5}
 	}
 end
 
@@ -59,9 +48,9 @@ local services = setmetatable({}, {
 local mouse = services.Players.LocalPlayer:GetMouse()
 
 local HighlightColors = {
-	Primary = Color3.fromRGB(74, 144, 226),  
+	Primary = Color3.fromRGB(74, 144, 226),
 	Secondary = Color3.fromRGB(91, 155, 213),
-	Accent = Color3.fromRGB(31, 97, 141),    
+	Accent = Color3.fromRGB(31, 97, 141),
 }
 
 local Colors = {
@@ -125,7 +114,6 @@ end
 
 local function autoFitUIScreen(mainFrame)
 	local viewportSize = services.Workspace.CurrentCamera.ViewportSize
-	
 	if viewportSize.X < 800 then
 		mainFrame.Size = UDim2.new(0, viewportSize.X - 100, 0, viewportSize.Y - 100)
 	elseif viewportSize.Y < 600 then
@@ -133,7 +121,6 @@ local function autoFitUIScreen(mainFrame)
 	else
 		mainFrame.Size = UDim2.new(0, 650, 0, 400)
 	end
-	
 	mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 end
 
@@ -177,126 +164,10 @@ local function highlightText(originalText, searchTerm, color)
 	if searchTerm == "" or not originalText:lower():find(searchTerm:lower(), 1, true) then
 		return originalText
 	end
-	
 	local pattern = searchTerm:gsub("([%^%$%(%)%%%.%[%]%*%+%-%?])", "%%%1")
 	local highlighted = originalText:gsub("(" .. pattern .. ")", 
 		'<font color="#4A90E2"><b>%1</b></font>')
 	return highlighted
-end
-
--- 新增：3D效果核心函数
-local function init3DMode(mainFrame)
-	if part3D then return end
-	
-	-- 创建3D部件
-	part3D = Instance.new("Part")
-	part3D.Name = "UI_Part3D"
-	part3D.Anchored = true
-	part3D.CanCollide = false
-	part3D.Locked = true
-	part3D.Transparency = 1
-	part3D.Size = Vector3.new(22.517, 11.59, 2)
-	part3D.Parent = workspace
-	
-	-- 创建SurfaceGui
-	surfaceGui3D = Instance.new("SurfaceGui")
-	surfaceGui3D.Name = "UI3D_SurfaceGui"
-	surfaceGui3D.ResetOnSpawn = false
-	surfaceGui3D.Face = Enum.NormalId.Back
-	surfaceGui3D.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-	surfaceGui3D.ClipsDescendants = true
-	surfaceGui3D.Adornee = part3D
-	surfaceGui3D.Name = "UI3D"
-	surfaceGui3D.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-	surfaceGui3D.AlwaysOnTop = true
-	surfaceGui3D.Parent = part3D
-	
-	-- 克隆主框架到3D界面
-	clonedMain = mainFrame:Clone()
-	clonedMain.Parent = surfaceGui3D
-	clonedMain.Position = UDim2.new(0, 0, 0, 0)
-	clonedMain.Size = UDim2.new(1, 0, 1, 0)
-	
-	-- 启动3D更新循环
-	local LookView = Vector3.new(0, 0.1, -11)
-	local SCALE = 0.01
-	
-	renderConnection = services.RunService.RenderStepped:Connect(function(deltaTime)
-		if not part3D or not part3D.Parent then return end
-		
-		local mousePos = Vector2.new(mouse.X, mouse.Y)
-		local sizeX = mouse.ViewSizeX
-		local sizeY = mouse.ViewSizeY
-		
-		local mouseX = (mousePos.X - sizeX/2) * SCALE
-		local mouseY = (mousePos.Y - sizeY/2) * SCALE
-		
-		local cameraCFrame = workspace.CurrentCamera.CFrame
-		
-		services.TweenService:Create(part3D, TweenInfo.new(deltaTime), {
-			CFrame = cameraCFrame * CFrame.new(LookView.X, LookView.Y, LookView.Z) * 
-				CFrame.Angles(0, math.rad(mouseX), 0) * CFrame.Angles(math.rad(mouseY), 0, 0)
-		}):Play()
-	end)
-end
-
-local function stop3DMode()
-	is3DMode = false
-	
-	if renderConnection then
-		renderConnection:Disconnect()
-		renderConnection = nil
-	end
-	
-	if part3D then
-		part3D:Destroy()
-		part3D = nil
-	end
-	
-	if surfaceGui3D then
-		surfaceGui3D:Destroy()
-		surfaceGui3D = nil
-	end
-	
-	clonedMain = nil
-end
-
--- 新增：切换3D模式
-local function toggle3DMode(mainFrame, toggleButton)
-	is3DMode = not is3DMode
-	
-	if is3DMode then
-		-- 保存原始状态
-		originalMainParent = mainFrame.Parent
-		originalMainPosition = mainFrame.Position
-		
-		-- 初始化3D模式
-		init3DMode(mainFrame)
-		
-		-- 隐藏2D界面
-		mainFrame.Visible = false
-		
-		-- 更新按钮样式
-		Tween(toggleButton, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
-		Tween(toggleButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
-	else
-		-- 停止3D模式
-		stop3DMode()
-		
-		-- 恢复2D界面
-		mainFrame.Parent = originalMainParent
-		mainFrame.Position = originalMainPosition
-		mainFrame.Visible = true
-		
-		-- 恢复按钮样式
-		Tween(toggleButton, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
-		Tween(toggleButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
-	end
-	
-	-- 保存配置
-	local config = loadConfig()
-	config.is3DMode = is3DMode
-	saveConfig(config)
 end
 
 function library.new(library, name, theme)
@@ -306,15 +177,35 @@ function library.new(library, name, theme)
 		end
 	end
 	
-	local dogent = Instance.new("ScreenGui")
+	local holderPart = Instance.new("Part")
+	holderPart.Name = "LU_" .. game:GetService("HttpService"):GenerateGUID()
+	holderPart.Anchored = true
+	holderPart.CanCollide = false
+	holderPart.Locked = true
+	holderPart.Transparency = 1
+	holderPart.Size = Vector3.new(20, 10, 0.5)
+	holderPart.Parent = workspace
+	
+	if type(ProtectInstance) == "function" then
+		ProtectInstance(holderPart)
+	end
+	
+	local dogent = Instance.new("SurfaceGui")
 	dogent.Name = "REN"
-	dogent.Parent = services.CoreGui
+	dogent.ResetOnSpawn = false
+	dogent.Face = Enum.NormalId.Back
+	dogent.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	dogent.PixelsPerStud = 50
+	dogent.AlwaysOnTop = true
+	dogent.ClipsDescendants = true
+	dogent.Adornee = holderPart
+	dogent.Parent = holderPart
 	
 	if syn and syn.protect_gui then
 		syn.protect_gui(dogent)
 	end
 	
-	local Main = Instance.new("Frame")
+	local Main = Instance.new("ImageLabel")
 	Main.Name = "Main"
 	Main.Parent = dogent
 	Main.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -323,7 +214,6 @@ function library.new(library, name, theme)
 	Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 	Main.ZIndex = 1
 	Main.Active = true
-	Main.Draggable = true
 	
 	CreateGlassEffect(Main)
 	
@@ -357,27 +247,6 @@ function library.new(library, name, theme)
 	DropShadow.ImageTransparency = 0.7
 	DropShadow.ScaleType = Enum.ScaleType.Slice
 	DropShadow.SliceCenter = Rect.new(49, 49, 450, 450)
-	
-	-- 新增：3D效果切换按钮（放在其他按钮左边）
-	local Mode3DBtn = Instance.new("ImageButton")
-	Mode3DBtn.Name = "Mode3DBtn"
-	Mode3DBtn.Parent = Main
-	Mode3DBtn.BackgroundColor3 = Colors.Secondary
-	Mode3DBtn.BackgroundTransparency = Colors.Transparent
-	Mode3DBtn.Position = UDim2.new(1, -125, 0, 10)  -- 在AutoFitBtn左边30px
-	Mode3DBtn.Size = UDim2.new(0, 25, 0, 25)
-	Mode3DBtn.Image = "rbxassetid://3926305904"
-	Mode3DBtn.ImageRectOffset = Vector2.new(44, 44)  -- 使用立方体图标
-	Mode3DBtn.ImageRectSize = Vector2.new(36, 36)
-	Mode3DBtn.ImageColor3 = Colors.Text
-	Mode3DBtn.ZIndex = 10
-	Mode3DBtn.ToolTip = "切换3D/2D模式"
-	
-	local Mode3DBtnC = Instance.new("UICorner")
-	Mode3DBtnC.CornerRadius = UDim.new(0, 6)
-	Mode3DBtnC.Parent = Mode3DBtn
-	
-	CreateGlassEffect(Mode3DBtn)
 	
 	local AutoFitBtn = Instance.new("ImageButton")
 	AutoFitBtn.Name = "AutoFitBtn"
@@ -435,32 +304,11 @@ function library.new(library, name, theme)
 	CloseBtnC.Parent = CloseBtn
 	
 	CloseBtn.MouseButton1Click:Connect(function()
-		dogent:Destroy()
-	end)
-	
-	-- 新增：3D按钮点击事件
-	Mode3DBtn.MouseButton1Click:Connect(function()
-		Ripple(Mode3DBtn)
-		toggle3DMode(Main, Mode3DBtn)
+		holderPart:Destroy()
 	end)
 	
 	local currentConfig = loadConfig()
 	local autoFitEnabled = currentConfig.autoFitScreen
-	is3DMode = currentConfig.is3DMode or false
-	
-	-- 恢复3D模式
-	if is3DMode then
-		Mode3DBtn.ImageColor3 = Colors.Accent
-		Mode3DBtn.BackgroundTransparency = 0
-		-- 延迟执行确保UI加载完成
-		task.spawn(function()
-			task.wait(0.5)
-			toggle3DMode(Main, Mode3DBtn)
-		end)
-	else
-		Mode3DBtn.ImageColor3 = Colors.Text
-		Mode3DBtn.BackgroundTransparency = 0.3
-	end
 	
 	if autoFitEnabled then
 		autoFitUIScreen(Main)
@@ -472,9 +320,7 @@ function library.new(library, name, theme)
 		spawn(function()
 			Ripple(AutoFitBtn)
 		end)
-		
 		autoFitEnabled = not autoFitEnabled
-		
 		if autoFitEnabled then
 			autoFitUIScreen(Main)
 			Tween(AutoFitBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
@@ -485,7 +331,6 @@ function library.new(library, name, theme)
 			Tween(AutoFitBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
 			Tween(AutoFitBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
 		end
-		
 		currentConfig.autoFitScreen = autoFitEnabled
 		saveConfig(currentConfig)
 	end)
@@ -494,9 +339,7 @@ function library.new(library, name, theme)
 		spawn(function()
 			Ripple(ScaleBtn)
 		end)
-		
 		scaleEnabled = not scaleEnabled
-		
 		if scaleEnabled then
 			Main.Size = UDim2.new(0, 325, 0, 200)
 			Main.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -657,7 +500,6 @@ function library.new(library, name, theme)
 	Open.TextColor3 = Colors.Text
 	Open.TextSize = 14
 	Open.Active = true
-	Open.Draggable = true
 	Open.ZIndex = 100
 	
 	local OpenC = Instance.new("UICorner")
@@ -673,28 +515,15 @@ function library.new(library, name, theme)
 	OpenStroke.Parent = Open
 	
 	Open.MouseButton1Click:Connect(function()
-		if is3DMode then
-			-- 3D模式下切换可见性
-			if part3D then
-				part3D.Visible = not part3D.Visible
-			end
-		else
-			Main.Visible = not Main.Visible
-			if Main.Visible then
-				Tween(Main, 0.2, "Sine", "Out", { Size = UDim2.new(0, 650, 0, 400) })
-			end
+		holderPart.Visible = not holderPart.Visible
+		if holderPart.Visible then
+			Tween(Main, 0.2, "Sine", "Out", { Size = UDim2.new(0, 650, 0, 400) })
 		end
 	end)
 	
 	services.UserInputService.InputEnded:Connect(function(input)
 		if input.KeyCode == Enum.KeyCode.LeftControl then
-			if is3DMode then
-				if part3D then
-					part3D.Visible = not part3D.Visible
-				end
-			else
-				Main.Visible = not Main.Visible
-			end
+			holderPart.Visible = not holderPart.Visible
 		end
 	end)
 	
@@ -703,25 +532,21 @@ function library.new(library, name, theme)
 	
 	SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
 		local searchText = SearchBox.Text:lower()
-		
 		if searchText == "" then
 			for _, tabInfo in ipairs(allTabs) do
 				tabInfo.button.Visible = true
-				tabInfo.button.TabText.Text = tabInfo.name 
+				tabInfo.button.TabText.Text = tabInfo.name
 				tabInfo.button.TabText.RichText = false
-				
 				for _, sectionInfo in ipairs(tabInfo.sections or {}) do
 					sectionInfo.section.Visible = true
 					sectionInfo.objsFrame.Visible = true
 					sectionInfo.section.SectionText.Text = sectionInfo.name
 					sectionInfo.section.SectionText.RichText = false
-					
 					local ObjsL = sectionInfo.objsFrame:FindFirstChild("ObjsL")
 					if ObjsL then
 						local originalHeight = 42 + ObjsL.AbsoluteContentSize.Y + 10
 						sectionInfo.section.Size = UDim2.new(0.975, 0, 0, originalHeight)
 					end
-					
 					for _, component in ipairs(sectionInfo.objsFrame:GetChildren()) do
 						if component:IsA("Frame") then
 							local textElement = component:FindFirstChildWhichIsA("TextButton") or 
@@ -737,7 +562,6 @@ function library.new(library, name, theme)
 					end
 				end
 			end
-			
 			if library.currentTab and not library.currentTab.button.Visible then
 				for _, tabInfo in ipairs(allTabs) do
 					if tabInfo.button.Visible then
@@ -749,23 +573,18 @@ function library.new(library, name, theme)
 					end
 				end
 			end
-			
 			return
 		end
-		
 		for _, tabInfo in ipairs(allTabs) do
 			local tabVisible = false
-			
 			local tabTextHighlighted = highlightText(tabInfo.name, searchText)
 			tabInfo.button.TabText.Text = tabTextHighlighted
 			tabInfo.button.TabText.RichText = true
 			if tabTextHighlighted ~= tabInfo.name then
 				tabVisible = true
 			end
-			
 			for _, sectionInfo in ipairs(tabInfo.sections or {}) do
 				local sectionVisible = false
-				
 				local sectionTextHighlighted = highlightText(sectionInfo.name, searchText)
 				sectionInfo.section.SectionText.Text = sectionTextHighlighted
 				sectionInfo.section.SectionText.RichText = true
@@ -773,7 +592,6 @@ function library.new(library, name, theme)
 					sectionVisible = true
 					tabVisible = true
 				end
-				
 				sectionInfo.originalTexts = sectionInfo.originalTexts or {}
 				for _, component in ipairs(sectionInfo.objsFrame:GetChildren()) do
 					if component:IsA("Frame") then
@@ -783,10 +601,8 @@ function library.new(library, name, theme)
 							if not sectionInfo.originalTexts[component] then
 								sectionInfo.originalTexts[component] = textElement.Text
 							end
-							
 							local originalText = sectionInfo.originalTexts[component]
 							local highlightedText = highlightText(originalText, searchText)
-							
 							if highlightedText ~= originalText then
 								textElement.Text = highlightedText
 								textElement.RichText = true
@@ -804,13 +620,10 @@ function library.new(library, name, theme)
 						end
 					end
 				end
-				
 				sectionInfo.section.Visible = sectionVisible
 				sectionInfo.objsFrame.Visible = sectionVisible
 			end
-			
 			tabInfo.button.Visible = tabVisible
-			
 			if not tabInfo.button.Visible and library.currentTab and library.currentTab.button == tabInfo.button then
 				for _, otherTabInfo in ipairs(allTabs) do
 					if otherTabInfo.button.Visible then
@@ -841,18 +654,14 @@ function library.new(library, name, theme)
 			return
 		end
 		if old.button == new.button then return end
-		
 		switchingTabs = true
 		library.currentTab = new
-		
 		Tween(old.button, 0.15, "Sine", "Out", { BackgroundTransparency = 0.3 })
 		Tween(new.button, 0.15, "Sine", "Out", { BackgroundTransparency = 0 })
 		Tween(old.button.TabText, 0.15, "Sine", "Out", { TextTransparency = 0.3 })
 		Tween(new.button.TabText, 0.15, "Sine", "Out", { TextTransparency = 0 })
-		
 		old.frame.Visible = false
 		new.frame.Visible = true
-		
 		task.wait(0.15)
 		switchingTabs = false
 	end
@@ -1047,7 +856,7 @@ function library.new(library, name, theme)
 				section = Section,
 				objsFrame = Objs,
 				components = {},
-				originalTexts = {} 
+				originalTexts = {}
 			}
 			table.insert(tabInfo.sections, sectionInfo)
 			
@@ -1075,7 +884,7 @@ function library.new(library, name, theme)
 				Btn.TextColor3 = Colors.Text
 				Btn.TextSize = 15
 				Btn.TextXAlignment = Enum.TextXAlignment.Left
-				Btn.RichText = false 
+				Btn.RichText = false
 				
 				CreateGlassEffect(Btn)
 				
@@ -1112,7 +921,7 @@ function library.new(library, name, theme)
 				TextLabel.TextColor3 = Colors.Text
 				TextLabel.TextSize = 14
 				TextLabel.TextWrapped = true
-				TextLabel.RichText = false 
+				TextLabel.RichText = false
 				
 				CreateGlassEffect(TextLabel)
 				
@@ -1152,7 +961,7 @@ function library.new(library, name, theme)
 				ToggleBtn.TextColor3 = Colors.Text
 				ToggleBtn.TextSize = 15
 				ToggleBtn.TextXAlignment = Enum.TextXAlignment.Left
-				ToggleBtn.RichText = false 
+				ToggleBtn.RichText = false
 				
 				CreateGlassEffect(ToggleBtn)
 				
@@ -1266,7 +1075,7 @@ function library.new(library, name, theme)
 				KeybindBtn.TextColor3 = Colors.Text
 				KeybindBtn.TextSize = 15
 				KeybindBtn.TextXAlignment = Enum.TextXAlignment.Left
-				KeybindBtn.RichText = false 
+				KeybindBtn.RichText = false
 				
 				CreateGlassEffect(KeybindBtn)
 				
@@ -1365,7 +1174,7 @@ function library.new(library, name, theme)
 				TextboxBack.TextColor3 = Colors.Text
 				TextboxBack.TextSize = 15
 				TextboxBack.TextXAlignment = Enum.TextXAlignment.Left
-				TextboxBack.RichText = false 
+				TextboxBack.RichText = false
 				
 				CreateGlassEffect(TextboxBack)
 				
@@ -1421,7 +1230,7 @@ function library.new(library, name, theme)
 				
 				local funcs = {
 					GetValue = function() return TB.Text end,
-					SetValue = function(self, value) 
+					SetValue = function(self, value)
 						TB.Text = tostring(value)
 						library.flags[flag] = value
 						callback(value)
@@ -1785,14 +1594,37 @@ function library.new(library, name, theme)
 		return tab
 	end
 	
+	local runService = game:GetService("RunService")
+	local tweenService = game:GetService("TweenService")
+	local camera = workspace.CurrentCamera
+	local lookOffset = Vector3.new(0, 1, -12)
+	local scale = 0.02
+	
+	runService.RenderStepped:Connect(function(deltaTime)
+		if not holderPart or not holderPart.Parent then return end
+		local mousePos = mouse.Position
+		local viewportSize = camera.ViewportSize
+		local mouseX = (mousePos.X - viewportSize.X/2) * scale
+		local mouseY = (mousePos.Y - viewportSize.Y/2) * scale
+		local partCFrame = camera.CFrame * CFrame.new(lookOffset) * CFrame.Angles(0, math.rad(mouseX), 0) * CFrame.Angles(math.rad(mouseY), 0, 0)
+		tweenService:Create(holderPart, TweenInfo.new(deltaTime * 2), { CFrame = partCFrame }):Play()
+		local distance = (camera.CFrame.Position - partCFrame.Position).Magnitude
+		holderPart.Size = Vector3.new(20 + distance*0.5, 10 + distance*0.25, 0.5)
+	end)
+	
+	spawn(function()
+		local originalSize = holderPart.Size
+		while holderPart.Parent do
+			for i = 1, 100 do
+				if not holderPart.Parent then break end
+				holderPart.Size = originalSize * (1 + math.sin(i/10)*0.02)
+				task.wait(0.03)
+			end
+			task.wait(1)
+		end
+	end)
+	
 	return window
 end
-
--- 新增：窗口关闭时清理3D资源
-game:GetService("CoreGui").ChildRemoved:Connect(function(child)
-	if child.Name == "REN" and is3DMode then
-		stop3DMode()
-	end
-end)
 
 return library
