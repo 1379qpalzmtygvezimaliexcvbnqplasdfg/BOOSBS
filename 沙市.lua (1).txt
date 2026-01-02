@@ -9,6 +9,15 @@ library.flags = {}
 
 local configPath = "BS脚本/UI配置.txt"
 
+-- 新增：3D效果相关变量
+local is3DMode = false
+local renderConnection = nil
+local part3D = nil
+local surfaceGui3D = nil
+local clonedMain = nil
+local originalMainParent = nil
+local originalMainPosition = nil
+
 local function saveConfig(config)
 	local success, encoded = pcall(function()
 		return game:GetService("HttpService"):JSONEncode(config)
@@ -37,7 +46,8 @@ local function loadConfig()
 	return {
 		autoFitScreen = false,
 		windowSize = {650, 400},
-		windowPosition = {0.5, 0.5}
+		windowPosition = {0.5, 0.5},
+		is3DMode = false  -- 新增：保存3D模式状态
 	}
 end
 
@@ -174,64 +184,147 @@ local function highlightText(originalText, searchTerm, color)
 	return highlighted
 end
 
+-- 新增：3D效果核心函数
+local function init3DMode(mainFrame)
+	if part3D then return end
+	
+	-- 创建3D部件
+	part3D = Instance.new("Part")
+	part3D.Name = "UI_Part3D"
+	part3D.Anchored = true
+	part3D.CanCollide = false
+	part3D.Locked = true
+	part3D.Transparency = 1
+	part3D.Size = Vector3.new(22.517, 11.59, 2)
+	part3D.Parent = workspace
+	
+	-- 创建SurfaceGui
+	surfaceGui3D = Instance.new("SurfaceGui")
+	surfaceGui3D.Name = "UI3D_SurfaceGui"
+	surfaceGui3D.ResetOnSpawn = false
+	surfaceGui3D.Face = Enum.NormalId.Back
+	surfaceGui3D.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	surfaceGui3D.ClipsDescendants = true
+	surfaceGui3D.Adornee = part3D
+	surfaceGui3D.Name = "UI3D"
+	surfaceGui3D.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+	surfaceGui3D.AlwaysOnTop = true
+	surfaceGui3D.Parent = part3D
+	
+	-- 克隆主框架到3D界面
+	clonedMain = mainFrame:Clone()
+	clonedMain.Parent = surfaceGui3D
+	clonedMain.Position = UDim2.new(0, 0, 0, 0)
+	clonedMain.Size = UDim2.new(1, 0, 1, 0)
+	
+	-- 启动3D更新循环
+	local LookView = Vector3.new(0, 0.1, -11)
+	local SCALE = 0.01
+	
+	renderConnection = services.RunService.RenderStepped:Connect(function(deltaTime)
+		if not part3D or not part3D.Parent then return end
+		
+		local mousePos = Vector2.new(mouse.X, mouse.Y)
+		local sizeX = mouse.ViewSizeX
+		local sizeY = mouse.ViewSizeY
+		
+		local mouseX = (mousePos.X - sizeX/2) * SCALE
+		local mouseY = (mousePos.Y - sizeY/2) * SCALE
+		
+		local cameraCFrame = workspace.CurrentCamera.CFrame
+		
+		services.TweenService:Create(part3D, TweenInfo.new(deltaTime), {
+			CFrame = cameraCFrame * CFrame.new(LookView.X, LookView.Y, LookView.Z) * 
+				CFrame.Angles(0, math.rad(mouseX), 0) * CFrame.Angles(math.rad(mouseY), 0, 0)
+		}):Play()
+	end)
+end
+
+local function stop3DMode()
+	is3DMode = false
+	
+	if renderConnection then
+		renderConnection:Disconnect()
+		renderConnection = nil
+	end
+	
+	if part3D then
+		part3D:Destroy()
+		part3D = nil
+	end
+	
+	if surfaceGui3D then
+		surfaceGui3D:Destroy()
+		surfaceGui3D = nil
+	end
+	
+	clonedMain = nil
+end
+
+-- 新增：切换3D模式
+local function toggle3DMode(mainFrame, toggleButton)
+	is3DMode = not is3DMode
+	
+	if is3DMode then
+		-- 保存原始状态
+		originalMainParent = mainFrame.Parent
+		originalMainPosition = mainFrame.Position
+		
+		-- 初始化3D模式
+		init3DMode(mainFrame)
+		
+		-- 隐藏2D界面
+		mainFrame.Visible = false
+		
+		-- 更新按钮样式
+		Tween(toggleButton, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
+		Tween(toggleButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
+	else
+		-- 停止3D模式
+		stop3DMode()
+		
+		-- 恢复2D界面
+		mainFrame.Parent = originalMainParent
+		mainFrame.Position = originalMainPosition
+		mainFrame.Visible = true
+		
+		-- 恢复按钮样式
+		Tween(toggleButton, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
+		Tween(toggleButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
+	end
+	
+	-- 保存配置
+	local config = loadConfig()
+	config.is3DMode = is3DMode
+	saveConfig(config)
+end
+
 function library.new(library, name, theme)
 	for _, v in next, services.CoreGui:GetChildren() do
 		if v.Name == "REN" then
 			v:Destroy()
 		end
 	end
-
-	local camera = services.Workspace.CurrentCamera
-	local player = services.Players.LocalPlayer
-	local mouse = player:GetMouse()
-
-	local canvasPart = Instance.new("Part")
-	canvasPart.Name = "UI_Canvas_" .. game:GetService("HttpService"):GenerateGUID(false)
-	canvasPart.Anchored = true
-	canvasPart.CanCollide = false
-	canvasPart.Transparency = 1
-	canvasPart.Size = Vector3.new(15, 8.5, 0.2)
-	canvasPart.Parent = workspace
-
-	if syn and syn.protect_gui then
-		syn.protect_gui(canvasPart)
-	end
-
-	local dogent = Instance.new("SurfaceGui")
-	dogent.Name = "REN_3D"
-	dogent.Adornee = canvasPart
-	dogent.Face = Enum.NormalId.Back
-	dogent.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-	dogent.PixelsPerStud = 50
-	dogent.AlwaysOnTop = true
-	dogent.Parent = canvasPart
-
+	
+	local dogent = Instance.new("ScreenGui")
+	dogent.Name = "REN"
+	dogent.Parent = services.CoreGui
+	
 	if syn and syn.protect_gui then
 		syn.protect_gui(dogent)
 	end
-
-	local BgImage = Instance.new("ImageLabel")
-	BgImage.Name = "BackgroundImage"
-	BgImage.Parent = dogent
-	BgImage.Size = UDim2.new(1, 0, 1, 0)
-	BgImage.BackgroundTransparency = 1
-	BgImage.Image = "rbxassetid://102621341311637"
-	BgImage.ScaleType = Enum.ScaleType.Slice
-	BgImage.SliceCenter = Rect.new(256, 256, 768, 768)
-	BgImage.ZIndex = 0
-	BgImage.ImageTransparency = 0.3
-
+	
 	local Main = Instance.new("Frame")
 	Main.Name = "Main"
 	Main.Parent = dogent
 	Main.AnchorPoint = Vector2.new(0.5, 0.5)
 	Main.BackgroundColor3 = Colors.Primary
-	Main.BackgroundTransparency = 0.15
 	Main.Size = UDim2.new(0, 650, 0, 400)
 	Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 	Main.ZIndex = 1
 	Main.Active = true
-
+	Main.Draggable = true
+	
 	CreateGlassEffect(Main)
 	
 	local MainC = Instance.new("UICorner")
@@ -264,6 +357,27 @@ function library.new(library, name, theme)
 	DropShadow.ImageTransparency = 0.7
 	DropShadow.ScaleType = Enum.ScaleType.Slice
 	DropShadow.SliceCenter = Rect.new(49, 49, 450, 450)
+	
+	-- 新增：3D效果切换按钮（放在其他按钮左边）
+	local Mode3DBtn = Instance.new("ImageButton")
+	Mode3DBtn.Name = "Mode3DBtn"
+	Mode3DBtn.Parent = Main
+	Mode3DBtn.BackgroundColor3 = Colors.Secondary
+	Mode3DBtn.BackgroundTransparency = Colors.Transparent
+	Mode3DBtn.Position = UDim2.new(1, -125, 0, 10)  -- 在AutoFitBtn左边30px
+	Mode3DBtn.Size = UDim2.new(0, 25, 0, 25)
+	Mode3DBtn.Image = "rbxassetid://3926305904"
+	Mode3DBtn.ImageRectOffset = Vector2.new(44, 44)  -- 使用立方体图标
+	Mode3DBtn.ImageRectSize = Vector2.new(36, 36)
+	Mode3DBtn.ImageColor3 = Colors.Text
+	Mode3DBtn.ZIndex = 10
+	Mode3DBtn.ToolTip = "切换3D/2D模式"
+	
+	local Mode3DBtnC = Instance.new("UICorner")
+	Mode3DBtnC.CornerRadius = UDim.new(0, 6)
+	Mode3DBtnC.Parent = Mode3DBtn
+	
+	CreateGlassEffect(Mode3DBtn)
 	
 	local AutoFitBtn = Instance.new("ImageButton")
 	AutoFitBtn.Name = "AutoFitBtn"
@@ -324,8 +438,29 @@ function library.new(library, name, theme)
 		dogent:Destroy()
 	end)
 	
+	-- 新增：3D按钮点击事件
+	Mode3DBtn.MouseButton1Click:Connect(function()
+		Ripple(Mode3DBtn)
+		toggle3DMode(Main, Mode3DBtn)
+	end)
+	
 	local currentConfig = loadConfig()
 	local autoFitEnabled = currentConfig.autoFitScreen
+	is3DMode = currentConfig.is3DMode or false
+	
+	-- 恢复3D模式
+	if is3DMode then
+		Mode3DBtn.ImageColor3 = Colors.Accent
+		Mode3DBtn.BackgroundTransparency = 0
+		-- 延迟执行确保UI加载完成
+		task.spawn(function()
+			task.wait(0.5)
+			toggle3DMode(Main, Mode3DBtn)
+		end)
+	else
+		Mode3DBtn.ImageColor3 = Colors.Text
+		Mode3DBtn.BackgroundTransparency = 0.3
+	end
 	
 	if autoFitEnabled then
 		autoFitUIScreen(Main)
@@ -522,6 +657,7 @@ function library.new(library, name, theme)
 	Open.TextColor3 = Colors.Text
 	Open.TextSize = 14
 	Open.Active = true
+	Open.Draggable = true
 	Open.ZIndex = 100
 	
 	local OpenC = Instance.new("UICorner")
@@ -537,15 +673,28 @@ function library.new(library, name, theme)
 	OpenStroke.Parent = Open
 	
 	Open.MouseButton1Click:Connect(function()
-		Main.Visible = not Main.Visible
-		if Main.Visible then
-			Tween(Main, 0.2, "Sine", "Out", { Size = UDim2.new(0, 650, 0, 400) })
+		if is3DMode then
+			-- 3D模式下切换可见性
+			if part3D then
+				part3D.Visible = not part3D.Visible
+			end
+		else
+			Main.Visible = not Main.Visible
+			if Main.Visible then
+				Tween(Main, 0.2, "Sine", "Out", { Size = UDim2.new(0, 650, 0, 400) })
+			end
 		end
 	end)
 	
 	services.UserInputService.InputEnded:Connect(function(input)
 		if input.KeyCode == Enum.KeyCode.LeftControl then
-			Main.Visible = not Main.Visible
+			if is3DMode then
+				if part3D then
+					part3D.Visible = not part3D.Visible
+				end
+			else
+				Main.Visible = not Main.Visible
+			end
 		end
 	end)
 	
@@ -1636,40 +1785,14 @@ function library.new(library, name, theme)
 		return tab
 	end
 	
-	local SCALE = 0.01
-	local LookView = Vector3.new(0, 0.5, -10)
-
-	game:GetService("RunService").RenderStepped:Connect(function(dt)
-		if not canvasPart or not canvasPart.Parent then return end
-		
-		local offsetX = (mouse.X - mouse.ViewSizeX/2) * SCALE
-		local offsetY = (mouse.Y - mouse.ViewSizeY/2) * SCALE
-		
-		local goalCFrame = camera.CFrame 
-			* CFrame.new(LookView.X, LookView.Y, LookView.Z)
-			* CFrame.Angles(0, math.rad(offsetX), 0)
-			* CFrame.Angles(math.rad(offsetY), 0, 0)
-		
-		services.TweenService:Create(canvasPart, TweenInfo.new(dt * 2), {
-			CFrame = goalCFrame
-		}):Play()
-	end)
-	
-	function window:Set3DOffset(offsetVector)
-		LookView = offsetVector
-	end
-
-	function window:GetCanvasPart()
-		return canvasPart
-	end
-
-	function window:Destroy()
-		if canvasPart then
-			canvasPart:Destroy()
-		end
-	end
-
 	return window
 end
+
+-- 新增：窗口关闭时清理3D资源
+game:GetService("CoreGui").ChildRemoved:Connect(function(child)
+	if child.Name == "REN" and is3DMode then
+		stop3DMode()
+	end
+end)
 
 return library
