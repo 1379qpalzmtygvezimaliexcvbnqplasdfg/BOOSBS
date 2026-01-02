@@ -127,6 +127,53 @@ local function autoFitUIScreen(mainFrame)
 	mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 end
 
+local function HSVtoRGB(h, s, v)
+	local c = v * s
+	local x = c * (1 - math.abs((h / 60) % 2 - 1))
+	local m = v - c
+	
+	local rgb = {0, 0, 0}
+	if h < 60 then
+		rgb = {c, x, 0}
+	elseif h < 120 then
+		rgb = {x, c, 0}
+	elseif h < 180 then
+		rgb = {0, c, x}
+	elseif h < 240 then
+		rgb = {0, x, c}
+	elseif h < 300 then
+		rgb = {x, 0, c}
+	else
+		rgb = {c, 0, x}
+	end
+	
+	return Color3.fromRGB((rgb[1] + m) * 255, (rgb[2] + m) * 255, (rgb[3] + m) * 255)
+end
+
+local function RGBtoHSV(color)
+	local r, g, b = color.R, color.G, color.B
+	local max = math.max(r, g, b)
+	local min = math.min(r, g, b)
+	local delta = max - min
+	
+	local h = 0
+	if delta ~= 0 then
+		if max == r then
+			h = ((g - b) / delta) % 6
+		elseif max == g then
+			h = (b - r) / delta + 2
+		else
+			h = (r - g) / delta + 4
+		end
+		h = h * 60
+	end
+	
+	local s = max == 0 and 0 or delta / max
+	local v = max
+	
+	return h, s, v
+end
+
 function drag(frame, hold)
 	if not hold then
 		hold = frame
@@ -343,10 +390,6 @@ function library.new(library, name, theme)
 	local CloseBtnC = Instance.new("UICorner")
 	CloseBtnC.CornerRadius = UDim.new(0, 6)
 	CloseBtnC.Parent = CloseBtn
-	
-	CloseBtn.MouseButton1Click:Connect(function()
-		dogent:Destroy()
-	end)
 	
 	Open.MouseButton1Click:Connect(function()
 		Main.Visible = not Main.Visible
@@ -1621,10 +1664,388 @@ function library.new(library, name, theme)
 				return funcs
 			end
 			
+			function section.ColorPicker(section, text, flag, default, callback)
+				local callback = callback or function() end
+				assert(text, "No text provided")
+				assert(flag, "No flag provided")
+				library.flags[flag] = default or Color3.fromRGB(255, 255, 255)
+				table.insert(tabInfo.searchableComponents, text)
+				table.insert(sectionInfo.components, text)
+				
+				local ColorModule = Instance.new("Frame")
+				ColorModule.Name = "ColorPickerModule"
+				ColorModule.Parent = Objs
+				ColorModule.BackgroundTransparency = 1
+				ColorModule.ClipsDescendants = true
+				ColorModule.Size = UDim2.new(1, 0, 0, 40)
+				
+				local ColorBack = Instance.new("TextButton")
+				ColorBack.Name = "ColorBack"
+				ColorBack.Parent = ColorModule
+				ColorBack.BackgroundColor3 = Colors.Secondary
+				ColorBack.BackgroundTransparency = 0.3
+				ColorBack.Size = UDim2.new(1, 0, 1, 0)
+				ColorBack.AutoButtonColor = false
+				ColorBack.Font = Enum.Font.GothamSemibold
+				ColorBack.Text = "   " .. text
+				ColorBack.TextColor3 = Colors.Text
+				ColorBack.TextSize = 15
+				ColorBack.TextXAlignment = Enum.TextXAlignment.Left
+				ColorBack.RichText = false
+				
+				CreateGlassEffect(ColorBack)
+				
+				local ColorBackC = Instance.new("UICorner")
+				ColorBackC.CornerRadius = UDim.new(0, 6)
+				ColorBackC.Parent = ColorBack
+				
+				sectionInfo.originalTexts[ColorModule] = text
+				
+				local ColorPreview = Instance.new("Frame")
+				ColorPreview.Name = "ColorPreview"
+				ColorPreview.Parent = ColorBack
+				ColorPreview.BackgroundColor3 = library.flags[flag]
+				ColorPreview.Position = UDim2.new(1, -40, 0.5, -12)
+				ColorPreview.Size = UDim2.new(0, 24, 0, 24)
+				ColorPreview.BorderSizePixel = 0
+				
+				local ColorPreviewC = Instance.new("UICorner")
+				ColorPreviewC.CornerRadius = UDim.new(0, 6)
+				ColorPreviewC.Parent = ColorPreview
+				
+				local ColorPickerFrame = Instance.new("Frame")
+				ColorPickerFrame.Name = "ColorPickerFrame"
+				ColorPickerFrame.Parent = ColorModule
+				ColorPickerFrame.BackgroundColor3 = Colors.Secondary
+				ColorPickerFrame.BackgroundTransparency = 0.2
+				ColorPickerFrame.Size = UDim2.new(1, 0, 0, 180)
+				ColorPickerFrame.Position = UDim2.new(0, 0, 0, 40)
+				ColorPickerFrame.Visible = false
+				ColorPickerFrame.ZIndex = 5
+				
+				local ColorPickerFrameC = Instance.new("UICorner")
+				ColorPickerFrameC.CornerRadius = UDim.new(0, 8)
+				ColorPickerFrameC.Parent = ColorPickerFrame
+				
+				local HueWheel = Instance.new("ImageButton")
+				HueWheel.Name = "HueWheel"
+				HueWheel.Parent = ColorPickerFrame
+				HueWheel.BackgroundTransparency = 1
+				HueWheel.Position = UDim2.new(0, 10, 0, 10)
+				HueWheel.Size = UDim2.new(0, 120, 0, 120)
+				HueWheel.Image = "rbxassetid://6020299385"
+				HueWheel.ImageTransparency = 0.2
+				HueWheel.ZIndex = 6
+				
+				local HueWheelC = Instance.new("UICorner")
+				HueWheelC.CornerRadius = UDim.new(0, 60)
+				HueWheelC.Parent = HueWheel
+				
+				local HuePicker = Instance.new("Frame")
+				HuePicker.Name = "HuePicker"
+				HuePicker.Parent = HueWheel
+				HuePicker.BackgroundColor3 = Colors.White
+				HuePicker.BackgroundTransparency = 0.3
+				HuePicker.BorderSizePixel = 0
+				HuePicker.Size = UDim2.new(0, 8, 0, 8)
+				HuePicker.ZIndex = 7
+				local HuePickerC = Instance.new("UICorner")
+				HuePickerC.CornerRadius = UDim.new(0, 4)
+				HuePickerC.Parent = HuePicker
+				
+				local BrightnessBar = Instance.new("ImageButton")
+				BrightnessBar.Name = "BrightnessBar"
+				BrightnessBar.Parent = ColorPickerFrame
+				BrightnessBar.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+				BrightnessBar.Position = UDim2.new(0, 140, 0, 10)
+				BrightnessBar.Size = UDim2.new(0, 20, 0, 120)
+				BrightnessBar.ZIndex = 6
+				local BrightnessBarC = Instance.new("UICorner")
+				BrightnessBarC.CornerRadius = UDim.new(0, 4)
+				BrightnessBarC.Parent = BrightnessBar
+				
+				local BrightnessGradient = Instance.new("UIGradient")
+				BrightnessGradient.Color = ColorSequence.new({
+					ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+					ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
+				})
+				BrightnessGradient.Rotation = 90
+				BrightnessGradient.Parent = BrightnessBar
+				
+				local BrightnessPicker = Instance.new("Frame")
+				BrightnessPicker.Name = "BrightnessPicker"
+				BrightnessPicker.Parent = BrightnessBar
+				BrightnessPicker.BackgroundColor3 = Colors.White
+				BrightnessPicker.BackgroundTransparency = 0.5
+				BrightnessPicker.BorderSizePixel = 0
+				BrightnessPicker.Size = UDim2.new(1, 0, 0, 4)
+				BrightnessPicker.Position = UDim2.new(0, 0, 0, 0)
+				BrightnessPicker.ZIndex = 7
+				local BrightnessPickerC = Instance.new("UICorner")
+				BrightnessPickerC.CornerRadius = UDim.new(0, 2)
+				BrightnessPickerC.Parent = BrightnessPicker
+				
+				local RGBInputs = Instance.new("Frame")
+				RGBInputs.Name = "RGBInputs"
+				RGBInputs.Parent = ColorPickerFrame
+				RGBInputs.BackgroundTransparency = 1
+				RGBInputs.Position = UDim2.new(0, 10, 0, 140)
+				RGBInputs.Size = UDim2.new(1, -20, 0, 30)
+				RGBInputs.ZIndex = 6
+				
+				local RGBLayout = Instance.new("UIListLayout")
+				RGBLayout.Parent = RGBInputs
+				RGBLayout.FillDirection = Enum.FillDirection.Horizontal
+				RGBLayout.Padding = UDim.new(0, 5)
+				RGBLayout.SortOrder = Enum.SortOrder.LayoutOrder
+				
+				local RBox = Instance.new("TextBox")
+				RBox.Name = "RBox"
+				RBox.Parent = RGBInputs
+				RBox.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+				RBox.BackgroundTransparency = 0.3
+				RBox.Size = UDim2.new(0, 50, 1, 0)
+				RBox.Font = Enum.Font.Gotham
+				RBox.PlaceholderText = "R"
+				RBox.Text = "255"
+				RBox.TextColor3 = Colors.Text
+				RBox.TextSize = 14
+				RBox.ClearTextOnFocus = false
+				local RBoxC = Instance.new("UICorner")
+				RBoxC.CornerRadius = UDim.new(0, 4)
+				RBoxC.Parent = RBox
+				
+				local GBox = Instance.new("TextBox")
+				GBox.Name = "GBox"
+				GBox.Parent = RGBInputs
+				GBox.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+				GBox.BackgroundTransparency = 0.3
+				GBox.Size = UDim2.new(0, 50, 1, 0)
+				GBox.Font = Enum.Font.Gotham
+				GBox.PlaceholderText = "G"
+				GBox.Text = "255"
+				GBox.TextColor3 = Colors.Text
+				GBox.TextSize = 14
+				GBox.ClearTextOnFocus = false
+				local GBoxC = Instance.new("UICorner")
+				GBoxC.CornerRadius = UDim.new(0, 4)
+				GBoxC.Parent = GBox
+				
+				local BBox = Instance.new("TextBox")
+				BBox.Name = "BBox"
+				BBox.Parent = RGBInputs
+				BBox.BackgroundColor3 = Color3.fromRGB(50, 50, 200)
+				BBox.BackgroundTransparency = 0.3
+				BBox.Size = UDim2.new(0, 50, 1, 0)
+				BBox.Font = Enum.Font.Gotham
+				BBox.PlaceholderText = "B"
+				BBox.Text = "255"
+				BBox.TextColor3 = Colors.Text
+				BBox.TextSize = 14
+				BBox.ClearTextOnFocus = false
+				local BBoxC = Instance.new("UICorner")
+				BBoxC.CornerRadius = UDim.new(0, 4)
+				BBoxC.Parent = BBox
+				
+				local HexBox = Instance.new("TextBox")
+				HexBox.Name = "HexBox"
+				HexBox.Parent = RGBInputs
+				HexBox.BackgroundColor3 = Colors.Primary
+				HexBox.BackgroundTransparency = 0.5
+				HexBox.Size = UDim2.new(0, 80, 1, 0)
+				HexBox.Font = Enum.Font.Gotham
+				HexBox.PlaceholderText = "Hex"
+				HexBox.Text = "#FFFFFF"
+				HexBox.TextColor3 = Colors.Text
+				HexBox.TextSize = 14
+				HexBox.ClearTextOnFocus = false
+				local HexBoxC = Instance.new("UICorner")
+				HexBoxC.CornerRadius = UDim.new(0, 4)
+				HexBoxC.Parent = HexBox
+				
+				local currentHSV = {0, 1, 1}
+				local currentColor = Color3.fromRGB(255, 255, 255)
+				local isSetting = false
+				
+				local function updateColorFromHSV()
+					if isSetting then return end
+					currentColor = HSVtoRGB(currentHSV[1], currentHSV[2], currentHSV[3])
+					ColorPreview.BackgroundColor3 = currentColor
+					library.flags[flag] = currentColor
+					
+					local r, g, b = math.floor(currentColor.R * 255), math.floor(currentColor.G * 255), math.floor(currentColor.B * 255)
+					RBox.Text = tostring(r)
+					GBox.Text = tostring(g)
+					BBox.Text = tostring(b)
+					HexBox.Text = string.format("#%02X%02X%02X", r, g, b)
+					
+					callback(currentColor)
+				end
+				
+				local function updateColorFromRGB()
+					if isSetting then return end
+					local r = math.clamp(tonumber(RBox.Text) or 0, 0, 255)
+					local g = math.clamp(tonumber(GBox.Text) or 0, 0, 255)
+					local b = math.clamp(tonumber(BBox.Text) or 0, 0, 255)
+					
+					currentColor = Color3.fromRGB(r, g, b)
+					local h, s, v = RGBtoHSV(currentColor)
+					currentHSV = {h, s, v}
+					
+					ColorPreview.BackgroundColor3 = currentColor
+					library.flags[flag] = currentColor
+					
+					HuePicker.Position = UDim2.new(0.5 + math.cos(math.rad(h)) * s * 0.4, -4, 0.5 - math.sin(math.rad(h)) * s * 0.4, -4)
+					BrightnessPicker.Position = UDim2.new(0, 0, 0, math.clamp((1 - v) * 120, 0, 120))
+					
+					local baseColor = HSVtoRGB(h, 1, 1)
+					BrightnessBar.BackgroundColor3 = baseColor
+					
+					HexBox.Text = string.format("#%02X%02X%02X", r, g, b)
+					callback(currentColor)
+				end
+				
+				local function updateColorFromHex()
+					if isSetting then return end
+					local hex = HexBox.Text:gsub("#", "")
+					if #hex ~= 6 then return end
+					
+					local r = tonumber(hex:sub(1, 2), 16) or 0
+					local g = tonumber(hex:sub(3, 4), 16) or 0
+					local b = tonumber(hex:sub(5, 6), 16) or 0
+					
+					currentColor = Color3.fromRGB(r, g, b)
+					local h, s, v = RGBtoHSV(currentColor)
+					currentHSV = {h, s, v}
+					
+					ColorPreview.BackgroundColor3 = currentColor
+					library.flags[flag] = currentColor
+					
+					HuePicker.Position = UDim2.new(0.5 + math.cos(math.rad(h)) * s * 0.4, -4, 0.5 - math.sin(math.rad(h)) * s * 0.4, -4)
+					BrightnessPicker.Position = UDim2.new(0, 0, 0, math.clamp((1 - v) * 120, 0, 120))
+					
+					local baseColor = HSVtoRGB(h, 1, 1)
+					BrightnessBar.BackgroundColor3 = baseColor
+					
+					RBox.Text = tostring(r)
+					GBox.Text = tostring(g)
+					BBox.Text = tostring(b)
+					
+					callback(currentColor)
+				end
+				
+				RBox.FocusLost:Connect(updateColorFromRGB)
+				GBox.FocusLost:Connect(updateColorFromRGB)
+				BBox.FocusLost:Connect(updateColorFromRGB)
+				HexBox.FocusLost:Connect(updateColorFromHex)
+				
+				local draggingHue = false
+				local draggingBrightness = false
+				
+				HueWheel.InputBegan:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then
+						draggingHue = true
+					end
+				end)
+				
+				BrightnessBar.InputBegan:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then
+						draggingBrightness = true
+					end
+				end)
+				
+				services.UserInputService.InputEnded:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then
+						draggingHue = false
+						draggingBrightness = false
+					end
+				end)
+				
+				services.UserInputService.InputChanged:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseMovement then
+						if draggingHue then
+							local center = Vector2.new(HueWheel.AbsolutePosition.X + HueWheel.AbsoluteSize.X/2, HueWheel.AbsolutePosition.Y + HueWheel.AbsoluteSize.Y/2)
+							local pos = Vector2.new(input.Position.X, input.Position.Y)
+							local delta = pos - center
+							local angle = math.deg(math.atan2(-delta.Y, delta.X))
+							if angle < 0 then angle = angle + 360 end
+							
+							local distance = math.min(delta.Magnitude / (HueWheel.AbsoluteSize.X/2), 1)
+							currentHSV = {angle, distance, currentHSV[3]}
+							
+							HuePicker.Position = UDim2.new(0.5 + math.cos(math.rad(angle)) * distance * 0.4, -4, 0.5 - math.sin(math.rad(angle)) * distance * 0.4, -4)
+							
+							local baseColor = HSVtoRGB(angle, 1, 1)
+							BrightnessBar.BackgroundColor3 = baseColor
+							
+							updateColorFromHSV()
+						end
+						
+						if draggingBrightness then
+							local pos = input.Position.Y - BrightnessBar.AbsolutePosition.Y
+							local percent = math.clamp(pos / BrightnessBar.AbsoluteSize.Y, 0, 1)
+							
+							currentHSV[3] = 1 - percent
+							BrightnessPicker.Position = UDim2.new(0, 0, 0, percent * 120)
+							
+							updateColorFromHSV()
+						end
+					end
+				end)
+				
+				ColorBack.MouseButton1Click:Connect(function()
+					ColorPickerFrame.Visible = not ColorPickerFrame.Visible
+					if ColorPickerFrame.Visible then
+						ColorModule.Size = UDim2.new(1, 0, 0, 220)
+					else
+						ColorModule.Size = UDim2.new(1, 0, 0, 40)
+					end
+				end)
+				
+				updateColorFromHSV()
+				
+				local funcs = {
+					SetValue = function(self, color)
+						if typeof(color) ~= "Color3" then return end
+						isSetting = true
+						currentColor = color
+						library.flags[flag] = color
+						
+						local h, s, v = RGBtoHSV(color)
+						currentHSV = {h, s, v}
+						
+						ColorPreview.BackgroundColor3 = color
+						
+						HuePicker.Position = UDim2.new(0.5 + math.cos(math.rad(h)) * s * 0.4, -4, 0.5 - math.sin(math.rad(h)) * s * 0.4, -4)
+						BrightnessPicker.Position = UDim2.new(0, 0, 0, math.clamp((1 - v) * 120, 0, 120))
+						
+						local baseColor = HSVtoRGB(h, 1, 1)
+						BrightnessBar.BackgroundColor3 = baseColor
+						
+						local r, g, b = math.floor(color.R * 255), math.floor(color.G * 255), math.floor(color.B * 255)
+						RBox.Text = tostring(r)
+						GBox.Text = tostring(g)
+						BBox.Text = tostring(b)
+						HexBox.Text = string.format("#%02X%02X%02X", r, g, b)
+						
+						isSetting = false
+						callback(color)
+					end,
+					Module = ColorModule,
+				}
+				
+				library.flags[flag] = currentColor
+				callback(currentColor)
+				
+				return funcs
+			end
+			
 			section.TextBox = section.Textbox
 			section.textbox = section.Textbox
 			section.KeyBind = section.Keybind
 			section.keybind = section.Keybind
+			section.Color = section.ColorPicker
+			section.color = section.ColorPicker
 			
 			return section
 		end
