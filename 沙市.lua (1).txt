@@ -315,7 +315,7 @@ function library.new(library, name, theme)
 	MainBG.Size = UDim2.new(1, 0, 1, 0)
 	MainBG.Image = "rbxassetid://102621341311637"
 	MainBG.ZIndex = 0
-	MainBG.ImageTransparency = 0.5
+	MainBG.ImageTransparency = 0.2
 	
 	local MainC = Instance.new("UICorner")
 	MainC.CornerRadius = UDim.new(0, 8)
