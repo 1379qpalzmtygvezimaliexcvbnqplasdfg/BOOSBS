@@ -1,6 +1,3 @@
--- BS UI Library - 修复版
--- 修复了窗口立即消失的问题
-
 repeat
 	task.wait()
 until game:IsLoaded()
@@ -12,40 +9,19 @@ library.flags = {}
 
 local configPath = "BS脚本/UI配置.txt"
 
--- 添加错误日志函数
-local function logError(message)
-	warn("[BS UI错误] " .. tostring(message))
-	-- 可选：创建错误提示
-	local errorUI = Instance.new("ScreenGui")
-	errorUI.Name = "BS_ErrorDisplay"
-	errorUI.Parent = game.CoreGui
-	local errorLabel = Instance.new("TextLabel")
-	errorLabel.Size = UDim2.new(1, 0, 0, 50)
-	errorLabel.Position = UDim2.new(0, 0, 0, 0)
-	errorLabel.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-	errorLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-	errorLabel.Text = "错误: " .. tostring(message) .. " | 检查控制台"
-	errorLabel.Parent = errorUI
-	task.delay(5, function() errorUI:Destroy() end)
-end
-
 local function saveConfig(config)
 	local success, encoded = pcall(function()
 		return game:GetService("HttpService"):JSONEncode(config)
 	end)
 	if success then
-		pcall(function()
-			if isfolder("BS脚本") then
-				if isfile(configPath) then
-					delfile(configPath)
-				end
-			else
-				makefolder("BS脚本")
+		if isfolder("BS脚本") then
+			if isfile(configPath) then
+				delfile(configPath)
 			end
-			writefile(configPath, encoded)
-		end)
-	else
-		logError("配置保存失败: " .. tostring(encoded))
+		else
+			makefolder("BS脚本")
+		end
+		writefile(configPath, encoded)
 	end
 end
 
@@ -102,15 +78,10 @@ local function CreateGlassEffect(instance, transparency)
 end
 
 function Tween(obj, duration, style, direction, data)
-	local success, result = pcall(function()
-		services.TweenService
-			:Create(obj, TweenInfo.new(duration, Enum.EasingStyle[style], Enum.EasingDirection[direction]), data)
-			:Play()
-	end)
-	if not success then
-		logError("Tween失败: " .. tostring(result))
-	end
-	return success
+	services.TweenService
+		:Create(obj, TweenInfo.new(duration, Enum.EasingStyle[style], Enum.EasingDirection[direction]), data)
+		:Play()
+	return true
 end
 
 function Ripple(obj)
@@ -143,26 +114,17 @@ function Ripple(obj)
 end
 
 local function autoFitUIScreen(mainFrame)
-	pcall(function()
-		local viewportSize = services.Workspace.CurrentCamera.ViewportSize
-		
-		-- 添加最小尺寸保护
-		local minWidth = 400
-		local minHeight = 300
-		
-		local newWidth = math.max(minWidth, viewportSize.X - 100)
-		local newHeight = math.max(minHeight, viewportSize.Y - 100)
-		
-		if viewportSize.X < 800 then
-			mainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
-		elseif viewportSize.Y < 600 then
-			mainFrame.Size = UDim2.new(0, 550, 0, newHeight)
-		else
-			mainFrame.Size = UDim2.new(0, 650, 0, 400)
-		end
-		
-		mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-	end)
+	local viewportSize = services.Workspace.CurrentCamera.ViewportSize
+	
+	if viewportSize.X < 800 then
+		mainFrame.Size = UDim2.new(0, viewportSize.X - 100, 0, viewportSize.Y - 100)
+	elseif viewportSize.Y < 600 then
+		mainFrame.Size = UDim2.new(0, 550, 0, viewportSize.Y - 100)
+	else
+		mainFrame.Size = UDim2.new(0, 650, 0, 400)
+	end
+	
+	mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 end
 
 function drag(frame, hold)
@@ -213,70 +175,74 @@ local function highlightText(originalText, searchTerm, color)
 end
 
 function library.new(library, name, theme)
-	-- 安全清理旧实例
-	pcall(function()
-		for _, v in next, services.CoreGui:GetChildren() do
-			if v.Name == "REN" then
-				v:Destroy()
-			end
+	for _, v in next, services.CoreGui:GetChildren() do
+		if v.Name == "REN" then
+			v:Destroy()
 		end
-	end)
-	
-	local success, dogent = pcall(function()
-		local dogent = Instance.new("ScreenGui")
-		dogent.Name = "REN"
-		dogent.Parent = services.CoreGui
-		dogent.ResetOnSpawn = false
-		dogent.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-		
-		-- 安全调用syn.protect_gui
-		if syn and syn.protect_gui then
-			pcall(function()
-				syn.protect_gui(dogent)
-			end)
-		end
-		
-		return dogent
-	end)
-	
-	if not success or not dogent then
-		logError("无法创建UI: " .. tostring(dogent))
-		return nil
 	end
-	
-	local success, Main = pcall(function()
-		local Main = Instance.new("Frame")
-		Main.Name = "Main"
-		Main.Parent = dogent
-		Main.AnchorPoint = Vector2.new(0.5, 0.5)
-		Main.BackgroundColor3 = Colors.Primary
-		Main.Size = UDim2.new(0, 650, 0, 400)
-		Main.Position = UDim2.new(0.5, 0, 0.5, 0)
-		Main.ZIndex = 1
-		Main.Active = true
-		-- 移除Draggable，使用自定义拖拽
-		-- Main.Draggable = true
-		
-		CreateGlassEffect(Main)
-		
-		local MainC = Instance.new("UICorner")
-		MainC.CornerRadius = UDim.new(0, 8)
-		MainC.Parent = Main
-		
-		local MainStroke = Instance.new("UIStroke")
-		MainStroke.Color = Colors.Secondary
-		MainStroke.Thickness = 1
-		MainStroke.Transparency = 0.5
-		MainStroke.Parent = Main
-		
-		return Main
-	end)
-	
-	if not success then
-		logError("无法创建主窗口: " .. tostring(Main))
-		dogent:Destroy()
-		return nil
+
+	local camera = services.Workspace.CurrentCamera
+	local player = services.Players.LocalPlayer
+	local mouse = player:GetMouse()
+
+	local canvasPart = Instance.new("Part")
+	canvasPart.Name = "UI_Canvas_" .. game:GetService("HttpService"):GenerateGUID(false)
+	canvasPart.Anchored = true
+	canvasPart.CanCollide = false
+	canvasPart.Transparency = 1
+	canvasPart.Size = Vector3.new(15, 8.5, 0.2)
+	canvasPart.Parent = workspace
+
+	if syn and syn.protect_gui then
+		syn.protect_gui(canvasPart)
 	end
+
+	local dogent = Instance.new("SurfaceGui")
+	dogent.Name = "REN_3D"
+	dogent.Adornee = canvasPart
+	dogent.Face = Enum.NormalId.Back
+	dogent.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	dogent.PixelsPerStud = 50
+	dogent.AlwaysOnTop = true
+	dogent.Parent = canvasPart
+
+	if syn and syn.protect_gui then
+		syn.protect_gui(dogent)
+	end
+
+	local BgImage = Instance.new("ImageLabel")
+	BgImage.Name = "BackgroundImage"
+	BgImage.Parent = dogent
+	BgImage.Size = UDim2.new(1, 0, 1, 0)
+	BgImage.BackgroundTransparency = 1
+	BgImage.Image = "rbxassetid://102621341311637"
+	BgImage.ScaleType = Enum.ScaleType.Slice
+	BgImage.SliceCenter = Rect.new(256, 256, 768, 768)
+	BgImage.ZIndex = 0
+	BgImage.ImageTransparency = 0.3
+
+	local Main = Instance.new("Frame")
+	Main.Name = "Main"
+	Main.Parent = dogent
+	Main.AnchorPoint = Vector2.new(0.5, 0.5)
+	Main.BackgroundColor3 = Colors.Primary
+	Main.BackgroundTransparency = 0.15
+	Main.Size = UDim2.new(0, 650, 0, 400)
+	Main.Position = UDim2.new(0.5, 0, 0.5, 0)
+	Main.ZIndex = 1
+	Main.Active = true
+
+	CreateGlassEffect(Main)
+	
+	local MainC = Instance.new("UICorner")
+	MainC.CornerRadius = UDim.new(0, 8)
+	MainC.Parent = Main
+	
+	local MainStroke = Instance.new("UIStroke")
+	MainStroke.Color = Colors.Secondary
+	MainStroke.Thickness = 1
+	MainStroke.Transparency = 0.5
+	MainStroke.Parent = Main
 	
 	local DropShadowHolder = Instance.new("Frame")
 	DropShadowHolder.Name = "DropShadowHolder"
@@ -355,18 +321,14 @@ function library.new(library, name, theme)
 	CloseBtnC.Parent = CloseBtn
 	
 	CloseBtn.MouseButton1Click:Connect(function()
-		pcall(function()
-			dogent:Destroy()
-		end)
+		dogent:Destroy()
 	end)
 	
 	local currentConfig = loadConfig()
 	local autoFitEnabled = currentConfig.autoFitScreen
 	
 	if autoFitEnabled then
-		pcall(function()
-			autoFitUIScreen(Main)
-		end)
+		autoFitUIScreen(Main)
 	end
 	
 	local scaleEnabled = false
@@ -379,9 +341,7 @@ function library.new(library, name, theme)
 		autoFitEnabled = not autoFitEnabled
 		
 		if autoFitEnabled then
-			pcall(function()
-				autoFitUIScreen(Main)
-			end)
+			autoFitUIScreen(Main)
 			Tween(AutoFitBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
 			Tween(AutoFitBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
 		else
@@ -455,14 +415,10 @@ function library.new(library, name, theme)
 	TitleGradient.Parent = Title
 	
 	coroutine.wrap(function()
-		while dogent and dogent.Parent do
-			pcall(function()
-				Tween(TitleGradient, 7, "Linear", "In", { Rotation = 360 })
-			end)
+		while dogent.Parent do
+			Tween(TitleGradient, 7, "Linear", "In", { Rotation = 360 })
 			wait(7)
-			if TitleGradient then
-				TitleGradient.Rotation = 0
-			end
+			TitleGradient.Rotation = 0
 		end
 	end)()
 	
@@ -566,8 +522,6 @@ function library.new(library, name, theme)
 	Open.TextColor3 = Colors.Text
 	Open.TextSize = 14
 	Open.Active = true
-	-- 移除Draggable，使用自定义拖拽
-	-- Open.Draggable = true
 	Open.ZIndex = 100
 	
 	local OpenC = Instance.new("UICorner")
@@ -589,151 +543,136 @@ function library.new(library, name, theme)
 		end
 	end)
 	
-	-- 安全绑定热键，避免冲突
-	pcall(function()
-		services.UserInputService.InputEnded:Connect(function(input)
-			if input.KeyCode == Enum.KeyCode.LeftControl then
-				Main.Visible = not Main.Visible
-				print("热键切换: " .. (Main.Visible and "显示" or "隐藏"))
-			end
-		end)
+	services.UserInputService.InputEnded:Connect(function(input)
+		if input.KeyCode == Enum.KeyCode.LeftControl then
+			Main.Visible = not Main.Visible
+		end
 	end)
-	
-	-- 初始时显示主窗口
-	Main.Visible = true
-	
-	print("BS UI初始化完成")
 	
 	local allTabs = {}
 	local tabInfos = {}
 	
 	SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
-		local success = pcall(function()
-			local searchText = SearchBox.Text:lower()
-			
-			if searchText == "" then
-				for _, tabInfo in ipairs(allTabs) do
-					tabInfo.button.Visible = true
-					tabInfo.button.TabText.Text = tabInfo.name 
-					tabInfo.button.TabText.RichText = false
-					
-					for _, sectionInfo in ipairs(tabInfo.sections or {}) do
-						sectionInfo.section.Visible = true
-						sectionInfo.objsFrame.Visible = true
-						sectionInfo.section.SectionText.Text = sectionInfo.name
-						sectionInfo.section.SectionText.RichText = false
-						
-						local ObjsL = sectionInfo.objsFrame:FindFirstChild("ObjsL")
-						if ObjsL then
-							local originalHeight = 42 + ObjsL.AbsoluteContentSize.Y + 10
-							sectionInfo.section.Size = UDim2.new(0.975, 0, 0, originalHeight)
-						end
-						
-						for _, component in ipairs(sectionInfo.objsFrame:GetChildren()) do
-							if component:IsA("Frame") then
-								local textElement = component:FindFirstChildWhichIsA("TextButton") or 
-													component:FindFirstChildWhichIsA("TextLabel")
-								if textElement and sectionInfo.originalTexts then
-									local original = sectionInfo.originalTexts[component]
-									if original then
-										textElement.Text = original
-										textElement.RichText = false
-									end
-								end
-							end
-						end
-					end
-				end
-				
-				if library.currentTab and not library.currentTab.button.Visible then
-					for _, tabInfo in ipairs(allTabs) do
-						if tabInfo.button.Visible then
-							switchTab({
-								button = tabInfo.button,
-								frame = tabInfo.frame
-							})
-							break
-						end
-					end
-				end
-				
-				return
-			end
-			
+		local searchText = SearchBox.Text:lower()
+		
+		if searchText == "" then
 			for _, tabInfo in ipairs(allTabs) do
-				local tabVisible = false
-				
-				local tabTextHighlighted = highlightText(tabInfo.name, searchText)
-				tabInfo.button.TabText.Text = tabTextHighlighted
-				tabInfo.button.TabText.RichText = true
-				if tabTextHighlighted ~= tabInfo.name then
-					tabVisible = true
-				end
+				tabInfo.button.Visible = true
+				tabInfo.button.TabText.Text = tabInfo.name 
+				tabInfo.button.TabText.RichText = false
 				
 				for _, sectionInfo in ipairs(tabInfo.sections or {}) do
-					local sectionVisible = false
+					sectionInfo.section.Visible = true
+					sectionInfo.objsFrame.Visible = true
+					sectionInfo.section.SectionText.Text = sectionInfo.name
+					sectionInfo.section.SectionText.RichText = false
 					
-					local sectionTextHighlighted = highlightText(sectionInfo.name, searchText)
-					sectionInfo.section.SectionText.Text = sectionTextHighlighted
-					sectionInfo.section.SectionText.RichText = true
-					if sectionTextHighlighted ~= sectionInfo.name then
-						sectionVisible = true
-						tabVisible = true
+					local ObjsL = sectionInfo.objsFrame:FindFirstChild("ObjsL")
+					if ObjsL then
+						local originalHeight = 42 + ObjsL.AbsoluteContentSize.Y + 10
+						sectionInfo.section.Size = UDim2.new(0.975, 0, 0, originalHeight)
 					end
 					
-					sectionInfo.originalTexts = sectionInfo.originalTexts or {}
 					for _, component in ipairs(sectionInfo.objsFrame:GetChildren()) do
 						if component:IsA("Frame") then
 							local textElement = component:FindFirstChildWhichIsA("TextButton") or 
 												component:FindFirstChildWhichIsA("TextLabel")
-							if textElement then
-								if not sectionInfo.originalTexts[component] then
-									sectionInfo.originalTexts[component] = textElement.Text
+							if textElement and sectionInfo.originalTexts then
+								local original = sectionInfo.originalTexts[component]
+								if original then
+									textElement.Text = original
+									textElement.RichText = false
 								end
-								
-								local originalText = sectionInfo.originalTexts[component]
-								local highlightedText = highlightText(originalText, searchText)
-								
-								if highlightedText ~= originalText then
-									textElement.Text = highlightedText
-									textElement.RichText = true
-									sectionVisible = true
-									tabVisible = true
-								else
-									for _, componentText in ipairs(sectionInfo.components or {}) do
-										if componentText:lower():find(searchText, 1, true) then
-											sectionVisible = true
-											tabVisible = true
-											break
-										end
+							end
+						end
+					end
+				end
+			end
+			
+			if library.currentTab and not library.currentTab.button.Visible then
+				for _, tabInfo in ipairs(allTabs) do
+					if tabInfo.button.Visible then
+						switchTab({
+							button = tabInfo.button,
+							frame = tabInfo.frame
+						})
+						break
+					end
+				end
+			end
+			
+			return
+		end
+		
+		for _, tabInfo in ipairs(allTabs) do
+			local tabVisible = false
+			
+			local tabTextHighlighted = highlightText(tabInfo.name, searchText)
+			tabInfo.button.TabText.Text = tabTextHighlighted
+			tabInfo.button.TabText.RichText = true
+			if tabTextHighlighted ~= tabInfo.name then
+				tabVisible = true
+			end
+			
+			for _, sectionInfo in ipairs(tabInfo.sections or {}) do
+				local sectionVisible = false
+				
+				local sectionTextHighlighted = highlightText(sectionInfo.name, searchText)
+				sectionInfo.section.SectionText.Text = sectionTextHighlighted
+				sectionInfo.section.SectionText.RichText = true
+				if sectionTextHighlighted ~= sectionInfo.name then
+					sectionVisible = true
+					tabVisible = true
+				end
+				
+				sectionInfo.originalTexts = sectionInfo.originalTexts or {}
+				for _, component in ipairs(sectionInfo.objsFrame:GetChildren()) do
+					if component:IsA("Frame") then
+						local textElement = component:FindFirstChildWhichIsA("TextButton") or 
+											component:FindFirstChildWhichIsA("TextLabel")
+						if textElement then
+							if not sectionInfo.originalTexts[component] then
+								sectionInfo.originalTexts[component] = textElement.Text
+							end
+							
+							local originalText = sectionInfo.originalTexts[component]
+							local highlightedText = highlightText(originalText, searchText)
+							
+							if highlightedText ~= originalText then
+								textElement.Text = highlightedText
+								textElement.RichText = true
+								sectionVisible = true
+								tabVisible = true
+							else
+								for _, componentText in ipairs(sectionInfo.components or {}) do
+									if componentText:lower():find(searchText, 1, true) then
+										sectionVisible = true
+										tabVisible = true
+										break
 									end
 								end
 							end
 						end
 					end
-					
-					sectionInfo.section.Visible = sectionVisible
-					sectionInfo.objsFrame.Visible = sectionVisible
 				end
 				
-				tabInfo.button.Visible = tabVisible
-				
-				if not tabInfo.button.Visible and library.currentTab and library.currentTab.button == tabInfo.button then
-					for _, otherTabInfo in ipairs(allTabs) do
-						if otherTabInfo.button.Visible then
-							switchTab({
-								button = otherTabInfo.button,
-								frame = otherTabInfo.frame
-							})
-							break
-						end
+				sectionInfo.section.Visible = sectionVisible
+				sectionInfo.objsFrame.Visible = sectionVisible
+			end
+			
+			tabInfo.button.Visible = tabVisible
+			
+			if not tabInfo.button.Visible and library.currentTab and library.currentTab.button == tabInfo.button then
+				for _, otherTabInfo in ipairs(allTabs) do
+					if otherTabInfo.button.Visible then
+						switchTab({
+							button = otherTabInfo.button,
+							frame = otherTabInfo.frame
+						})
+						break
 					end
 				end
 			end
-		end)
-		
-		if not success then
-			logError("搜索功能错误: " .. debug.traceback())
 		end
 	end)
 	
@@ -1216,13 +1155,11 @@ function library.new(library, name, theme)
 				UIPadding.Parent = KeybindBtn
 				UIPadding.PaddingRight = UDim.new(0, 6)
 				
-				pcall(function()
-					services.UserInputService.InputBegan:Connect(function(inp, gpe)
-						if gpe then return end
-						if inp.UserInputType ~= Enum.UserInputType.Keyboard then return end
-						if inp.KeyCode ~= bindKey then return end
-						callback(bindKey.Name)
-					end)
+				services.UserInputService.InputBegan:Connect(function(inp, gpe)
+					if gpe then return end
+					if inp.UserInputType ~= Enum.UserInputType.Keyboard then return end
+					if inp.KeyCode ~= bindKey then return end
+					callback(bindKey.Name)
 				end)
 				
 				KeybindValue.MouseButton1Click:Connect(function()
@@ -1699,8 +1636,40 @@ function library.new(library, name, theme)
 		return tab
 	end
 	
+	local SCALE = 0.01
+	local LookView = Vector3.new(0, 0.5, -10)
+
+	game:GetService("RunService").RenderStepped:Connect(function(dt)
+		if not canvasPart or not canvasPart.Parent then return end
+		
+		local offsetX = (mouse.X - mouse.ViewSizeX/2) * SCALE
+		local offsetY = (mouse.Y - mouse.ViewSizeY/2) * SCALE
+		
+		local goalCFrame = camera.CFrame 
+			* CFrame.new(LookView.X, LookView.Y, LookView.Z)
+			* CFrame.Angles(0, math.rad(offsetX), 0)
+			* CFrame.Angles(math.rad(offsetY), 0, 0)
+		
+		services.TweenService:Create(canvasPart, TweenInfo.new(dt * 2), {
+			CFrame = goalCFrame
+		}):Play()
+	end)
+	
+	function window:Set3DOffset(offsetVector)
+		LookView = offsetVector
+	end
+
+	function window:GetCanvasPart()
+		return canvasPart
+	end
+
+	function window:Destroy()
+		if canvasPart then
+			canvasPart:Destroy()
+		end
+	end
+
 	return window
 end
 
-print("BS UI库加载完成")
 return library
