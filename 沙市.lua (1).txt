@@ -48,13 +48,10 @@ local services = setmetatable({}, {
 })
 local mouse = services.Players.LocalPlayer:GetMouse()
 
-local isComputer = not services.UserInputService.TouchEnabled
-local scaleMultiplier = isComputer and 1.3 or 1
-
 local HighlightColors = {
-	Primary = Color3.fromRGB(74, 144, 226),
+	Primary = Color3.fromRGB(74, 144, 226),  
 	Secondary = Color3.fromRGB(91, 155, 213),
-	Accent = Color3.fromRGB(31, 97, 141),
+	Accent = Color3.fromRGB(31, 97, 141),    
 }
 
 local Colors = {
@@ -75,7 +72,7 @@ local function CreateGlassEffect(instance, transparency)
 		blur.BackgroundTransparency = 1
 		blur.Size = UDim2.new(1, 0, 1, 0)
 		blur.Image = "rbxassetid://5554237735"
-		blur.ImageTransparency = 0.9
+		blur.ImageTransparency = 0.95
 		blur.Parent = instance
 	end
 end
@@ -122,9 +119,9 @@ local function autoFitUIScreen(mainFrame)
 	if viewportSize.X < 800 then
 		mainFrame.Size = UDim2.new(0, viewportSize.X - 100, 0, viewportSize.Y - 100)
 	elseif viewportSize.Y < 600 then
-		mainFrame.Size = UDim2.new(0, 550 * scaleMultiplier, 0, viewportSize.Y - 100)
+		mainFrame.Size = UDim2.new(0, 550, 0, viewportSize.Y - 100)
 	else
-		mainFrame.Size = UDim2.new(0, 650 * scaleMultiplier, 0, 400 * scaleMultiplier)
+		mainFrame.Size = UDim2.new(0, 650, 0, 400)
 	end
 	
 	mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -240,10 +237,8 @@ function library.new(library, name, theme)
 	canvasPart.Anchored = true
 	canvasPart.CanCollide = false
 	canvasPart.Transparency = 1
-	canvasPart.Size = Vector3.new(15 * scaleMultiplier, 8.5 * scaleMultiplier, 0.2)
+	canvasPart.Size = Vector3.new(15, 8.5, 0.2)
 	canvasPart.Parent = workspace
-	canvasPart.Material = Enum.Material.Glass
-	canvasPart.Reflectance = 0.1
 
 	if syn and syn.protect_gui then
 		syn.protect_gui(canvasPart)
@@ -257,7 +252,6 @@ function library.new(library, name, theme)
 	dogent.PixelsPerStud = 50
 	dogent.AlwaysOnTop = true
 	dogent.Parent = canvasPart
-	dogent.LightInfluence = 0.5
 
 	if syn and syn.protect_gui then
 		syn.protect_gui(dogent)
@@ -277,7 +271,7 @@ function library.new(library, name, theme)
 	Open.BackgroundColor3 = Colors.Primary
 	Open.BackgroundTransparency = Colors.Transparent
 	Open.Position = UDim2.new(0.01, 0, 0.3, 0)
-	Open.Size = UDim2.new(0, 70 * scaleMultiplier, 0, 35 * scaleMultiplier)
+	Open.Size = UDim2.new(0, 70, 0, 35)
 	Open.Font = Enum.Font.GothamBold
 	Open.Text = "BS"
 	Open.TextColor3 = Colors.Text
@@ -298,18 +292,30 @@ function library.new(library, name, theme)
 	OpenStroke.Transparency = 0.5
 	OpenStroke.Parent = Open
 
+	local isComputer = not services.UserInputService.TouchEnabled
+	local scaleFactor = isComputer and 1.3 or 1
+
 	local Main = Instance.new("Frame")
 	Main.Name = "Main"
 	Main.Parent = dogent
 	Main.AnchorPoint = Vector2.new(0.5, 0.5)
 	Main.BackgroundColor3 = Colors.Primary
 	Main.BackgroundTransparency = 0
-	Main.Size = UDim2.new(0, 650 * scaleMultiplier, 0, 400 * scaleMultiplier)
+	Main.Size = UDim2.new(0, 650 * scaleFactor, 0, 400 * scaleFactor)
 	Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 	Main.ZIndex = 1
 	Main.Active = true
 
 	CreateGlassEffect(Main)
+	
+	local MainBG = Instance.new("ImageLabel")
+	MainBG.Name = "MainBG"
+	MainBG.Parent = Main
+	MainBG.BackgroundTransparency = 1
+	MainBG.Size = UDim2.new(1, 0, 1, 0)
+	MainBG.Image = "rbxassetid://102621341311637"
+	MainBG.ZIndex = 0
+	MainBG.ImageTransparency = 0.5
 	
 	local MainC = Instance.new("UICorner")
 	MainC.CornerRadius = UDim.new(0, 8)
@@ -400,7 +406,7 @@ function library.new(library, name, theme)
 	Open.MouseButton1Click:Connect(function()
 		Main.Visible = not Main.Visible
 		if Main.Visible then
-			Tween(Main, 0.2, "Sine", "Out", { Size = UDim2.new(0, 650 * scaleMultiplier, 0, 400 * scaleMultiplier) })
+			Tween(Main, 0.2, "Sine", "Out", { Size = UDim2.new(0, 650 * scaleFactor, 0, 400 * scaleFactor) })
 		end
 	end)
 	
@@ -431,7 +437,7 @@ function library.new(library, name, theme)
 			Tween(AutoFitBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
 			Tween(AutoFitBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
 		else
-			Main.Size = UDim2.new(0, 650 * scaleMultiplier, 0, 400 * scaleMultiplier)
+			Main.Size = UDim2.new(0, 650 * scaleFactor, 0, 400 * scaleFactor)
 			Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 			Tween(AutoFitBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
 			Tween(AutoFitBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
@@ -449,12 +455,12 @@ function library.new(library, name, theme)
 		scaleEnabled = not scaleEnabled
 		
 		if scaleEnabled then
-			Main.Size = UDim2.new(0, 325 * scaleMultiplier, 0, 200 * scaleMultiplier)
+			Main.Size = UDim2.new(0, 325 * scaleFactor, 0, 200 * scaleFactor)
 			Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 			Tween(ScaleBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
 			Tween(ScaleBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
 		else
-			Main.Size = UDim2.new(0, 650 * scaleMultiplier, 0, 400 * scaleMultiplier)
+			Main.Size = UDim2.new(0, 650 * scaleFactor, 0, 400 * scaleFactor)
 			Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 			Tween(ScaleBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
 			Tween(ScaleBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
@@ -546,6 +552,18 @@ function library.new(library, name, theme)
 	SearchBox.PlaceholderColor3 = Colors.Placeholder
 	SearchBox.TextSize = 14
 	SearchBox.ClearTextOnFocus = false
+	
+	SearchBox.Focused:Connect(function()
+		if SearchBox.Text == SearchBox.PlaceholderText then
+			SearchBox.Text = ""
+		end
+	end)
+	
+	SearchBox.FocusLost:Connect(function()
+		if SearchBox.Text == "" then
+			SearchBox.Text = ""
+		end
+	end)
 	
 	local Content = Instance.new("Frame")
 	Content.Name = "Content"
@@ -1295,20 +1313,12 @@ function library.new(library, name, theme)
 				TB.TextColor3 = Colors.Text
 				TB.PlaceholderColor3 = Colors.Placeholder
 				TB.TextSize = 14
-				TB.ClearTextOnFocus = false
+				TB.ClearTextOnFocus = true
 				
-				local lastText = default
-				TB.MouseButton1Click:Connect(function()
-					lastText = TB.Text
-					TB.Text = ""
-				end)
-				
-				TB.FocusLost:Connect(function()
-					if TB.Text == "" then
-						TB.Text = lastText
+				TB.Focused:Connect(function()
+					if TB.Text == default then
+						TB.Text = ""
 					end
-					library.flags[flag] = TB.Text
-					callback(TB.Text)
 				end)
 				
 				TextboxBack:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
@@ -1432,6 +1442,13 @@ function library.new(library, name, theme)
 				SliderValue.Text = tostring(default)
 				SliderValue.TextColor3 = Colors.Text
 				SliderValue.TextSize = 14
+				SliderValue.ClearTextOnFocus = true
+				
+				SliderValue.Focused:Connect(function()
+					if SliderValue.Text == tostring(default) then
+						SliderValue.Text = ""
+					end
+				end)
 				
 				local MinSlider = Instance.new("TextButton")
 				MinSlider.Name = "MinSlider"
@@ -1589,15 +1606,9 @@ function library.new(library, name, theme)
 				DropdownText.ClearTextOnFocus = false
 				DropdownText.RichText = false
 				
-				local lastDropdownText = ""
-				DropdownText.MouseButton1Click:Connect(function()
-					lastDropdownText = DropdownText.Text
-					DropdownText.Text = ""
-				end)
-				
-				DropdownText.FocusLost:Connect(function()
-					if DropdownText.Text == "" then
-						DropdownText.Text = lastDropdownText
+				DropdownText.Focused:Connect(function()
+					if DropdownText.Text == DropdownText.PlaceholderText then
+						DropdownText.Text = ""
 					end
 				end)
 				
@@ -1842,7 +1853,12 @@ function library.new(library, name, theme)
 				RBox.Text = "255"
 				RBox.TextColor3 = Colors.Text
 				RBox.TextSize = 14
-				RBox.ClearTextOnFocus = false
+				RBox.ClearTextOnFocus = true
+				RBox.Focused:Connect(function()
+					if RBox.Text == RBox.PlaceholderText then
+						RBox.Text = ""
+					end
+				end)
 				local RBoxC = Instance.new("UICorner")
 				RBoxC.CornerRadius = UDim.new(0, 4)
 				RBoxC.Parent = RBox
@@ -1858,7 +1874,12 @@ function library.new(library, name, theme)
 				GBox.Text = "255"
 				GBox.TextColor3 = Colors.Text
 				GBox.TextSize = 14
-				GBox.ClearTextOnFocus = false
+				GBox.ClearTextOnFocus = true
+				GBox.Focused:Connect(function()
+					if GBox.Text == GBox.PlaceholderText then
+						GBox.Text = ""
+					end
+				end)
 				local GBoxC = Instance.new("UICorner")
 				GBoxC.CornerRadius = UDim.new(0, 4)
 				GBoxC.Parent = GBox
@@ -1874,7 +1895,12 @@ function library.new(library, name, theme)
 				BBox.Text = "255"
 				BBox.TextColor3 = Colors.Text
 				BBox.TextSize = 14
-				BBox.ClearTextOnFocus = false
+				BBox.ClearTextOnFocus = true
+				BBox.Focused:Connect(function()
+					if BBox.Text == BBox.PlaceholderText then
+						BBox.Text = ""
+					end
+				end)
 				local BBoxC = Instance.new("UICorner")
 				BBoxC.CornerRadius = UDim.new(0, 4)
 				BBoxC.Parent = BBox
@@ -1890,7 +1916,12 @@ function library.new(library, name, theme)
 				HexBox.Text = "#FFFFFF"
 				HexBox.TextColor3 = Colors.Text
 				HexBox.TextSize = 14
-				HexBox.ClearTextOnFocus = false
+				HexBox.ClearTextOnFocus = true
+				HexBox.Focused:Connect(function()
+					if HexBox.Text == HexBox.PlaceholderText then
+						HexBox.Text = ""
+					end
+				end)
 				local HexBoxC = Instance.new("UICorner")
 				HexBoxC.CornerRadius = UDim.new(0, 4)
 				HexBoxC.Parent = HexBox
@@ -1965,55 +1996,6 @@ function library.new(library, name, theme)
 					
 					callback(currentColor)
 				end
-				
-				local lastRBoxText = RBox.Text
-				local lastGBoxText = GBox.Text
-				local lastBBoxText = BBox.Text
-				local lastHexBoxText = HexBox.Text
-				
-				RBox.MouseButton1Click:Connect(function()
-					lastRBoxText = RBox.Text
-					RBox.Text = ""
-				end)
-				
-				GBox.MouseButton1Click:Connect(function()
-					lastGBoxText = GBox.Text
-					GBox.Text = ""
-				end)
-				
-				BBox.MouseButton1Click:Connect(function()
-					lastBBoxText = BBox.Text
-					BBox.Text = ""
-				end)
-				
-				HexBox.MouseButton1Click:Connect(function()
-					lastHexBoxText = HexBox.Text
-					HexBox.Text = ""
-				end)
-				
-				RBox.FocusLost:Connect(function()
-					if RBox.Text == "" then
-						RBox.Text = lastRBoxText
-					end
-				end)
-				
-				GBox.FocusLost:Connect(function()
-					if GBox.Text == "" then
-						GBox.Text = lastGBoxText
-					end
-				end)
-				
-				BBox.FocusLost:Connect(function()
-					if BBox.Text == "" then
-						BBox.Text = lastBBoxText
-					end
-				end)
-				
-				HexBox.FocusLost:Connect(function()
-					if HexBox.Text == "" then
-						HexBox.Text = lastHexBoxText
-					end
-				end)
 				
 				RBox.FocusLost:Connect(updateColorFromRGB)
 				GBox.FocusLost:Connect(updateColorFromRGB)
@@ -2134,30 +2116,23 @@ function library.new(library, name, theme)
 		return tab
 	end
 	
-	local SCALE = 0.01
+	local SCALE = 0.008
 	local LookView = Vector3.new(0, 0.5, -10)
 	local dragOffset3D = Vector2.new(0, 0)
 	local dragging3D = false
 	local dragStart3D = Vector2.new(0, 0)
-	local autoRotate = false
-	local rotationSpeed = 5
 
 	TitleBar.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
 			dragging3D = true
 			dragStart3D = Vector2.new(input.Position.X, input.Position.Y)
 			dragOffset3D = Vector2.new(LookView.X, LookView.Y)
-			autoRotate = false
 		end
 	end)
 
 	TitleBar.InputEnded:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
 			dragging3D = false
-			wait(5)
-			if not dragging3D then
-				autoRotate = true
-			end
 		end
 	end)
 
@@ -2171,10 +2146,6 @@ function library.new(library, name, theme)
 	game:GetService("RunService").RenderStepped:Connect(function(dt)
 		if not canvasPart or not canvasPart.Parent then return end
 		
-		if autoRotate then
-			LookView = Vector3.new(LookView.X + rotationSpeed * dt, LookView.Y, LookView.Z)
-		end
-		
 		local offsetX = (mouse.X - mouse.ViewSizeX/2) * SCALE
 		local offsetY = (mouse.Y - mouse.ViewSizeY/2) * SCALE
 		
@@ -2186,13 +2157,6 @@ function library.new(library, name, theme)
 		services.TweenService:Create(canvasPart, TweenInfo.new(dt * 2), {
 			CFrame = goalCFrame
 		}):Play()
-	end)
-	
-	canvasPart:GetPropertyChangedSignal("CFrame"):Connect(function()
-		local light = game.Lighting
-		local sunDirection = -canvasPart.CFrame.LookVector
-		light.GeographicLatitude = 0
-		light.ClockTime = 12
 	end)
 	
 	function window:Set3DOffset(offsetVector)
