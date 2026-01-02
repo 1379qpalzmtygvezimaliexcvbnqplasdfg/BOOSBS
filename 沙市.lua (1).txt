@@ -210,6 +210,41 @@ function library.new(library, name, theme)
 		syn.protect_gui(dogent)
 	end
 
+	local switchGui = Instance.new("ScreenGui")
+	switchGui.Name = "UI_Switch"
+	switchGui.Parent = services.CoreGui
+
+	if syn and syn.protect_gui then
+		syn.protect_gui(switchGui)
+	end
+
+	local Open = Instance.new("TextButton")
+	Open.Name = "Open"
+	Open.Parent = switchGui
+	Open.BackgroundColor3 = Colors.Primary
+	Open.BackgroundTransparency = Colors.Transparent
+	Open.Position = UDim2.new(0.01, 0, 0.3, 0)
+	Open.Size = UDim2.new(0, 70, 0, 35)
+	Open.Font = Enum.Font.GothamBold
+	Open.Text = "BS"
+	Open.TextColor3 = Colors.Text
+	Open.TextSize = 14
+	Open.Active = true
+	Open.Draggable = true
+	Open.ZIndex = 100
+	
+	local OpenC = Instance.new("UICorner")
+	OpenC.CornerRadius = UDim.new(0, 6)
+	OpenC.Parent = Open
+	
+	CreateGlassEffect(Open)
+	
+	local OpenStroke = Instance.new("UIStroke")
+	OpenStroke.Color = Colors.Secondary
+	OpenStroke.Thickness = 1
+	OpenStroke.Transparency = 0.5
+	OpenStroke.Parent = Open
+
 	local Main = Instance.new("Frame")
 	Main.Name = "Main"
 	Main.Parent = dogent
@@ -311,6 +346,19 @@ function library.new(library, name, theme)
 	
 	CloseBtn.MouseButton1Click:Connect(function()
 		dogent:Destroy()
+	end)
+	
+	Open.MouseButton1Click:Connect(function()
+		Main.Visible = not Main.Visible
+		if Main.Visible then
+			Tween(Main, 0.2, "Sine", "Out", { Size = UDim2.new(0, 650, 0, 400) })
+		end
+	end)
+	
+	services.UserInputService.InputEnded:Connect(function(input)
+		if input.KeyCode == Enum.KeyCode.LeftControl then
+			Main.Visible = not Main.Visible
+		end
 	end)
 	
 	local currentConfig = loadConfig()
@@ -498,45 +546,6 @@ function library.new(library, name, theme)
 	TabMain.BackgroundTransparency = 1
 	TabMain.Position = UDim2.new(0, 145, 0, 0)
 	TabMain.Size = UDim2.new(1, -145, 1, 0)
-	
-	local Open = Instance.new("TextButton")
-	Open.Name = "Open"
-	Open.Parent = dogent
-	Open.BackgroundColor3 = Colors.Primary
-	Open.BackgroundTransparency = Colors.Transparent
-	Open.Position = UDim2.new(0.01, 0, 0.3, 0)
-	Open.Size = UDim2.new(0, 70, 0, 35)
-	Open.Font = Enum.Font.GothamBold
-	Open.Text = "BS"
-	Open.TextColor3 = Colors.Text
-	Open.TextSize = 14
-	Open.Active = true
-	Open.ZIndex = 100
-	
-	local OpenC = Instance.new("UICorner")
-	OpenC.CornerRadius = UDim.new(0, 6)
-	OpenC.Parent = Open
-	
-	CreateGlassEffect(Open)
-	
-	local OpenStroke = Instance.new("UIStroke")
-	OpenStroke.Color = Colors.Secondary
-	OpenStroke.Thickness = 1
-	OpenStroke.Transparency = 0.5
-	OpenStroke.Parent = Open
-	
-	Open.MouseButton1Click:Connect(function()
-		Main.Visible = not Main.Visible
-		if Main.Visible then
-			Tween(Main, 0.2, "Sine", "Out", { Size = UDim2.new(0, 650, 0, 400) })
-		end
-	end)
-	
-	services.UserInputService.InputEnded:Connect(function(input)
-		if input.KeyCode == Enum.KeyCode.LeftControl then
-			Main.Visible = not Main.Visible
-		end
-	end)
 	
 	local allTabs = {}
 	local tabInfos = {}
@@ -1623,39 +1632,33 @@ function library.new(library, name, theme)
 		return tab
 	end
 	
-	drag(Open)
-	
 	local SCALE = 0.01
 	local LookView = Vector3.new(0, 0.5, -10)
-	
-	local mainDragMode = false
-	local mainDragStart = Vector2.new(0,0)
-	local mainDragOffset = Vector2.new(0,0)
-	local longPressStart = 0
-	
+	local dragOffset3D = Vector2.new(0, 0)
+	local dragging3D = false
+	local dragStart3D = Vector2.new(0, 0)
+
 	TitleBar.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			longPressStart = tick()
-			mainDragStart = input.Position
-			mainDragOffset = Vector2.new(LookView.X, LookView.Y)
+			dragging3D = true
+			dragStart3D = Vector2.new(input.Position.X, input.Position.Y)
+			dragOffset3D = Vector2.new(LookView.X, LookView.Y)
 		end
 	end)
-	
+
 	TitleBar.InputEnded:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			if tick() - longPressStart >= 2 then
-				mainDragMode = not mainDragMode
-				if mainDragMode then
-					MainStroke.Color = Colors.Accent
-					MainStroke.Thickness = 2
-				else
-					MainStroke.Color = Colors.Secondary
-					MainStroke.Thickness = 1
-				end
-			end
+			dragging3D = false
 		end
 	end)
-	
+
+	services.UserInputService.InputChanged:Connect(function(input)
+		if dragging3D and input.UserInputType == Enum.UserInputType.MouseMovement then
+			local delta = Vector2.new(input.Position.X - dragStart3D.X, input.Position.Y - dragStart3D.Y) * 0.01
+			LookView = Vector3.new(dragOffset3D.X + delta.X, dragOffset3D.Y - delta.Y, LookView.Z)
+		end
+	end)
+
 	game:GetService("RunService").RenderStepped:Connect(function(dt)
 		if not canvasPart or not canvasPart.Parent then return end
 		
@@ -1670,13 +1673,6 @@ function library.new(library, name, theme)
 		services.TweenService:Create(canvasPart, TweenInfo.new(dt * 2), {
 			CFrame = goalCFrame
 		}):Play()
-	end)
-	
-	services.UserInputService.InputChanged:Connect(function(input)
-		if mainDragMode and input.UserInputType == Enum.UserInputType.MouseMovement then
-			local delta = Vector2.new(input.Position.X - mainDragStart.X, input.Position.Y - mainDragStart.Y) * 0.01
-			LookView = Vector3.new(mainDragOffset.X + delta.X, mainDragOffset.Y - delta.Y, LookView.Z)
-		end
 	end)
 	
 	function window:Set3DOffset(offsetVector)
