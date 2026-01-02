@@ -9,16 +9,6 @@ library.flags = {}
 
 local configPath = "BS脚本/UI配置.txt"
 
--- 设备检测：判断是否为电脑设备
-local services = setmetatable({}, {
-	__index = function(t, k)
-		return game.GetService(game, k)
-	end,
-})
-
-local isComputerDevice = not services.UserInputService.TouchEnabled
-local uiScaleMultiplier = isComputerDevice and 1.3 or 1.0 -- 电脑设备放大30%
-
 local function saveConfig(config)
 	local success, encoded = pcall(function()
 		return game:GetService("HttpService"):JSONEncode(config)
@@ -46,20 +36,27 @@ local function loadConfig()
 	end
 	return {
 		autoFitScreen = false,
-		windowSize = {650 * uiScaleMultiplier, 400 * uiScaleMultiplier},
+		windowSize = {650, 400},
 		windowPosition = {0.5, 0.5}
 	}
 end
 
+local services = setmetatable({}, {
+	__index = function(t, k)
+		return game.GetService(game, k)
+	end,
+})
 local mouse = services.Players.LocalPlayer:GetMouse()
 
+local isComputer = not services.UserInputService.TouchEnabled
+local scaleMultiplier = isComputer and 1.3 or 1
+
 local HighlightColors = {
-	Primary = Color3.fromRGB(74, 144, 226),  
+	Primary = Color3.fromRGB(74, 144, 226),
 	Secondary = Color3.fromRGB(91, 155, 213),
-	Accent = Color3.fromRGB(31, 97, 141),    
+	Accent = Color3.fromRGB(31, 97, 141),
 }
 
--- 优化颜色配置 - 增强半透明效果
 local Colors = {
 	Primary = Color3.fromRGB(15, 15, 15),
 	Secondary = Color3.fromRGB(30, 30, 30),
@@ -67,49 +64,20 @@ local Colors = {
 	Text = Color3.fromRGB(240, 240, 240),
 	Placeholder = Color3.fromRGB(150, 150, 150),
 	White = Color3.fromRGB(255, 255, 255),
-	Transparent = 0.15, -- 降低基础透明度
+	Transparent = 0.5,
 }
 
--- 优化玻璃效果 - 极致半透明
 local function CreateGlassEffect(instance, transparency)
-	instance.BackgroundTransparency = transparency or (Colors.Transparent * 0.4) -- 更透明的玻璃
-	
-	-- 移除旧的玻璃效果
-	if instance:FindFirstChild("GlassEffect") then
-		instance.GlassEffect:Destroy()
+	instance.BackgroundTransparency = transparency or Colors.Transparent
+	if not instance:FindFirstChild("GlassEffect") then
+		local blur = Instance.new("ImageLabel")
+		blur.Name = "GlassEffect"
+		blur.BackgroundTransparency = 1
+		blur.Size = UDim2.new(1, 0, 1, 0)
+		blur.Image = "rbxassetid://5554237735"
+		blur.ImageTransparency = 0.9
+		blur.Parent = instance
 	end
-	
-	-- 创建新的高级玻璃效果
-	local blur = Instance.new("ImageLabel")
-	blur.Name = "GlassEffect"
-	blur.BackgroundTransparency = 1
-	blur.Size = UDim2.new(1, 0, 1, 0)
-	blur.Image = "rbxassetid://5554237735" -- 玻璃纹理
-	blur.ImageTransparency = 0.92 -- 更透明
-	blur.ScaleType = Enum.ScaleType.Slice
-	blur.SliceCenter = Rect.new(128, 128, 128, 128)
-	blur.Parent = instance
-	
-	-- 添加额外的高光层
-	local highlight = Instance.new("Frame")
-	highlight.Name = "GlassHighlight"
-	highlight.BackgroundTransparency = 1
-	highlight.Size = UDim2.new(1, 0, 1, 0)
-	highlight.Parent = instance
-	
-	local highlightGradient = Instance.new("UIGradient")
-	highlightGradient.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 200, 200))
-	})
-	highlightGradient.Rotation = 45
-	highlightGradient.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.95),
-		NumberSequenceKeypoint.new(0.5, 0.98),
-		NumberSequenceKeypoint.new(1, 0.95)
-	})
-	highlightGradient.Parent = highlight
 end
 
 function Tween(obj, duration, style, direction, data)
@@ -131,7 +99,7 @@ function Ripple(obj)
 		Ripple.BackgroundTransparency = 1.000
 		Ripple.ZIndex = 8
 		Ripple.Image = "rbxassetid://2708891598"
-		Ripple.ImageTransparency = 0.850 -- 更柔和的波纹
+		Ripple.ImageTransparency = 0.800
 		Ripple.ScaleType = Enum.ScaleType.Fit
 		Ripple.ImageColor3 = Colors.White
 		Ripple.Position = UDim2.new(
@@ -140,8 +108,8 @@ function Ripple(obj)
 			(mouse.Y - Ripple.AbsolutePosition.Y) / obj.AbsoluteSize.Y,
 			0
 		)
-		Tween(Ripple, 0.4, "Linear", "InOut", { Position = UDim2.new(-5.5, 0, -5.5, 0), Size = UDim2.new(12, 0, 12, 0) })
-		wait(0.2)
+		Tween(Ripple, 0.3, "Linear", "InOut", { Position = UDim2.new(-5.5, 0, -5.5, 0), Size = UDim2.new(12, 0, 12, 0) })
+		wait(0.15)
 		Tween(Ripple, 0.3, "Linear", "InOut", { ImageTransparency = 1 })
 		wait(0.3)
 		Ripple:Destroy()
@@ -154,9 +122,9 @@ local function autoFitUIScreen(mainFrame)
 	if viewportSize.X < 800 then
 		mainFrame.Size = UDim2.new(0, viewportSize.X - 100, 0, viewportSize.Y - 100)
 	elseif viewportSize.Y < 600 then
-		mainFrame.Size = UDim2.new(0, 550 * uiScaleMultiplier, 0, viewportSize.Y - 100)
+		mainFrame.Size = UDim2.new(0, 550 * scaleMultiplier, 0, viewportSize.Y - 100)
 	else
-		mainFrame.Size = UDim2.new(0, 650 * uiScaleMultiplier, 0, 400 * uiScaleMultiplier)
+		mainFrame.Size = UDim2.new(0, 650 * scaleMultiplier, 0, 400 * scaleMultiplier)
 	end
 	
 	mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -258,7 +226,7 @@ end
 
 function library.new(library, name, theme)
 	for _, v in next, services.CoreGui:GetChildren() do
-		if v.Name == "REN_3D" then
+		if v.Name == "REN" then
 			v:Destroy()
 		end
 	end
@@ -267,32 +235,32 @@ function library.new(library, name, theme)
 	local player = services.Players.LocalPlayer
 	local mouse = player:GetMouse()
 
-	-- 优化3D画布 - 增强视觉效果
 	local canvasPart = Instance.new("Part")
 	canvasPart.Name = "UI_Canvas_" .. game:GetService("HttpService"):GenerateGUID(false)
 	canvasPart.Anchored = true
 	canvasPart.CanCollide = false
-	canvasPart.Transparency = 0.9 -- 更透明
-	canvasPart.Size = Vector3.new(15 * uiScaleMultiplier, 8.5 * uiScaleMultiplier, 0.1) -- 更薄的画布
+	canvasPart.Transparency = 1
+	canvasPart.Size = Vector3.new(15 * scaleMultiplier, 8.5 * scaleMultiplier, 0.2)
 	canvasPart.Parent = workspace
+	canvasPart.Material = Enum.Material.Glass
+	canvasPart.Reflectance = 0.1
 
 	if syn and syn.protect_gui then
 		syn.protect_gui(canvasPart)
 	end
 
-	-- 添加材质增强视觉效果
-	local surfaceGui = Instance.new("SurfaceGui")
-	surfaceGui.Name = "REN_3D"
-	surfaceGui.Adornee = canvasPart
-	surfaceGui.Face = Enum.NormalId.Back
-	surfaceGui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-	surfaceGui.PixelsPerStud = 60 -- 提高像素密度
-	surfaceGui.AlwaysOnTop = true
-	surfaceGui.LightInfluence = 0.3 -- 添加光照影响
-	surfaceGui.Parent = canvasPart
+	local dogent = Instance.new("SurfaceGui")
+	dogent.Name = "REN_3D"
+	dogent.Adornee = canvasPart
+	dogent.Face = Enum.NormalId.Back
+	dogent.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	dogent.PixelsPerStud = 50
+	dogent.AlwaysOnTop = true
+	dogent.Parent = canvasPart
+	dogent.LightInfluence = 0.5
 
 	if syn and syn.protect_gui then
-		syn.protect_gui(surfaceGui)
+		syn.protect_gui(dogent)
 	end
 
 	local switchGui = Instance.new("ScreenGui")
@@ -303,14 +271,13 @@ function library.new(library, name, theme)
 		syn.protect_gui(switchGui)
 	end
 
-	-- 优化打开按钮 - 半透明效果
 	local Open = Instance.new("TextButton")
 	Open.Name = "Open"
 	Open.Parent = switchGui
 	Open.BackgroundColor3 = Colors.Primary
-	Open.BackgroundTransparency = Colors.Transparent * 0.8 -- 更透明
+	Open.BackgroundTransparency = Colors.Transparent
 	Open.Position = UDim2.new(0.01, 0, 0.3, 0)
-	Open.Size = UDim2.new(0, 70 * uiScaleMultiplier, 0, 35 * uiScaleMultiplier)
+	Open.Size = UDim2.new(0, 70 * scaleMultiplier, 0, 35 * scaleMultiplier)
 	Open.Font = Enum.Font.GothamBold
 	Open.Text = "BS"
 	Open.TextColor3 = Colors.Text
@@ -328,17 +295,16 @@ function library.new(library, name, theme)
 	local OpenStroke = Instance.new("UIStroke")
 	OpenStroke.Color = Colors.Secondary
 	OpenStroke.Thickness = 1
-	OpenStroke.Transparency = 0.7 -- 更细的边框
+	OpenStroke.Transparency = 0.5
 	OpenStroke.Parent = Open
 
-	-- 优化主窗口 - 半透明玻璃效果
 	local Main = Instance.new("Frame")
 	Main.Name = "Main"
-	Main.Parent = surfaceGui
+	Main.Parent = dogent
 	Main.AnchorPoint = Vector2.new(0.5, 0.5)
 	Main.BackgroundColor3 = Colors.Primary
-	Main.BackgroundTransparency = Colors.Transparent * 0.6 -- 更透明
-	Main.Size = UDim2.new(0, 650 * uiScaleMultiplier, 0, 400 * uiScaleMultiplier)
+	Main.BackgroundTransparency = 0
+	Main.Size = UDim2.new(0, 650 * scaleMultiplier, 0, 400 * scaleMultiplier)
 	Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 	Main.ZIndex = 1
 	Main.Active = true
@@ -352,10 +318,9 @@ function library.new(library, name, theme)
 	local MainStroke = Instance.new("UIStroke")
 	MainStroke.Color = Colors.Secondary
 	MainStroke.Thickness = 1
-	MainStroke.Transparency = 0.7
+	MainStroke.Transparency = 0.5
 	MainStroke.Parent = Main
 	
-	-- 优化阴影效果 - 更柔和的阴影
 	local DropShadowHolder = Instance.new("Frame")
 	DropShadowHolder.Name = "DropShadowHolder"
 	DropShadowHolder.Parent = Main
@@ -369,22 +334,21 @@ function library.new(library, name, theme)
 	DropShadow.AnchorPoint = Vector2.new(0.5, 0.5)
 	DropShadow.BackgroundTransparency = 1.000
 	DropShadow.Position = UDim2.new(0.5, 0, 0.5, 0)
-	DropShadow.Size = UDim2.new(1, 47 * uiScaleMultiplier, 1, 47 * uiScaleMultiplier)
+	DropShadow.Size = UDim2.new(1, 47, 1, 47)
 	DropShadow.ZIndex = 0
 	DropShadow.Image = "rbxassetid://6015897843"
 	DropShadow.ImageColor3 = Colors.Primary
-	DropShadow.ImageTransparency = 0.85 -- 更柔和的阴影
+	DropShadow.ImageTransparency = 0.7
 	DropShadow.ScaleType = Enum.ScaleType.Slice
 	DropShadow.SliceCenter = Rect.new(49, 49, 450, 450)
 	
-	-- 优化控制按钮
 	local AutoFitBtn = Instance.new("ImageButton")
 	AutoFitBtn.Name = "AutoFitBtn"
 	AutoFitBtn.Parent = Main
 	AutoFitBtn.BackgroundColor3 = Colors.Secondary
-	AutoFitBtn.BackgroundTransparency = Colors.Transparent * 0.8
-	AutoFitBtn.Position = UDim2.new(1, -95 * uiScaleMultiplier, 0, 10 * uiScaleMultiplier)
-	AutoFitBtn.Size = UDim2.new(0, 25 * uiScaleMultiplier, 0, 25 * uiScaleMultiplier)
+	AutoFitBtn.BackgroundTransparency = Colors.Transparent
+	AutoFitBtn.Position = UDim2.new(1, -95, 0, 10)
+	AutoFitBtn.Size = UDim2.new(0, 25, 0, 25)
 	AutoFitBtn.Image = "rbxassetid://3926305904"
 	AutoFitBtn.ImageRectOffset = Vector2.new(244, 164)
 	AutoFitBtn.ImageRectSize = Vector2.new(36, 36)
@@ -401,9 +365,9 @@ function library.new(library, name, theme)
 	ScaleBtn.Name = "ScaleBtn"
 	ScaleBtn.Parent = Main
 	ScaleBtn.BackgroundColor3 = Colors.Secondary
-	ScaleBtn.BackgroundTransparency = Colors.Transparent * 0.8
-	ScaleBtn.Position = UDim2.new(1, -65 * uiScaleMultiplier, 0, 10 * uiScaleMultiplier)
-	ScaleBtn.Size = UDim2.new(0, 25 * uiScaleMultiplier, 0, 25 * uiScaleMultiplier)
+	ScaleBtn.BackgroundTransparency = Colors.Transparent
+	ScaleBtn.Position = UDim2.new(1, -65, 0, 10)
+	ScaleBtn.Size = UDim2.new(0, 25, 0, 25)
 	ScaleBtn.Image = "rbxassetid://3926305904"
 	ScaleBtn.ImageRectOffset = Vector2.new(324, 364)
 	ScaleBtn.ImageRectSize = Vector2.new(36, 36)
@@ -420,9 +384,9 @@ function library.new(library, name, theme)
 	CloseBtn.Name = "CloseBtn"
 	CloseBtn.Parent = Main
 	CloseBtn.BackgroundColor3 = Colors.Secondary
-	CloseBtn.BackgroundTransparency = Colors.Transparent * 0.8
-	CloseBtn.Position = UDim2.new(1, -35 * uiScaleMultiplier, 0, 10 * uiScaleMultiplier)
-	CloseBtn.Size = UDim2.new(0, 25 * uiScaleMultiplier, 0, 25 * uiScaleMultiplier)
+	CloseBtn.BackgroundTransparency = Colors.Transparent
+	CloseBtn.Position = UDim2.new(1, -35, 0, 10)
+	CloseBtn.Size = UDim2.new(0, 25, 0, 25)
 	CloseBtn.Font = Enum.Font.GothamBold
 	CloseBtn.Text = "×"
 	CloseBtn.TextColor3 = Colors.Text
@@ -436,7 +400,7 @@ function library.new(library, name, theme)
 	Open.MouseButton1Click:Connect(function()
 		Main.Visible = not Main.Visible
 		if Main.Visible then
-			Tween(Main, 0.2, "Sine", "Out", { Size = UDim2.new(0, 650 * uiScaleMultiplier, 0, 400 * uiScaleMultiplier) })
+			Tween(Main, 0.2, "Sine", "Out", { Size = UDim2.new(0, 650 * scaleMultiplier, 0, 400 * scaleMultiplier) })
 		end
 	end)
 	
@@ -467,7 +431,7 @@ function library.new(library, name, theme)
 			Tween(AutoFitBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
 			Tween(AutoFitBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
 		else
-			Main.Size = UDim2.new(0, 650 * uiScaleMultiplier, 0, 400 * uiScaleMultiplier)
+			Main.Size = UDim2.new(0, 650 * scaleMultiplier, 0, 400 * scaleMultiplier)
 			Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 			Tween(AutoFitBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
 			Tween(AutoFitBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
@@ -485,12 +449,12 @@ function library.new(library, name, theme)
 		scaleEnabled = not scaleEnabled
 		
 		if scaleEnabled then
-			Main.Size = UDim2.new(0, 325 * uiScaleMultiplier, 0, 200 * uiScaleMultiplier)
+			Main.Size = UDim2.new(0, 325 * scaleMultiplier, 0, 200 * scaleMultiplier)
 			Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 			Tween(ScaleBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
 			Tween(ScaleBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
 		else
-			Main.Size = UDim2.new(0, 650 * uiScaleMultiplier, 0, 400 * uiScaleMultiplier)
+			Main.Size = UDim2.new(0, 650 * scaleMultiplier, 0, 400 * scaleMultiplier)
 			Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 			Tween(ScaleBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
 			Tween(ScaleBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
@@ -505,33 +469,29 @@ function library.new(library, name, theme)
 		Tween(AutoFitBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
 	end
 	
-	-- 优化标题栏 - 半透明玻璃
 	local TitleBar = Instance.new("Frame")
 	TitleBar.Name = "TitleBar"
 	TitleBar.Parent = Main
 	TitleBar.BackgroundColor3 = Colors.Secondary
-	TitleBar.BackgroundTransparency = Colors.Transparent * 0.7
-	TitleBar.Size = UDim2.new(1, 0, 0, 45 * uiScaleMultiplier)
+	TitleBar.BackgroundTransparency = Colors.Transparent
+	TitleBar.Size = UDim2.new(1, 0, 0, 45)
 	
 	local TitleBarC = Instance.new("UICorner")
 	TitleBarC.CornerRadius = UDim.new(0, 8)
 	TitleBarC.Parent = TitleBar
 	
-	CreateGlassEffect(TitleBar)
-	
 	local Title = Instance.new("TextLabel")
 	Title.Name = "ScriptTitle"
 	Title.Parent = TitleBar
 	Title.BackgroundTransparency = 1
-	Title.Position = UDim2.new(0, 15 * uiScaleMultiplier, 0, 0)
-	Title.Size = UDim2.new(1, -30 * uiScaleMultiplier, 1, 0)
+	Title.Position = UDim2.new(0, 15, 0, 0)
+	Title.Size = UDim2.new(1, -30, 1, 0)
 	Title.Font = Enum.Font.GothamBlack
 	Title.Text = name
 	Title.TextColor3 = Colors.Text
 	Title.TextSize = 18
 	Title.TextXAlignment = Enum.TextXAlignment.Left
 	
-	-- 优化标题渐变
 	local TitleGradient = Instance.new("UIGradient")
 	TitleGradient.Color = ColorSequence.new({
 		ColorSequenceKeypoint.new(0.00, Color3.fromRGB(52, 152, 219)),
@@ -541,21 +501,20 @@ function library.new(library, name, theme)
 	TitleGradient.Parent = Title
 	
 	coroutine.wrap(function()
-		while surfaceGui.Parent do
+		while dogent.Parent do
 			Tween(TitleGradient, 7, "Linear", "In", { Rotation = 360 })
 			wait(7)
 			TitleGradient.Rotation = 0
 		end
 	end)()
 	
-	-- 优化搜索栏 - 半透明
 	local SearchBar = Instance.new("Frame")
 	SearchBar.Name = "SearchBar"
 	SearchBar.Parent = Main
 	SearchBar.BackgroundColor3 = Colors.Secondary
-	SearchBar.BackgroundTransparency = Colors.Transparent * 0.7
-	SearchBar.Position = UDim2.new(0, 15 * uiScaleMultiplier, 0, 55 * uiScaleMultiplier)
-	SearchBar.Size = UDim2.new(1, -30 * uiScaleMultiplier, 0, 35 * uiScaleMultiplier)
+	SearchBar.BackgroundTransparency = Colors.Transparent
+	SearchBar.Position = UDim2.new(0, 15, 0, 55)
+	SearchBar.Size = UDim2.new(1, -30, 0, 35)
 	
 	local SearchBarC = Instance.new("UICorner")
 	SearchBarC.CornerRadius = UDim.new(0, 6)
@@ -567,8 +526,8 @@ function library.new(library, name, theme)
 	SearchIcon.Name = "SearchIcon"
 	SearchIcon.Parent = SearchBar
 	SearchIcon.BackgroundTransparency = 1
-	SearchIcon.Position = UDim2.new(0, 10 * uiScaleMultiplier, 0.5, -10 * uiScaleMultiplier)
-	SearchIcon.Size = UDim2.new(0, 20 * uiScaleMultiplier, 0, 20 * uiScaleMultiplier)
+	SearchIcon.Position = UDim2.new(0, 10, 0.5, -10)
+	SearchIcon.Size = UDim2.new(0, 20, 0, 20)
 	SearchIcon.Image = "rbxassetid://3926305904"
 	SearchIcon.ImageRectOffset = Vector2.new(964, 324)
 	SearchIcon.ImageRectSize = Vector2.new(36, 36)
@@ -578,8 +537,8 @@ function library.new(library, name, theme)
 	SearchBox.Name = "SearchBox"
 	SearchBox.Parent = SearchBar
 	SearchBox.BackgroundTransparency = 1
-	SearchBox.Position = UDim2.new(0, 40 * uiScaleMultiplier, 0, 0)
-	SearchBox.Size = UDim2.new(1, -50 * uiScaleMultiplier, 1, 0)
+	SearchBox.Position = UDim2.new(0, 40, 0, 0)
+	SearchBox.Size = UDim2.new(1, -50, 1, 0)
 	SearchBox.Font = Enum.Font.Gotham
 	SearchBox.PlaceholderText = "搜索标签页或功能..."
 	SearchBox.Text = ""
@@ -592,16 +551,15 @@ function library.new(library, name, theme)
 	Content.Name = "Content"
 	Content.Parent = Main
 	Content.BackgroundTransparency = 1
-	Content.Position = UDim2.new(0, 0, 0, 100 * uiScaleMultiplier)
-	Content.Size = UDim2.new(1, 0, 1, -100 * uiScaleMultiplier)
+	Content.Position = UDim2.new(0, 0, 0, 100)
+	Content.Size = UDim2.new(1, 0, 1, -100)
 	
-	-- 优化侧边栏 - 半透明玻璃
 	local SideBar = Instance.new("Frame")
 	SideBar.Name = "SideBar"
 	SideBar.Parent = Content
 	SideBar.BackgroundColor3 = Colors.Secondary
-	SideBar.BackgroundTransparency = Colors.Transparent * 0.7
-	SideBar.Size = UDim2.new(0, 140 * uiScaleMultiplier, 1, 0)
+	SideBar.BackgroundTransparency = Colors.Transparent
+	SideBar.Size = UDim2.new(0, 140, 1, 0)
 	
 	local SideBarC = Instance.new("UICorner")
 	SideBarC.CornerRadius = UDim.new(0, 8)
@@ -615,8 +573,8 @@ function library.new(library, name, theme)
 	TabButtons.Active = true
 	TabButtons.BackgroundTransparency = 1
 	TabButtons.BorderSizePixel = 0
-	TabButtons.Position = UDim2.new(0, 5 * uiScaleMultiplier, 0, 5 * uiScaleMultiplier)
-	TabButtons.Size = UDim2.new(1, -10 * uiScaleMultiplier, 1, -10 * uiScaleMultiplier)
+	TabButtons.Position = UDim2.new(0, 5, 0, 5)
+	TabButtons.Size = UDim2.new(1, -10, 1, -10)
 	TabButtons.CanvasSize = UDim2.new(0, 0, 0, 0)
 	TabButtons.ScrollBarThickness = 2
 	TabButtons.ScrollBarImageColor3 = Colors.Secondary
@@ -625,18 +583,18 @@ function library.new(library, name, theme)
 	TabButtonsL.Name = "TabBtsL"
 	TabButtonsL.Parent = TabButtons
 	TabButtonsL.SortOrder = Enum.SortOrder.LayoutOrder
-	TabButtonsL.Padding = UDim.new(0, 8 * uiScaleMultiplier)
+	TabButtonsL.Padding = UDim.new(0, 8)
 	
 	TabButtonsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-		TabButtons.CanvasSize = UDim2.new(0, 0, 0, TabButtonsL.AbsoluteContentSize.Y + 10 * uiScaleMultiplier)
+		TabButtons.CanvasSize = UDim2.new(0, 0, 0, TabButtonsL.AbsoluteContentSize.Y + 10)
 	end)
 	
 	local TabMain = Instance.new("Frame")
 	TabMain.Name = "TabMain"
 	TabMain.Parent = Content
 	TabMain.BackgroundTransparency = 1
-	TabMain.Position = UDim2.new(0, 145 * uiScaleMultiplier, 0, 0)
-	TabMain.Size = UDim2.new(1, -145 * uiScaleMultiplier, 1, 0)
+	TabMain.Position = UDim2.new(0, 145, 0, 0)
+	TabMain.Size = UDim2.new(1, -145, 1, 0)
 	
 	local allTabs = {}
 	local tabInfos = {}
@@ -658,7 +616,7 @@ function library.new(library, name, theme)
 					
 					local ObjsL = sectionInfo.objsFrame:FindFirstChild("ObjsL")
 					if ObjsL then
-						local originalHeight = 42 * uiScaleMultiplier + ObjsL.AbsoluteContentSize.Y + 10 * uiScaleMultiplier
+						local originalHeight = 42 + ObjsL.AbsoluteContentSize.Y + 10
 						sectionInfo.section.Size = UDim2.new(0.975, 0, 0, originalHeight)
 					end
 					
@@ -801,7 +759,7 @@ function library.new(library, name, theme)
 		tabButton.Parent = TabButtons
 		tabButton.BackgroundColor3 = Colors.Secondary
 		tabButton.BackgroundTransparency = 0.3
-		tabButton.Size = UDim2.new(1, 0, 0, 40 * uiScaleMultiplier)
+		tabButton.Size = UDim2.new(1, 0, 0, 40)
 		
 		local tabButtonC = Instance.new("UICorner")
 		tabButtonC.CornerRadius = UDim.new(0, 6)
@@ -813,8 +771,8 @@ function library.new(library, name, theme)
 		tabIcon.Name = "TabIcon"
 		tabIcon.Parent = tabButton
 		tabIcon.BackgroundTransparency = 1
-		tabIcon.Position = UDim2.new(0, 10 * uiScaleMultiplier, 0.5, -12 * uiScaleMultiplier)
-		tabIcon.Size = UDim2.new(0, 24 * uiScaleMultiplier, 0, 24 * uiScaleMultiplier)
+		tabIcon.Position = UDim2.new(0, 10, 0.5, -12)
+		tabIcon.Size = UDim2.new(0, 24, 0, 24)
 		tabIcon.Image = ("rbxassetid://%s"):format(icon or 4370341699)
 		tabIcon.ImageColor3 = Colors.Text
 		
@@ -822,8 +780,8 @@ function library.new(library, name, theme)
 		tabText.Name = "TabText"
 		tabText.Parent = tabButton
 		tabText.BackgroundTransparency = 1
-		tabText.Position = UDim2.new(0, 45 * uiScaleMultiplier, 0, 0)
-		tabText.Size = UDim2.new(1, -50 * uiScaleMultiplier, 1, 0)
+		tabText.Position = UDim2.new(0, 45, 0, 0)
+		tabText.Size = UDim2.new(1, -50, 1, 0)
 		tabText.Font = Enum.Font.GothamSemibold
 		tabText.Text = name
 		tabText.TextColor3 = Colors.Text
@@ -850,7 +808,7 @@ function library.new(library, name, theme)
 		tabL.Name = "TabL"
 		tabL.Parent = tabFrame
 		tabL.SortOrder = Enum.SortOrder.LayoutOrder
-		tabL.Padding = UDim.new(0, 8 * uiScaleMultiplier)
+		tabL.Padding = UDim.new(0, 8)
 		
 		local tabInfo = {
 			name = name,
@@ -879,7 +837,7 @@ function library.new(library, name, theme)
 		end
 		
 		tabL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-			tabFrame.CanvasSize = UDim2.new(0, 0, 0, tabL.AbsoluteContentSize.Y + 16 * uiScaleMultiplier)
+			tabFrame.CanvasSize = UDim2.new(0, 0, 0, tabL.AbsoluteContentSize.Y + 16)
 		end)
 		
 		local tab = {}
@@ -890,10 +848,10 @@ function library.new(library, name, theme)
 			Section.Name = "Section"
 			Section.Parent = tabFrame
 			Section.BackgroundColor3 = Colors.Secondary
-			Section.BackgroundTransparency = Colors.Transparent * 0.7
+			Section.BackgroundTransparency = Colors.Transparent
 			Section.BorderSizePixel = 0
 			Section.ClipsDescendants = true
-			Section.Size = UDim2.new(0.975, 0, 0, 42 * uiScaleMultiplier)
+			Section.Size = UDim2.new(0.975, 0, 0, 42)
 			
 			CreateGlassEffect(Section)
 			
@@ -911,8 +869,8 @@ function library.new(library, name, theme)
 			SectionText.Name = "SectionText"
 			SectionText.Parent = Section
 			SectionText.BackgroundTransparency = 1
-			SectionText.Position = UDim2.new(0, 40 * uiScaleMultiplier, 0, 0)
-			SectionText.Size = UDim2.new(1, -45 * uiScaleMultiplier, 0, 42 * uiScaleMultiplier)
+			SectionText.Position = UDim2.new(0, 40, 0, 0)
+			SectionText.Size = UDim2.new(1, -45, 0, 42)
 			SectionText.Font = Enum.Font.GothamBold
 			SectionText.Text = name
 			SectionText.TextColor3 = Colors.Text
@@ -924,8 +882,8 @@ function library.new(library, name, theme)
 			SectionOpen.Parent = SectionText
 			SectionOpen.BackgroundTransparency = 1
 			SectionOpen.BorderSizePixel = 0
-			SectionOpen.Position = UDim2.new(0, -30 * uiScaleMultiplier, 0, 8 * uiScaleMultiplier)
-			SectionOpen.Size = UDim2.new(0, 26 * uiScaleMultiplier, 0, 26 * uiScaleMultiplier)
+			SectionOpen.Position = UDim2.new(0, -30, 0, 8)
+			SectionOpen.Size = UDim2.new(0, 26, 0, 26)
 			SectionOpen.Image = "http://www.roblox.com/asset/?id=6031302934"
 			SectionOpen.ImageColor3 = Colors.Text
 			
@@ -934,7 +892,7 @@ function library.new(library, name, theme)
 			SectionOpened.Parent = SectionOpen
 			SectionOpened.BackgroundTransparency = 1.000
 			SectionOpened.BorderSizePixel = 0
-			SectionOpened.Size = UDim2.new(0, 26 * uiScaleMultiplier, 0, 26 * uiScaleMultiplier)
+			SectionOpened.Size = UDim2.new(0, 26, 0, 26)
 			SectionOpened.Image = "http://www.roblox.com/asset/?id=6031302932"
 			SectionOpened.ImageTransparency = 1.000
 			SectionOpened.ImageColor3 = Colors.Text
@@ -944,32 +902,32 @@ function library.new(library, name, theme)
 			SectionToggle.Parent = SectionOpen
 			SectionToggle.BackgroundTransparency = 1
 			SectionToggle.BorderSizePixel = 0
-			SectionToggle.Size = UDim2.new(0, 26 * uiScaleMultiplier, 0, 26 * uiScaleMultiplier)
+			SectionToggle.Size = UDim2.new(0, 26, 0, 26)
 			
 			local Objs = Instance.new("Frame")
 			Objs.Name = "Objs"
 			Objs.Parent = Section
 			Objs.BackgroundTransparency = 1
 			Objs.BorderSizePixel = 0
-			Objs.Position = UDim2.new(0, 6 * uiScaleMultiplier, 0, 42 * uiScaleMultiplier)
-			Objs.Size = UDim2.new(1, -12 * uiScaleMultiplier, 0, 0)
+			Objs.Position = UDim2.new(0, 6, 0, 42)
+			Objs.Size = UDim2.new(1, -12, 0, 0)
 			
 			local ObjsL = Instance.new("UIListLayout")
 			ObjsL.Name = "ObjsL"
 			ObjsL.Parent = Objs
 			ObjsL.SortOrder = Enum.SortOrder.LayoutOrder
-			ObjsL.Padding = UDim.new(0, 8 * uiScaleMultiplier)
+			ObjsL.Padding = UDim.new(0, 8)
 			
 			local open = TabVal
 			if TabVal ~= false then
-				Section.Size = UDim2.new(0.975, 0, 0, open and (42 * uiScaleMultiplier + ObjsL.AbsoluteContentSize.Y + 10 * uiScaleMultiplier) or 42 * uiScaleMultiplier)
+				Section.Size = UDim2.new(0.975, 0, 0, open and 42 + ObjsL.AbsoluteContentSize.Y + 10 or 42)
 				SectionOpened.ImageTransparency = (open and 0 or 1)
 				SectionOpen.ImageTransparency = (open and 1 or 0)
 			end
 			
 			SectionToggle.MouseButton1Click:Connect(function()
 				open = not open
-				Section.Size = UDim2.new(0.975, 0, 0, open and (42 * uiScaleMultiplier + ObjsL.AbsoluteContentSize.Y + 10 * uiScaleMultiplier) or 42 * uiScaleMultiplier)
+				Section.Size = UDim2.new(0.975, 0, 0, open and 42 + ObjsL.AbsoluteContentSize.Y + 10 or 42)
 				SectionOpened.ImageTransparency = (open and 0 or 1)
 				SectionOpen.ImageTransparency = (open and 1 or 0)
 				Tween(Section, 0.2, "Sine", "Out", { BackgroundTransparency = open and 0.25 or 0 })
@@ -977,7 +935,7 @@ function library.new(library, name, theme)
 			
 			ObjsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 				if not open then return end
-				Section.Size = UDim2.new(0.975, 0, 0, 42 * uiScaleMultiplier + ObjsL.AbsoluteContentSize.Y + 10 * uiScaleMultiplier)
+				Section.Size = UDim2.new(0.975, 0, 0, 42 + ObjsL.AbsoluteContentSize.Y + 10)
 			end)
 			
 			local sectionInfo = {
@@ -999,7 +957,7 @@ function library.new(library, name, theme)
 				BtnModule.Name = "BtnModule"
 				BtnModule.Parent = Objs
 				BtnModule.BackgroundTransparency = 1
-				BtnModule.Size = UDim2.new(1, 0, 0, 40 * uiScaleMultiplier)
+				BtnModule.Size = UDim2.new(1, 0, 0, 40)
 				
 				local Btn = Instance.new("TextButton")
 				Btn.Name = "Btn"
@@ -1038,7 +996,7 @@ function library.new(library, name, theme)
 				LabelModule.Name = "LabelModule"
 				LabelModule.Parent = Objs
 				LabelModule.BackgroundTransparency = 1
-				LabelModule.Size = UDim2.new(1, 0, 0, 30 * uiScaleMultiplier)
+				LabelModule.Size = UDim2.new(1, 0, 0, 30)
 				
 				local TextLabel = Instance.new("TextLabel")
 				TextLabel.Parent = LabelModule
@@ -1076,7 +1034,7 @@ function library.new(library, name, theme)
 				ToggleModule.Name = "ToggleModule"
 				ToggleModule.Parent = Objs
 				ToggleModule.BackgroundTransparency = 1
-				ToggleModule.Size = UDim2.new(1, 0, 0, 40 * uiScaleMultiplier)
+				ToggleModule.Size = UDim2.new(1, 0, 0, 40)
 				
 				local ToggleBtn = Instance.new("TextButton")
 				ToggleBtn.Name = "ToggleBtn"
@@ -1106,15 +1064,15 @@ function library.new(library, name, theme)
 				ToggleDisable.BackgroundColor3 = Colors.Primary
 				ToggleDisable.BackgroundTransparency = 0.5
 				ToggleDisable.BorderSizePixel = 0
-				ToggleDisable.Position = UDim2.new(1, -38 * uiScaleMultiplier, 0.5, -13 * uiScaleMultiplier)
-				ToggleDisable.Size = UDim2.new(0, 26 * uiScaleMultiplier, 0, 26 * uiScaleMultiplier)
+				ToggleDisable.Position = UDim2.new(1, -38, 0.5, -13)
+				ToggleDisable.Size = UDim2.new(0, 26, 0, 26)
 				
 				local ToggleSwitch = Instance.new("Frame")
 				ToggleSwitch.Name = "ToggleSwitch"
 				ToggleSwitch.Parent = ToggleDisable
 				ToggleSwitch.BackgroundColor3 = Colors.White
-				ToggleSwitch.Size = UDim2.new(0, 22 * uiScaleMultiplier, 0, 22 * uiScaleMultiplier)
-				ToggleSwitch.Position = UDim2.new(0, 2 * uiScaleMultiplier, 0, 2 * uiScaleMultiplier)
+				ToggleSwitch.Size = UDim2.new(0, 22, 0, 22)
+				ToggleSwitch.Position = UDim2.new(0, 2, 0, 2)
 				
 				local ToggleDisableC = Instance.new("UICorner")
 				ToggleDisableC.CornerRadius = UDim.new(0, 6)
@@ -1133,7 +1091,7 @@ function library.new(library, name, theme)
 							return
 						end
 						Tween(ToggleSwitch, 0.15, "Sine", "Out", {
-							Position = UDim2.new(0, (state and 2 or 2) * uiScaleMultiplier, 0, 2 * uiScaleMultiplier),
+							Position = UDim2.new(0, (state and 2 or 2), 0, 2),
 							BackgroundColor3 = state and Color3.fromRGB(52, 152, 219) or Colors.White
 						})
 						library.flags[flag] = state
@@ -1190,7 +1148,7 @@ function library.new(library, name, theme)
 				KeybindModule.Name = "KeybindModule"
 				KeybindModule.Parent = Objs
 				KeybindModule.BackgroundTransparency = 1
-				KeybindModule.Size = UDim2.new(1, 0, 0, 40 * uiScaleMultiplier)
+				KeybindModule.Size = UDim2.new(1, 0, 0, 40)
 				
 				local KeybindBtn = Instance.new("TextButton")
 				KeybindBtn.Name = "KeybindBtn"
@@ -1219,8 +1177,8 @@ function library.new(library, name, theme)
 				KeybindValue.Parent = KeybindBtn
 				KeybindValue.BackgroundColor3 = Colors.Primary
 				KeybindValue.BackgroundTransparency = 0.5
-				KeybindValue.Position = UDim2.new(1, -60 * uiScaleMultiplier, 0.5, -14 * uiScaleMultiplier)
-				KeybindValue.Size = UDim2.new(0, 55 * uiScaleMultiplier, 0, 28 * uiScaleMultiplier)
+				KeybindValue.Position = UDim2.new(1, -60, 0.5, -14)
+				KeybindValue.Size = UDim2.new(0, 55, 0, 28)
 				KeybindValue.AutoButtonColor = false
 				KeybindValue.Font = Enum.Font.GothamSemibold
 				KeybindValue.Text = keyTxt
@@ -1240,7 +1198,7 @@ function library.new(library, name, theme)
 				
 				local UIPadding = Instance.new("UIPadding")
 				UIPadding.Parent = KeybindBtn
-				UIPadding.PaddingRight = UDim.new(0, 6 * uiScaleMultiplier)
+				UIPadding.PaddingRight = UDim.new(0, 6)
 				
 				services.UserInputService.InputBegan:Connect(function(inp, gpe)
 					if gpe then return end
@@ -1270,10 +1228,10 @@ function library.new(library, name, theme)
 				end)
 				
 				KeybindValue:GetPropertyChangedSignal("TextBounds"):Connect(function()
-					KeybindValue.Size = UDim2.new(0, KeybindValue.TextBounds.X + 30 * uiScaleMultiplier, 0, 28 * uiScaleMultiplier)
+					KeybindValue.Size = UDim2.new(0, KeybindValue.TextBounds.X + 30, 0, 28)
 				end)
 				
-				KeybindValue.Size = UDim2.new(0, KeybindValue.TextBounds.X + 30 * uiScaleMultiplier, 0, 28 * uiScaleMultiplier)
+				KeybindValue.Size = UDim2.new(0, KeybindValue.TextBounds.X + 30, 0, 28)
 			end
 			
 			function section.Textbox(section, text, flag, default, callback)
@@ -1289,7 +1247,7 @@ function library.new(library, name, theme)
 				TextboxModule.Name = "TextboxModule"
 				TextboxModule.Parent = Objs
 				TextboxModule.BackgroundTransparency = 1
-				TextboxModule.Size = UDim2.new(1, 0, 0, 40 * uiScaleMultiplier)
+				TextboxModule.Size = UDim2.new(1, 0, 0, 40)
 				
 				local TextboxBack = Instance.new("TextButton")
 				TextboxBack.Name = "TextboxBack"
@@ -1318,8 +1276,8 @@ function library.new(library, name, theme)
 				BoxBG.Parent = TextboxBack
 				BoxBG.BackgroundColor3 = Colors.Primary
 				BoxBG.BackgroundTransparency = 0.5
-				BoxBG.Position = UDim2.new(1, -100 * uiScaleMultiplier, 0.5, -14 * uiScaleMultiplier)
-				BoxBG.Size = UDim2.new(0, 90 * uiScaleMultiplier, 0, 28 * uiScaleMultiplier)
+				BoxBG.Position = UDim2.new(1, -100, 0.5, -14)
+				BoxBG.Size = UDim2.new(0, 90, 0, 28)
 				BoxBG.AutoButtonColor = false
 				BoxBG.Text = ""
 				
@@ -1339,8 +1297,22 @@ function library.new(library, name, theme)
 				TB.TextSize = 14
 				TB.ClearTextOnFocus = false
 				
+				local lastText = default
+				TB.MouseButton1Click:Connect(function()
+					lastText = TB.Text
+					TB.Text = ""
+				end)
+				
+				TB.FocusLost:Connect(function()
+					if TB.Text == "" then
+						TB.Text = lastText
+					end
+					library.flags[flag] = TB.Text
+					callback(TB.Text)
+				end)
+				
 				TextboxBack:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
-					BoxBG.Position = UDim2.new(1, -100 * uiScaleMultiplier, 0.5, -14 * uiScaleMultiplier)
+					BoxBG.Position = UDim2.new(1, -100, 0.5, -14)
 				end)
 				
 				TB.FocusLost:Connect(function()
@@ -1352,10 +1324,10 @@ function library.new(library, name, theme)
 				end)
 				
 				TB:GetPropertyChangedSignal("TextBounds"):Connect(function()
-					BoxBG.Size = UDim2.new(0, TB.TextBounds.X + 40 * uiScaleMultiplier, 0, 28 * uiScaleMultiplier)
+					BoxBG.Size = UDim2.new(0, TB.TextBounds.X + 40, 0, 28)
 				end)
 				
-				BoxBG.Size = UDim2.new(0, TB.TextBounds.X + 40 * uiScaleMultiplier, 0, 28 * uiScaleMultiplier)
+				BoxBG.Size = UDim2.new(0, TB.TextBounds.X + 40, 0, 28)
 				
 				local funcs = {
 					GetValue = function() return TB.Text end,
@@ -1388,7 +1360,7 @@ function library.new(library, name, theme)
 				SliderModule.Parent = Objs
 				SliderModule.BackgroundTransparency = 1
 				SliderModule.ClipsDescendants = true
-				SliderModule.Size = UDim2.new(1, 0, 0, 40 * uiScaleMultiplier)
+				SliderModule.Size = UDim2.new(1, 0, 0, 40)
 				
 				local SliderBack = Instance.new("TextButton")
 				SliderBack.Name = "SliderBack"
@@ -1419,11 +1391,11 @@ function library.new(library, name, theme)
 				SliderBar.BackgroundColor3 = Colors.Primary
 				SliderBar.BackgroundTransparency = 0.5
 				SliderBar.BorderSizePixel = 0
-				SliderBar.Position = UDim2.new(0.5, -60 * uiScaleMultiplier, 0.5, 0)
-				SliderBar.Size = UDim2.new(0, 120 * uiScaleMultiplier, 0, 6 * uiScaleMultiplier)
+				SliderBar.Position = UDim2.new(0.5, -60, 0.5, 0)
+				SliderBar.Size = UDim2.new(0, 120, 0, 6)
 				
 				local SliderBarC = Instance.new("UICorner")
-				SliderBarC.CornerRadius = UDim.new(0, 3 * uiScaleMultiplier)
+				SliderBarC.CornerRadius = UDim.new(0, 3)
 				SliderBarC.Parent = SliderBar
 				
 				local SliderPart = Instance.new("Frame")
@@ -1433,7 +1405,7 @@ function library.new(library, name, theme)
 				SliderPart.Size = UDim2.new(0.5, 0, 1, 0)
 				
 				local SliderPartC = Instance.new("UICorner")
-				SliderPartC.CornerRadius = UDim.new(0, 3 * uiScaleMultiplier)
+				SliderPartC.CornerRadius = UDim.new(0, 3)
 				SliderPartC.Parent = SliderPart
 				
 				local SliderValBG = Instance.new("TextButton")
@@ -1441,8 +1413,8 @@ function library.new(library, name, theme)
 				SliderValBG.Parent = SliderBack
 				SliderValBG.BackgroundColor3 = Colors.Primary
 				SliderValBG.BackgroundTransparency = 0.5
-				SliderValBG.Position = UDim2.new(1, -45 * uiScaleMultiplier, 0.5, -14 * uiScale_multiplier)
-				SliderValBG.Size = UDim2.new(0, 40 * uiScaleMultiplier, 0, 28 * uiScaleMultiplier)
+				SliderValBG.Position = UDim2.new(1, -45, 0.5, -14)
+				SliderValBG.Size = UDim2.new(0, 40, 0, 28)
 				SliderValBG.AutoButtonColor = false
 				SliderValBG.Font = Enum.Font.Gotham
 				SliderValBG.Text = ""
@@ -1465,8 +1437,8 @@ function library.new(library, name, theme)
 				MinSlider.Name = "MinSlider"
 				MinSlider.Parent = SliderBack
 				MinSlider.BackgroundTransparency = 1
-				MinSlider.Position = UDim2.new(0.5, -85 * uiScaleMultiplier, 0.5, -10 * uiScaleMultiplier)
-				MinSlider.Size = UDim2.new(0, 20 * uiScaleMultiplier, 0, 20 * uiScaleMultiplier)
+				MinSlider.Position = UDim2.new(0.5, -85, 0.5, -10)
+				MinSlider.Size = UDim2.new(0, 20, 0, 20)
 				MinSlider.Font = Enum.Font.GothamBold
 				MinSlider.Text = "-"
 				MinSlider.TextColor3 = Colors.Text
@@ -1477,8 +1449,8 @@ function library.new(library, name, theme)
 				AddSlider.Parent = SliderBack
 				AddSlider.AnchorPoint = Vector2.new(0, 0.5)
 				AddSlider.BackgroundTransparency = 1
-				AddSlider.Position = UDim2.new(0.5, 70 * uiScale_multiplier, 0.5, -10 * uiScale_multiplier)
-				AddSlider.Size = UDim2.new(0, 20 * uiScale_multiplier, 0, 20 * uiScale_multiplier)
+				AddSlider.Position = UDim2.new(0.5, 70, 0.5, -10)
+				AddSlider.Size = UDim2.new(0, 20, 0, 20)
 				AddSlider.Font = Enum.Font.GothamBold
 				AddSlider.Text = "+"
 				AddSlider.TextColor3 = Colors.Text
@@ -1582,14 +1554,14 @@ function library.new(library, name, theme)
 				DropdownModule.Parent = Objs
 				DropdownModule.BackgroundTransparency = 1
 				DropdownModule.ClipsDescendants = true
-				DropdownModule.Size = UDim2.new(1, 0, 0, 40 * uiScale_multiplier)
+				DropdownModule.Size = UDim2.new(1, 0, 0, 40)
 				
 				local DropdownTop = Instance.new("TextButton")
 				DropdownTop.Name = "DropdownTop"
 				DropdownTop.Parent = DropdownModule
 				DropdownTop.BackgroundColor3 = Colors.Secondary
 				DropdownTop.BackgroundTransparency = 0.3
-				DropdownTop.Size = UDim2.new(1, 0, 0, 40 * uiScale_multiplier)
+				DropdownTop.Size = UDim2.new(1, 0, 0, 40)
 				DropdownTop.AutoButtonColor = false
 				DropdownTop.Font = Enum.Font.GothamSemibold
 				DropdownTop.Text = ""
@@ -1606,8 +1578,8 @@ function library.new(library, name, theme)
 				DropdownText.Name = "DropdownText"
 				DropdownText.Parent = DropdownTop
 				DropdownText.BackgroundTransparency = 1
-				DropdownText.Position = UDim2.new(0, 40 * uiScale_multiplier, 0, 0)
-				DropdownText.Size = UDim2.new(1, -70 * uiScale_multiplier, 1, 0)
+				DropdownText.Position = UDim2.new(0, 40, 0, 0)
+				DropdownText.Size = UDim2.new(1, -70, 1, 0)
 				DropdownText.Font = Enum.Font.GothamSemibold
 				DropdownText.PlaceholderText = text
 				DropdownText.Text = ""
@@ -1617,13 +1589,25 @@ function library.new(library, name, theme)
 				DropdownText.ClearTextOnFocus = false
 				DropdownText.RichText = false
 				
+				local lastDropdownText = ""
+				DropdownText.MouseButton1Click:Connect(function()
+					lastDropdownText = DropdownText.Text
+					DropdownText.Text = ""
+				end)
+				
+				DropdownText.FocusLost:Connect(function()
+					if DropdownText.Text == "" then
+						DropdownText.Text = lastDropdownText
+					end
+				end)
+				
 				local DropdownOpen = Instance.new("TextButton")
 				DropdownOpen.Name = "DropdownOpen"
 				DropdownOpen.Parent = DropdownTop
 				DropdownOpen.AnchorPoint = Vector2.new(0, 0.5)
 				DropdownOpen.BackgroundTransparency = 1
-				DropdownOpen.Position = UDim2.new(1, -30 * uiScale_multiplier, 0.5, 0)
-				DropdownOpen.Size = UDim2.new(0, 20 * uiScale_multiplier, 0, 20 * uiScale_multiplier)
+				DropdownOpen.Position = UDim2.new(1, -30, 0.5, 0)
+				DropdownOpen.Size = UDim2.new(0, 20, 0, 20)
 				DropdownOpen.Font = Enum.Font.GothamBold
 				DropdownOpen.Text = "+"
 				DropdownOpen.TextColor3 = Colors.Text
@@ -1633,7 +1617,7 @@ function library.new(library, name, theme)
 				DropdownModuleL.Name = "DropdownModuleL"
 				DropdownModuleL.Parent = DropdownModule
 				DropdownModuleL.SortOrder = Enum.SortOrder.LayoutOrder
-				DropdownModuleL.Padding = UDim.new(0, 4 * uiScale_multiplier)
+				DropdownModuleL.Padding = UDim.new(0, 4)
 				
 				local open = false
 				local funcs = {
@@ -1644,7 +1628,7 @@ function library.new(library, name, theme)
 						Option.Parent = DropdownModule
 						Option.BackgroundColor3 = Colors.Secondary
 						Option.BackgroundTransparency = 0.3
-						Option.Size = UDim2.new(1, 0, 0, 32 * uiScale_multiplier)
+						Option.Size = UDim2.new(1, 0, 0, 32)
 						Option.AutoButtonColor = false
 						Option.Font = Enum.Font.Gotham
 						Option.Text = option
@@ -1663,7 +1647,7 @@ function library.new(library, name, theme)
 						Option.MouseButton1Click:Connect(function()
 							open = false
 							DropdownOpen.Text = "+"
-							Tween(DropdownModule, 0.2, "Sine", "Out", { Size = UDim2.new(1, 0, 0, 40 * uiScale_multiplier) })
+							Tween(DropdownModule, 0.2, "Sine", "Out", { Size = UDim2.new(1, 0, 0, 40) })
 							callback(Option.Text)
 							DropdownText.Text = Option.Text
 							library.flags[flag] = Option.Text
@@ -1693,7 +1677,7 @@ function library.new(library, name, theme)
 						open = not open
 						DropdownOpen.Text = (open and "-" or "+")
 						Tween(DropdownModule, 0.2, "Sine", "Out", {
-							Size = UDim2.new(1, 0, 0, (open and DropdownModuleL.AbsoluteContentSize.Y + 4 * uiScale_multiplier or 40 * uiScale_multiplier))
+							Size = UDim2.new(1, 0, 0, (open and DropdownModuleL.AbsoluteContentSize.Y + 4 or 40))
 						})
 					end
 				}
@@ -1704,7 +1688,7 @@ function library.new(library, name, theme)
 				
 				DropdownModuleL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 					if open then
-						Tween(DropdownModule, 0.2, "Sine", "Out", { Size = UDim2.new(1, 0, 0, DropdownModuleL.AbsoluteContentSize.Y + 4 * uiScale_multiplier) })
+						Tween(DropdownModule, 0.2, "Sine", "Out", { Size = UDim2.new(1, 0, 0, DropdownModuleL.AbsoluteContentSize.Y + 4) })
 					end
 				end)
 				
@@ -1725,7 +1709,7 @@ function library.new(library, name, theme)
 				ColorModule.Parent = Objs
 				ColorModule.BackgroundTransparency = 1
 				ColorModule.ClipsDescendants = true
-				ColorModule.Size = UDim2.new(1, 0, 0, 40 * uiScale_multiplier)
+				ColorModule.Size = UDim2.new(1, 0, 0, 40)
 				
 				local ColorBack = Instance.new("TextButton")
 				ColorBack.Name = "ColorBack"
@@ -1753,8 +1737,8 @@ function library.new(library, name, theme)
 				ColorPreview.Name = "ColorPreview"
 				ColorPreview.Parent = ColorBack
 				ColorPreview.BackgroundColor3 = library.flags[flag]
-				ColorPreview.Position = UDim2.new(1, -40 * uiScale_multiplier, 0.5, -12 * uiScale_multiplier)
-				ColorPreview.Size = UDim2.new(0, 24 * uiScale_multiplier, 0, 24 * uiScale_multiplier)
+				ColorPreview.Position = UDim2.new(1, -40, 0.5, -12)
+				ColorPreview.Size = UDim2.new(0, 24, 0, 24)
 				ColorPreview.BorderSizePixel = 0
 				
 				local ColorPreviewC = Instance.new("UICorner")
@@ -1766,8 +1750,8 @@ function library.new(library, name, theme)
 				ColorPickerFrame.Parent = ColorModule
 				ColorPickerFrame.BackgroundColor3 = Colors.Secondary
 				ColorPickerFrame.BackgroundTransparency = 0.2
-				ColorPickerFrame.Size = UDim2.new(1, 0, 0, 180 * uiScale_multiplier)
-				ColorPickerFrame.Position = UDim2.new(0, 0, 0, 40 * uiScale_multiplier)
+				ColorPickerFrame.Size = UDim2.new(1, 0, 0, 180)
+				ColorPickerFrame.Position = UDim2.new(0, 0, 0, 40)
 				ColorPickerFrame.Visible = false
 				ColorPickerFrame.ZIndex = 5
 				
@@ -1779,14 +1763,14 @@ function library.new(library, name, theme)
 				HueWheel.Name = "HueWheel"
 				HueWheel.Parent = ColorPickerFrame
 				HueWheel.BackgroundTransparency = 1
-				HueWheel.Position = UDim2.new(0, 10 * uiScale_multiplier, 0, 10 * uiScale_multiplier)
-				HueWheel.Size = UDim2.new(0, 120 * uiScale_multiplier, 0, 120 * uiScale_multiplier)
+				HueWheel.Position = UDim2.new(0, 10, 0, 10)
+				HueWheel.Size = UDim2.new(0, 120, 0, 120)
 				HueWheel.Image = "rbxassetid://6020299385"
 				HueWheel.ImageTransparency = 0.2
 				HueWheel.ZIndex = 6
 				
 				local HueWheelC = Instance.new("UICorner")
-				HueWheelC.CornerRadius = UDim.new(0, 60 * uiScale_multiplier)
+				HueWheelC.CornerRadius = UDim.new(0, 60)
 				HueWheelC.Parent = HueWheel
 				
 				local HuePicker = Instance.new("Frame")
@@ -1795,21 +1779,21 @@ function library.new(library, name, theme)
 				HuePicker.BackgroundColor3 = Colors.White
 				HuePicker.BackgroundTransparency = 0.3
 				HuePicker.BorderSizePixel = 0
-				HuePicker.Size = UDim2.new(0, 8 * uiScale_multiplier, 0, 8 * uiScale_multiplier)
+				HuePicker.Size = UDim2.new(0, 8, 0, 8)
 				HuePicker.ZIndex = 7
 				local HuePickerC = Instance.new("UICorner")
-				HuePickerC.CornerRadius = UDim.new(0, 4 * uiScale_multiplier)
+				HuePickerC.CornerRadius = UDim.new(0, 4)
 				HuePickerC.Parent = HuePicker
 				
 				local BrightnessBar = Instance.new("ImageButton")
 				BrightnessBar.Name = "BrightnessBar"
 				BrightnessBar.Parent = ColorPickerFrame
 				BrightnessBar.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-				BrightnessBar.Position = UDim2.new(0, 140 * uiScale_multiplier, 0, 10 * uiScale_multiplier)
-				BrightnessBar.Size = UDim2.new(0, 20 * uiScale_multiplier, 0, 120 * uiScale_multiplier)
+				BrightnessBar.Position = UDim2.new(0, 140, 0, 10)
+				BrightnessBar.Size = UDim2.new(0, 20, 0, 120)
 				BrightnessBar.ZIndex = 6
 				local BrightnessBarC = Instance.new("UICorner")
-				BrightnessBarC.CornerRadius = UDM.new(0, 4 * uiScale_multiplier)
+				BrightnessBarC.CornerRadius = UDim.new(0, 4)
 				BrightnessBarC.Parent = BrightnessBar
 				
 				local BrightnessGradient = Instance.new("UIGradient")
@@ -1826,25 +1810,25 @@ function library.new(library, name, theme)
 				BrightnessPicker.BackgroundColor3 = Colors.White
 				BrightnessPicker.BackgroundTransparency = 0.5
 				BrightnessPicker.BorderSizePixel = 0
-				BrightnessPicker.Size = UDim2.new(1, 0, 0, 4 * uiScale_multiplier)
+				BrightnessPicker.Size = UDim2.new(1, 0, 0, 4)
 				BrightnessPicker.Position = UDim2.new(0, 0, 0, 0)
 				BrightnessPicker.ZIndex = 7
 				local BrightnessPickerC = Instance.new("UICorner")
-				BrightnessPickerC.CornerRadius = UDim.new(0, 2 * uiScale_multiplier)
+				BrightnessPickerC.CornerRadius = UDim.new(0, 2)
 				BrightnessPickerC.Parent = BrightnessPicker
 				
 				local RGBInputs = Instance.new("Frame")
 				RGBInputs.Name = "RGBInputs"
 				RGBInputs.Parent = ColorPickerFrame
 				RGBInputs.BackgroundTransparency = 1
-				RGBInputs.Position = UDim2.new(0, 10 * uiScale_multiplier, 0, 140 * uiScale_multiplier)
-				RGBInputs.Size = UDim2.new(1, -20 * uiScale_multiplier, 0, 30 * uiScale_multiplier)
+				RGBInputs.Position = UDim2.new(0, 10, 0, 140)
+				RGBInputs.Size = UDim2.new(1, -20, 0, 30)
 				RGBInputs.ZIndex = 6
 				
 				local RGBLayout = Instance.new("UIListLayout")
 				RGBLayout.Parent = RGBInputs
 				RGBLayout.FillDirection = Enum.FillDirection.Horizontal
-				RGBLayout.Padding = UDim.new(0, 5 * uiScale_multiplier)
+				RGBLayout.Padding = UDim.new(0, 5)
 				RGBLayout.SortOrder = Enum.SortOrder.LayoutOrder
 				
 				local RBox = Instance.new("TextBox")
@@ -1852,7 +1836,7 @@ function library.new(library, name, theme)
 				RBox.Parent = RGBInputs
 				RBox.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
 				RBox.BackgroundTransparency = 0.3
-				RBox.Size = UDim2.new(0, 50 * uiScale_multiplier, 1, 0)
+				RBox.Size = UDim2.new(0, 50, 1, 0)
 				RBox.Font = Enum.Font.Gotham
 				RBox.PlaceholderText = "R"
 				RBox.Text = "255"
@@ -1860,7 +1844,7 @@ function library.new(library, name, theme)
 				RBox.TextSize = 14
 				RBox.ClearTextOnFocus = false
 				local RBoxC = Instance.new("UICorner")
-				RBoxC.CornerRadius = UDim.new(0, 4 * uiScale_multiplier)
+				RBoxC.CornerRadius = UDim.new(0, 4)
 				RBoxC.Parent = RBox
 				
 				local GBox = Instance.new("TextBox")
@@ -1868,7 +1852,7 @@ function library.new(library, name, theme)
 				GBox.Parent = RGBInputs
 				GBox.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
 				GBox.BackgroundTransparency = 0.3
-				GBox.Size = UDim2.new(0, 50 * uiScale_multiplier, 1, 0)
+				GBox.Size = UDim2.new(0, 50, 1, 0)
 				GBox.Font = Enum.Font.Gotham
 				GBox.PlaceholderText = "G"
 				GBox.Text = "255"
@@ -1876,7 +1860,7 @@ function library.new(library, name, theme)
 				GBox.TextSize = 14
 				GBox.ClearTextOnFocus = false
 				local GBoxC = Instance.new("UICorner")
-				GBoxC.CornerRadius = UDim.new(0, 4 * uiScale_multiplier)
+				GBoxC.CornerRadius = UDim.new(0, 4)
 				GBoxC.Parent = GBox
 				
 				local BBox = Instance.new("TextBox")
@@ -1884,7 +1868,7 @@ function library.new(library, name, theme)
 				BBox.Parent = RGBInputs
 				BBox.BackgroundColor3 = Color3.fromRGB(50, 50, 200)
 				BBox.BackgroundTransparency = 0.3
-				BBox.Size = UDM2.new(0, 50 * uiScale_multiplier, 1, 0)
+				BBox.Size = UDim2.new(0, 50, 1, 0)
 				BBox.Font = Enum.Font.Gotham
 				BBox.PlaceholderText = "B"
 				BBox.Text = "255"
@@ -1892,7 +1876,7 @@ function library.new(library, name, theme)
 				BBox.TextSize = 14
 				BBox.ClearTextOnFocus = false
 				local BBoxC = Instance.new("UICorner")
-				BBoxC.CornerRadius = UDM.new(0, 4 * uiScale_multiplier)
+				BBoxC.CornerRadius = UDim.new(0, 4)
 				BBoxC.Parent = BBox
 				
 				local HexBox = Instance.new("TextBox")
@@ -1900,7 +1884,7 @@ function library.new(library, name, theme)
 				HexBox.Parent = RGBInputs
 				HexBox.BackgroundColor3 = Colors.Primary
 				HexBox.BackgroundTransparency = 0.5
-				HexBox.Size = UDM2.new(0, 80 * uiScale_multiplier, 1, 0)
+				HexBox.Size = UDim2.new(0, 80, 1, 0)
 				HexBox.Font = Enum.Font.Gotham
 				HexBox.PlaceholderText = "Hex"
 				HexBox.Text = "#FFFFFF"
@@ -1908,7 +1892,7 @@ function library.new(library, name, theme)
 				HexBox.TextSize = 14
 				HexBox.ClearTextOnFocus = false
 				local HexBoxC = Instance.new("UICorner")
-				HexBoxC.CornerRadius = UDM.new(0, 4 * uiScale_multiplier)
+				HexBoxC.CornerRadius = UDim.new(0, 4)
 				HexBoxC.Parent = HexBox
 				
 				local currentHSV = {0, 1, 1}
@@ -1943,8 +1927,8 @@ function library.new(library, name, theme)
 					ColorPreview.BackgroundColor3 = currentColor
 					library.flags[flag] = currentColor
 					
-					HuePicker.Position = UDim2.new(0.5 + math.cos(math.rad(h)) * s * 0.4, -4 * uiScale_multiplier, 0.5 - math.sin(math.rad(h)) * s * 0.4, -4 * uiScale_multiplier)
-					BrightnessPicker.Position = UDim2.new(0, 0, 0, math.clamp((1 - v) * 120 * uiScale_multiplier, 0, 120 * uiScale_multiplier))
+					HuePicker.Position = UDim2.new(0.5 + math.cos(math.rad(h)) * s * 0.4, -4, 0.5 - math.sin(math.rad(h)) * s * 0.4, -4)
+					BrightnessPicker.Position = UDim2.new(0, 0, 0, math.clamp((1 - v) * 120, 0, 120))
 					
 					local baseColor = HSVtoRGB(h, 1, 1)
 					BrightnessBar.BackgroundColor3 = baseColor
@@ -1969,8 +1953,8 @@ function library.new(library, name, theme)
 					ColorPreview.BackgroundColor3 = currentColor
 					library.flags[flag] = currentColor
 					
-					HuePicker.Position = UDim2.new(0.5 + math.cos(math.rad(h)) * s * 0.4, -4 * uiScale_multiplier, 0.5 - math.sin(math.rad(h)) * s * 0.4, -4 * uiScale_multiplier)
-					BrightnessPicker.Position = UDim2.new(0, 0, 0, math.clamp((1 - v) * 120 * uiScale_multiplier, 0, 120 * uiScale_multiplier))
+					HuePicker.Position = UDim2.new(0.5 + math.cos(math.rad(h)) * s * 0.4, -4, 0.5 - math.sin(math.rad(h)) * s * 0.4, -4)
+					BrightnessPicker.Position = UDim2.new(0, 0, 0, math.clamp((1 - v) * 120, 0, 120))
 					
 					local baseColor = HSVtoRGB(h, 1, 1)
 					BrightnessBar.BackgroundColor3 = baseColor
@@ -1981,6 +1965,55 @@ function library.new(library, name, theme)
 					
 					callback(currentColor)
 				end
+				
+				local lastRBoxText = RBox.Text
+				local lastGBoxText = GBox.Text
+				local lastBBoxText = BBox.Text
+				local lastHexBoxText = HexBox.Text
+				
+				RBox.MouseButton1Click:Connect(function()
+					lastRBoxText = RBox.Text
+					RBox.Text = ""
+				end)
+				
+				GBox.MouseButton1Click:Connect(function()
+					lastGBoxText = GBox.Text
+					GBox.Text = ""
+				end)
+				
+				BBox.MouseButton1Click:Connect(function()
+					lastBBoxText = BBox.Text
+					BBox.Text = ""
+				end)
+				
+				HexBox.MouseButton1Click:Connect(function()
+					lastHexBoxText = HexBox.Text
+					HexBox.Text = ""
+				end)
+				
+				RBox.FocusLost:Connect(function()
+					if RBox.Text == "" then
+						RBox.Text = lastRBoxText
+					end
+				end)
+				
+				GBox.FocusLost:Connect(function()
+					if GBox.Text == "" then
+						GBox.Text = lastGBoxText
+					end
+				end)
+				
+				BBox.FocusLost:Connect(function()
+					if BBox.Text == "" then
+						BBox.Text = lastBBoxText
+					end
+				end)
+				
+				HexBox.FocusLost:Connect(function()
+					if HexBox.Text == "" then
+						HexBox.Text = lastHexBoxText
+					end
+				end)
 				
 				RBox.FocusLost:Connect(updateColorFromRGB)
 				GBox.FocusLost:Connect(updateColorFromRGB)
@@ -2021,7 +2054,7 @@ function library.new(library, name, theme)
 							local distance = math.min(delta.Magnitude / (HueWheel.AbsoluteSize.X/2), 1)
 							currentHSV = {angle, distance, currentHSV[3]}
 							
-							HuePicker.Position = UDim2.new(0.5 + math.cos(math.rad(angle)) * distance * 0.4, -4 * uiScale_multiplier, 0.5 - math.sin(math.rad(angle)) * distance * 0.4, -4 * uiScale_multiplier)
+							HuePicker.Position = UDim2.new(0.5 + math.cos(math.rad(angle)) * distance * 0.4, -4, 0.5 - math.sin(math.rad(angle)) * distance * 0.4, -4)
 							
 							local baseColor = HSVtoRGB(angle, 1, 1)
 							BrightnessBar.BackgroundColor3 = baseColor
@@ -2034,7 +2067,7 @@ function library.new(library, name, theme)
 							local percent = math.clamp(pos / BrightnessBar.AbsoluteSize.Y, 0, 1)
 							
 							currentHSV[3] = 1 - percent
-							BrightnessPicker.Position = UDim2.new(0, 0, 0, percent * 120 * uiScale_multiplier)
+							BrightnessPicker.Position = UDim2.new(0, 0, 0, percent * 120)
 							
 							updateColorFromHSV()
 						end
@@ -2044,9 +2077,9 @@ function library.new(library, name, theme)
 				ColorBack.MouseButton1Click:Connect(function()
 					ColorPickerFrame.Visible = not ColorPickerFrame.Visible
 					if ColorPickerFrame.Visible then
-						ColorModule.Size = UDim2.new(1, 0, 0, 220 * uiScale_multiplier)
+						ColorModule.Size = UDim2.new(1, 0, 0, 220)
 					else
-						ColorModule.Size = UDim2.new(1, 0, 0, 40 * uiScale_multiplier)
+						ColorModule.Size = UDim2.new(1, 0, 0, 40)
 					end
 				end)
 				
@@ -2064,8 +2097,8 @@ function library.new(library, name, theme)
 						
 						ColorPreview.BackgroundColor3 = color
 						
-						HuePicker.Position = UDim2.new(0.5 + math.cos(math.rad(h)) * s * 0.4, -4 * uiScale_multiplier, 0.5 - math.sin(math.rad(h)) * s * 0.4, -4 * uiScale_multiplier)
-						BrightnessPicker.Position = UDim2.new(0, 0, 0, math.clamp((1 - v) * 120 * uiScale_multiplier, 0, 120 * uiScale_multiplier))
+						HuePicker.Position = UDim2.new(0.5 + math.cos(math.rad(h)) * s * 0.4, -4, 0.5 - math.sin(math.rad(h)) * s * 0.4, -4)
+						BrightnessPicker.Position = UDim2.new(0, 0, 0, math.clamp((1 - v) * 120, 0, 120))
 						
 						local baseColor = HSVtoRGB(h, 1, 1)
 						BrightnessBar.BackgroundColor3 = baseColor
@@ -2101,24 +2134,30 @@ function library.new(library, name, theme)
 		return tab
 	end
 	
-	-- 优化3D渲染 - 更流畅的动态效果
-	local SCALE = 0.008 -- 更平滑的跟随
+	local SCALE = 0.01
 	local LookView = Vector3.new(0, 0.5, -10)
 	local dragOffset3D = Vector2.new(0, 0)
 	local dragging3D = false
 	local dragStart3D = Vector2.new(0, 0)
+	local autoRotate = false
+	local rotationSpeed = 5
 
 	TitleBar.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
 			dragging3D = true
 			dragStart3D = Vector2.new(input.Position.X, input.Position.Y)
 			dragOffset3D = Vector2.new(LookView.X, LookView.Y)
+			autoRotate = false
 		end
 	end)
 
 	TitleBar.InputEnded:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
 			dragging3D = false
+			wait(5)
+			if not dragging3D then
+				autoRotate = true
+			end
 		end
 	end)
 
@@ -2132,6 +2171,10 @@ function library.new(library, name, theme)
 	game:GetService("RunService").RenderStepped:Connect(function(dt)
 		if not canvasPart or not canvasPart.Parent then return end
 		
+		if autoRotate then
+			LookView = Vector3.new(LookView.X + rotationSpeed * dt, LookView.Y, LookView.Z)
+		end
+		
 		local offsetX = (mouse.X - mouse.ViewSizeX/2) * SCALE
 		local offsetY = (mouse.Y - mouse.ViewSizeY/2) * SCALE
 		
@@ -2140,8 +2183,16 @@ function library.new(library, name, theme)
 			* CFrame.Angles(0, math.rad(offsetX), 0)
 			* CFrame.Angles(math.rad(offsetY), 0, 0)
 		
-		-- 使用更平滑的插值
-		canvasPart.CFrame = canvasPart.CFrame:Lerp(goalCFrame, dt * 5)
+		services.TweenService:Create(canvasPart, TweenInfo.new(dt * 2), {
+			CFrame = goalCFrame
+		}):Play()
+	end)
+	
+	canvasPart:GetPropertyChangedSignal("CFrame"):Connect(function()
+		local light = game.Lighting
+		local sunDirection = -canvasPart.CFrame.LookVector
+		light.GeographicLatitude = 0
+		light.ClockTime = 12
 	end)
 	
 	function window:Set3DOffset(offsetVector)
