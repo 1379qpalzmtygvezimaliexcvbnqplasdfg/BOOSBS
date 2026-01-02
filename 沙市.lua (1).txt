@@ -1614,7 +1614,7 @@ function library.new(library, name, theme)
 	end
 	
 	-- 确保UI可见
-	Part.Transparency = 0
+	Part.Transparency = 1
 	
 	return window
 end
