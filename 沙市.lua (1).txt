@@ -25,8 +25,8 @@ local function getCurrentConfig()
         dragModeEnabled = false,
         faceCharacterEnabled = false,
         aiPanelEnabled = false,
-        customCommandsEnabled = false,
-        chatModeEnabled = false,
+        customCommandsEnabled = true,  -- 新增：自定义指令模式
+        chatModeEnabled = false,         -- 新增：聊天模式
         fontSize = "default",
         buttonStyle = "default",
         animationSpeed = "normal",
@@ -254,7 +254,7 @@ function library.new(library, name, theme)
 	dogent.Adornee = canvasPart
 	dogent.Face = Enum.NormalId.Back
 	dogent.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-	dogent.PixelsPerStud = 50
+	dogents.PixelsPerStud = 50
 	dogent.AlwaysOnTop = true
 	dogent.Parent = canvasPart
 
@@ -504,11 +504,13 @@ function library.new(library, name, theme)
 	ChatHistory.CanvasSize = UDim2.new(0, 0, 0, 0)
 	ChatHistory.ScrollBarThickness = 2
 	ChatHistory.ZIndex = 16
+    ChatHistory.ScrollBarImageColor3 = Colors.Secondary
 
 	local ChatHistoryL = Instance.new("UIListLayout")
 	ChatHistoryL.Parent = ChatHistory
 	ChatHistoryL.SortOrder = Enum.SortOrder.LayoutOrder
 	ChatHistoryL.Padding = UDim.new(0, 10)
+    ChatHistoryL.VerticalAlignment = Enum.VerticalAlignment.Bottom  -- 消息从底部开始排列
 
 	local InputFrame = Instance.new("Frame")
 	InputFrame.Name = "InputFrame"
@@ -567,6 +569,20 @@ function library.new(library, name, theme)
 	LoadingLabel.Visible = false
 	LoadingLabel.ZIndex = 18
 
+    -- 模式切换提示标签
+    local ModeIndicator = Instance.new("TextLabel")
+    ModeIndicator.Name = "ModeIndicator"
+    ModeIndicator.Parent = AIPanelFrame
+    ModeIndicator.BackgroundTransparency = 1
+    ModeIndicator.Position = UDim2.new(0, 15, 1, -85)
+    ModeIndicator.Size = UDim2.new(0, 200, 0, 20)
+    ModeIndicator.Font = Enum.Font.GothamSemibold
+    ModeIndicator.Text = "自定义指令模式"
+    ModeIndicator.TextColor3 = Colors.Accent
+    ModeIndicator.TextSize = 12
+    ModeIndicator.TextXAlignment = Enum.TextXAlignment.Left
+    ModeIndicator.ZIndex = 16
+
     -- 首次使用AI标志
     local isFirstTimeAI = true
 
@@ -585,9 +601,8 @@ function library.new(library, name, theme)
 		messageLabel.TextSize = 14
 		messageLabel.TextWrapped = true
 		messageLabel.RichText = true
-		-- 修正：用户消息左对齐，AI消息右对齐
-		messageLabel.TextXAlignment = isUser and Enum.TextXAlignment.Left or Enum.TextXAlignment.Right
-		messageLabel.TextColor3 = isUser and Colors.Text or Colors.Accent
+		messageLabel.TextXAlignment = isUser and Enum.TextXAlignment.Right or Enum.TextXAlignment.Left
+		messageLabel.TextColor3 = isUser and Colors.Accent or Colors.Text
 		messageLabel.Text = isUser and ("你: " .. text) or ("AI: " .. text)
 		messageLabel.ZIndex = 17
 
@@ -595,6 +610,9 @@ function library.new(library, name, theme)
 			local textHeight = messageLabel.TextBounds.Y
 			messageFrame.Size = UDim2.new(1, 0, 0, textHeight + 10)
 			ChatHistory.CanvasSize = UDim2.new(0, 0, 0, ChatHistoryL.AbsoluteContentSize.Y + 20)
+            
+            -- 自动滚动到底部
+            ChatHistory.CanvasPosition = Vector2.new(0, ChatHistory.CanvasSize.Y.Offset)
 		end)
 	end
 
@@ -656,51 +674,7 @@ function library.new(library, name, theme)
         if config.accentColor then
             local r, g, b = unpack(config.accentColor)
             local newColor = Color3.fromRGB(r, g, b)
-            Colors.Accent = newColor
-            saveColorConfig({accentColor = config.accentColor})
-            
-            -- 全面应用颜色到所有UI元素
-            for _, obj in pairs(Main:GetDescendants()) do
-                -- 背景色
-                if obj:IsA("Frame") or obj:IsA("TextButton") or obj:IsA("ImageButton") then
-                    if obj.BackgroundColor3 == Colors.Accent then
-                        Tween(obj, 0.3, "Sine", "Out", { BackgroundColor3 = newColor })
-                    end
-                end
-                
-                -- 文字颜色
-                if obj:IsA("TextLabel") or obj:IsA("TextBox") or obj:IsA("TextButton") then
-                    if obj.TextColor3 == Colors.Accent then
-                        Tween(obj, 0.3, "Sine", "Out", { TextColor3 = newColor })
-                    end
-                end
-                
-                -- 描边颜色
-                if obj:IsA("UIStroke") then
-                    if obj.Color == Colors.Accent then
-                        Tween(obj, 0.3, "Sine", "Out", { Color = newColor })
-                    end
-                end
-                
-                -- 图片颜色
-                if obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
-                    if obj.ImageColor3 == Colors.Accent then
-                        Tween(obj, 0.3, "Sine", "Out", { ImageColor3 = newColor })
-                    end
-                end
-            end
-            
-            -- 修改渐变颜色
-            local TitleGradient = Main:FindFirstChild("TitleBar"):FindFirstChild("ScriptTitle"):FindFirstChild("UIGradient")
-            if TitleGradient then
-                Tween(TitleGradient, 0.3, "Sine", "Out", { 
-                    Color = ColorSequence.new({
-                        ColorSequenceKeypoint.new(0.00, newColor),
-                        ColorSequenceKeypoint.new(0.50, newColor:Lerp(Color3.fromRGB(0,0,0), 0.2)),
-                        ColorSequenceKeypoint.new(1.00, newColor:Lerp(Color3.fromRGB(0,0,0), 0.4)),
-                    })
-                })
-            end
+            applyColorToAllUI(newColor)
         end
         
         -- 应用透明度
@@ -723,7 +697,7 @@ function library.new(library, name, theme)
             local size = sizeMap[config.fontSize] or 14
             for _, obj in pairs(Main:GetDescendants()) do
                 if obj:IsA("TextLabel") or obj:IsA("TextBox") or obj:IsA("TextButton") then
-                    if obj.TextSize then
+                    if obj.TextSize and obj.TextSize >= 12 and obj.TextSize <= 18 then
                         Tween(obj, 0.3, "Sine", "Out", { TextSize = size })
                     end
                 end
@@ -745,14 +719,6 @@ function library.new(library, name, theme)
             end
         end
         
-        -- 应用新指令状态
-        if config.customCommandsEnabled ~= nil then
-            customCommandsEnabled = config.customCommandsEnabled
-        end
-        if config.chatModeEnabled ~= nil then
-            chatModeEnabled = config.chatModeEnabled
-        end
-        
         -- 应用flags（开关、滑块、文本框等状态）
         if config.flags then
             for flag, value in pairs(config.flags) do
@@ -770,6 +736,12 @@ function library.new(library, name, theme)
         if config.faceCharacterEnabled ~= nil then
             faceCharacterEnabled = config.faceCharacterEnabled
         end
+        if config.customCommandsEnabled ~= nil then
+            customCommandsEnabled = config.customCommandsEnabled
+        end
+        if config.chatModeEnabled ~= nil then
+            chatModeEnabled = config.chatModeEnabled
+        end
         
         return true
     end
@@ -778,42 +750,65 @@ function library.new(library, name, theme)
     local function showAllCommands()
         addChatMessage("🎉 欢迎使用AI助手！以下是所有支持的指令：", false)
         wait(0.1)
-        addChatMessage("🎨 颜色：红/蓝/绿/黄/紫/橙/粉/青/黑/白/灰/金/银/默认/随机, 或 #FF0000", false)
+        addChatMessage("🎨 颜色修改：红/蓝/绿/黄/紫/橙/粉/青/黑/白/灰/金/银/默认/随机, 或 #FF0000", false)
         wait(0.05)
-        addChatMessage("📐 布局：紧凑/宽松/默认", false)
+        addChatMessage("📐 布局间距：紧凑/宽松/默认", false)
         wait(0.05)
         addChatMessage("💧 透明度：高/低/默认", false)
         wait(0.05)
-        addChatMessage("📏 尺寸：大/小/默认", false)
+        addChatMessage("📏 UI尺寸：大/小/默认", false)
         wait(0.05)
-        addChatMessage("✏️ 字体：字体大/字体小/字体默认", false)
+        addChatMessage("✏️ 字体大小：字体大/字体小/字体默认", false)
         wait(0.05)
-        addChatMessage("🎯 按钮：圆角/方形/默认", false)
+        addChatMessage("🎯 按钮样式：圆角/方形/默认", false)
         wait(0.05)
-        addChatMessage("⚡ 动画：动画快/动画慢/动画关闭", false)
+        addChatMessage("⚡ 动画速度：动画快/动画慢/动画关闭", false)
         wait(0.05)
-        addChatMessage("💾 保存：发送\"保存\"或\"保存配置\"", false)
+        addChatMessage("💾 保存配置：保存/保存配置", false)
         wait(0.05)
-        addChatMessage("📋 复制：发送\"复制配置\"或\"复制\"", false)
+        addChatMessage("📋 复制配置：复制配置/复制", false)
         wait(0.05)
-        addChatMessage("🔧 自定义：发送\"开启自定义指令\"或\"关闭自定义指令\"", false)
+        addChatMessage("🔄 重置UI：重置/恢复默认", false)
         wait(0.05)
-        addChatMessage("💬 聊天：发送\"开启聊天模式\"或\"关闭聊天模式\"", false)
+        addChatMessage("🎮 自定义指令：开启自定义指令/关闭自定义指令", false)
         wait(0.05)
-        addChatMessage("🔄 重置：发送\"重置\"或\"恢复默认\"", false)
+        addChatMessage("💬 聊天模式：开启聊天模式/关闭聊天模式", false)
         wait(0.05)
-        addChatMessage("📱 JSON：直接粘贴配置JSON即可", false)
+        addChatMessage("📱 应用JSON：直接粘贴配置JSON即可", false)
         wait(0.05)
-        addChatMessage("💡 提示：组合使用指令，如\"改成红色，紧凑布局，透明度低\"", false)
+        addChatMessage("💡 提示：你可以组合使用指令，如\"改成红色，紧凑布局，透明度低\"", false)
     end
 
-    -- 新模式状态
-    local customCommandsEnabled = false
-    local chatModeEnabled = false
+    -- 更新模式指示器
+    local function updateModeIndicator()
+        if chatModeEnabled then
+            ModeIndicator.Text = "💬 聊天模式"
+            ModeIndicator.TextColor3 = Color3.fromRGB(46, 204, 113)
+        elseif customCommandsEnabled then
+            ModeIndicator.Text = "🎮 自定义指令模式"
+            ModeIndicator.TextColor3 = Colors.Accent
+        else
+            ModeIndicator.Text = "🔒 标准模式"
+            ModeIndicator.TextColor3 = Colors.Placeholder
+        end
+    end
 
 	local function parseAIResponse(response)
 		local commands = {}
 		local lower = response:lower()
+		
+		-- 模式切换指令
+		if lower:match("开启自定义指令") or lower:match("enable custom commands") then
+			table.insert(commands, {type = "custom_mode", value = true})
+		elseif lower:match("关闭自定义指令") or lower:match("disable custom commands") then
+			table.insert(commands, {type = "custom_mode", value = false})
+		end
+		
+		if lower:match("开启聊天模式") or lower:match("enable chat mode") then
+			table.insert(commands, {type = "chat_mode", value = true})
+		elseif lower:match("关闭聊天模式") or lower:match("disable chat mode") then
+			table.insert(commands, {type = "chat_mode", value = false})
+		end
 		
 		-- 保存配置指令
 		if lower:match("保存") or lower:match("save config") then
@@ -829,20 +824,6 @@ function library.new(library, name, theme)
 		if response:match("^%s*{") and response:match("}$") then
 			table.insert(commands, {type = "apply_config", value = response})
 		end
-		
-        -- 自定义指令开关
-        if lower:match("开启自定义指令") or lower:match("enable custom") then
-            table.insert(commands, {type = "custom_commands", value = true})
-        elseif lower:match("关闭自定义指令") or lower:match("disable custom") then
-            table.insert(commands, {type = "custom_commands", value = false})
-        end
-        
-        -- 聊天模式开关
-        if lower:match("开启聊天模式") or lower:match("enable chat") or lower:match("打开聊天") then
-            table.insert(commands, {type = "chat_mode", value = true})
-        elseif lower:match("关闭聊天模式") or lower:match("disable chat") or lower:match("关闭聊天") then
-            table.insert(commands, {type = "chat_mode", value = false})
-        end
 		
 		-- 颜色修改（支持中英文）
 		local colorMap = {
@@ -1141,27 +1122,23 @@ function library.new(library, name, theme)
                     end
                 end
                 
-                -- 重置新模式
-                customCommandsEnabled = false
-                chatModeEnabled = false
-                
 				addChatMessage("🔄 UI已完全重置为默认设置！", false)
-            elseif cmd.type == "custom_commands" then
+            elseif cmd.type == "custom_mode" then
                 customCommandsEnabled = cmd.value
-                local status = cmd.value and "已开启" or "已关闭"
-                addChatMessage("🔧 自定义指令模式" .. status, false)
-                
-                -- 保存配置
-                local config = getCurrentConfig()
-                saveConfig(config)
+                updateModeIndicator()
+                if customCommandsEnabled then
+                    addChatMessage("✅ 已开启自定义指令模式", false)
+                else
+                    addChatMessage("❌ 已关闭自定义指令模式", false)
+                end
             elseif cmd.type == "chat_mode" then
                 chatModeEnabled = cmd.value
-                local status = cmd.value and "已开启" or "已关闭"
-                addChatMessage("💬 聊天模式" .. status, false)
-                
-                -- 保存配置
-                local config = getCurrentConfig()
-                saveConfig(config)
+                updateModeIndicator()
+                if chatModeEnabled then
+                    addChatMessage("✅ 已开启聊天模式", false)
+                else
+                    addChatMessage("❌ 已关闭聊天模式", false)
+                end
             elseif cmd.type == "save" then
                 local config = getCurrentConfig()
                 if saveConfig(config) then
@@ -1204,22 +1181,12 @@ function library.new(library, name, theme)
 		spawn(function()
 			local success, result = pcall(function()
 				local HttpService = game:GetService("HttpService")
-                
-                -- 根据模式调整系统提示
-                local systemPrompt = "你是一个UI助手，请根据用户指令返回简洁的修改建议。"
-                if chatModeEnabled then
-                    systemPrompt = systemPrompt .. "当前处于聊天模式，可以更自由地与用户交流。"
-                end
-                if customCommandsEnabled then
-                    systemPrompt = systemPrompt .. "自定义指令模式已开启，支持更多灵活指令。"
-                end
-                
 				local payload = {
 					model = MODEL,
 					messages = {
 						{
 							role = "system",
-							content = systemPrompt
+							content = "你是一个UI助手，请根据用户指令返回简洁的修改建议。对于颜色：只返回颜色名称或十六进制代码。对于布局：只返回布局类型。对于透明度：只返回透明度级别。对于尺寸：只返回尺寸类型。对于字体：只返回字体大小。对于按钮：只返回按钮样式。对于动画：只返回动画速度。对于保存/复制：返回相应指令。对于JSON配置：直接返回配置内容。对于模式切换：返回相应指令。如果你不确定用户的意图，或者聊天模式已开启，请直接进行友好对话。"
 						},
 						{
 							role = "user",
@@ -1253,21 +1220,25 @@ function library.new(library, name, theme)
 			if success then
 				addChatMessage(result, false)
                 
-                -- 在聊天模式下，不强制解析指令
-                if not chatModeEnabled then
-                    local commands = parseAIResponse(result)
-                    if #commands > 0 then
-                        applyCommands(commands)
-                    else
-                        addChatMessage("未识别到可执行指令，请尝试更明确的描述。发送\"帮助\"查看所有指令。", false)
-                    end
-                else
-                    -- 聊天模式下，仍然尝试解析指令，但失败时不提示
-                    local commands = parseAIResponse(result)
-                    if #commands > 0 then
-                        applyCommands(commands)
-                    end
+                -- 如果开启聊天模式，只显示消息不执行指令
+                if chatModeEnabled then
+                    return
                 end
+                
+                -- 如果关闭自定义指令模式，不解析指令
+                if not customCommandsEnabled then
+                    return
+                end
+                
+				local commands = parseAIResponse(result)
+				if #commands > 0 then
+					applyCommands(commands)
+				else
+					-- 如果没有识别到指令，显示提示
+                    if not chatModeEnabled then
+                        addChatMessage("未识别到可执行指令。发送\"帮助\"查看所有指令，或开启聊天模式进行对话。", false)
+                    end
+				end
 			else
 				addChatMessage("发生错误: " .. tostring(result), false)
 			end
@@ -1303,14 +1274,6 @@ function library.new(library, name, theme)
 	if autoFitEnabled then
 		autoFitUIScreen(Main)
 	end
-	
-    -- 恢复新模式状态
-    if currentConfig.customCommandsEnabled ~= nil then
-        customCommandsEnabled = currentConfig.customCommandsEnabled
-    end
-    if currentConfig.chatModeEnabled ~= nil then
-        chatModeEnabled = currentConfig.chatModeEnabled
-    end
 	
 	local scaleEnabled = false
 	
@@ -1941,6 +1904,12 @@ function library.new(library, name, theme)
 				local enabled = enabled or false
 				assert(text, "No text provided")
 				assert(flag, "No flag provided")
+				
+				-- 从配置中加载状态
+				if currentConfig.flags and currentConfig.flags[flag] ~= nil then
+					enabled = currentConfig.flags[flag]
+				end
+				
 				library.flags[flag] = enabled
 				table.insert(tabInfo.searchableComponents, text)
 				table.insert(sectionInfo.components, text)
@@ -2158,6 +2127,12 @@ function library.new(library, name, theme)
 				assert(text, "No text provided")
 				assert(flag, "No flag provided")
 				assert(default, "No default text provided")
+				
+				-- 从配置中加载值
+				if currentConfig.flags and currentConfig.flags[flag] ~= nil then
+					default = currentConfig.flags[flag]
+				end
+				
 				library.flags[flag] = default
 				table.insert(tabInfo.searchableComponents, text)
 				table.insert(sectionInfo.components, text)
@@ -2210,21 +2185,15 @@ function library.new(library, name, theme)
 				TB.BackgroundTransparency = 1
 				TB.Size = UDim2.new(1, 0, 1, 0)
 				TB.Font = Enum.Font.Gotham
-				TB.PlaceholderText = default
-				TB.Text = default
+				TB.PlaceholderText = tostring(default)
+				TB.Text = tostring(default)
 				TB.TextColor3 = Colors.Text
 				TB.PlaceholderColor3 = Colors.Placeholder
 				TB.TextSize = 14
 				TB.ClearTextOnFocus = true
-                
-                -- 从加载的配置中恢复值
-                if currentConfig.flags and currentConfig.flags[flag] ~= nil then
-                    TB.Text = tostring(currentConfig.flags[flag])
-                    library.flags[flag] = currentConfig.flags[flag]
-                end
 				
 				TB.Focused:Connect(function()
-					if TB.Text == default then
+					if TB.Text == tostring(default) then
 						TB.Text = ""
 					end
 				end)
@@ -2235,7 +2204,7 @@ function library.new(library, name, theme)
 				
 				TB.FocusLost:Connect(function()
 					if TB.Text == "" then
-						TB.Text = default
+						TB.Text = tostring(default)
 					end
 					library.flags[flag] = TB.Text
 					callback(TB.Text)
@@ -2274,6 +2243,12 @@ function library.new(library, name, theme)
 				local max = max or 10
 				local default = default or min
 				local precise = precise or false
+				
+				-- 从配置中加载值
+				if currentConfig.flags and currentConfig.flags[flag] ~= nil then
+					default = currentConfig.flags[flag]
+				end
+				
 				library.flags[flag] = default
 				assert(text, "No text provided")
 				assert(flag, "No flag provided")
@@ -2411,23 +2386,6 @@ function library.new(library, name, theme)
                         saveConfig(config)
 					end,
 				}
-                
-                -- 从加载的配置中恢复值
-                if currentConfig.flags and currentConfig.flags[flag] ~= nil then
-                    funcs:SetValue(currentConfig.flags[flag])
-                end
-				
-				MinSlider.MouseButton1Click:Connect(function()
-					local currentValue = library.flags[flag]
-					currentValue = math.clamp(currentValue - 1, min, max)
-					funcs:SetValue(currentValue)
-				end)
-				
-				AddSlider.MouseButton1Click:Connect(function()
-					local currentValue = library.flags[flag]
-					currentValue = math.clamp(currentValue + 1, min, max)
-					funcs:SetValue(currentValue)
-				end)
 				
 				funcs:SetValue(default)
 				
@@ -2667,11 +2625,18 @@ function library.new(library, name, theme)
 	local dragModeEnabled = false
 	local faceCharacterEnabled = false
 	local aiPanelEnabled = false
+    local customCommandsEnabled = true  -- 自定义指令模式
+    local chatModeEnabled = false       -- 聊天模式
 
     -- 从配置恢复UI模式
     if currentConfig.uiFollowEnabled ~= nil then uiFollowEnabled = currentConfig.uiFollowEnabled end
     if currentConfig.dragModeEnabled ~= nil then dragModeEnabled = currentConfig.dragModeEnabled end
     if currentConfig.faceCharacterEnabled ~= nil then faceCharacterEnabled = currentConfig.faceCharacterEnabled end
+    if currentConfig.customCommandsEnabled ~= nil then customCommandsEnabled = currentConfig.customCommandsEnabled end
+    if currentConfig.chatModeEnabled ~= nil then chatModeEnabled = currentConfig.chatModeEnabled end
+    
+    -- 更新模式指示器
+    updateModeIndicator()
 
 	FaceBtn.MouseButton1Click:Connect(function()
 		spawn(function()
