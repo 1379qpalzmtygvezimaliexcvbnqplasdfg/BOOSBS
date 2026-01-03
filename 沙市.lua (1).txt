@@ -116,45 +116,30 @@ local MODEL = "deepseek-ai/DeepSeek-V3.2"
 
 local PROXY_URL = "https://rproxy.kirbs.net"
 
-local function safeHttpGet(url)
-	local success, result = pcall(function()
-		return game:HttpGet(url, true)
-	end)
-	if success then
-		return result
-	end
-	return nil
-end
-
-local function fetchCatalogItems(cursor)
+local function fetchCatalogItems(itemType, cursor)
 	local endpoint = string.format("%s/v1/search/items?category=Animations&limit=100&cursor=%s", PROXY_URL, cursor)
-	local content = safeHttpGet(endpoint)
-	if content then
-		local success, data = pcall(function()
-			return game:GetService("HttpService"):JSONDecode(content)
-		end)
-		if success and data then
-			return {
-				items = data.data or {},
-				nextCursor = data.nextPageCursor
-			}
-		end
-	end
-	return {items = {}, nextCursor = ""}
+	local data = game:GetService("HttpService"):JSONDecode(game:HttpGet(endpoint))
+	return {
+		items = data.data,
+		nextCursor = data.nextPageCursor
+	}
 end
 
 local function fetchAssetDetails(assetIds)
 	local endpoint = string.format("%s/v1/assets?assetIds=%s", PROXY_URL, table.concat(assetIds, ","))
-	local content = safeHttpGet(endpoint)
-	if content then
-		local success, data = pcall(function()
-			return game:GetService("HttpService"):JSONDecode(content)
-		end)
-		if success and data then
-			return data.data or {}
+	return game:GetService("HttpService"):JSONDecode(game:HttpGet(endpoint)).data
+end
+
+local function fetchBundleItems(bundleId)
+	local endpoint = string.format("%s/v1/bundles/%s/bundleItems", PROXY_URL, bundleId)
+	local data = game:GetService("HttpService"):JSONDecode(game:HttpGet(endpoint))
+	local bundledItems = {}
+	for _, item in pairs(data.data) do
+		if item.type == "Asset" then
+			table.insert(bundledItems, item.id)
 		end
 	end
-	return {}
+	return bundledItems
 end
 
 local function CreateGlassEffect(instance, transparency)
@@ -292,7 +277,7 @@ function library.new(library, name, theme)
 	local dogent = Instance.new("SurfaceGui")
 	dogent.Name = "REN_3D"
 	dogent.Adornee = canvasPart
-	dogent.Face = Enum.NormalId.Front
+	dogent.Face = Enum.NormalId.Back
 	dogent.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
 	dogent.PixelsPerStud = 50
 	dogent.AlwaysOnTop = true
@@ -588,7 +573,6 @@ function library.new(library, name, theme)
 	AnimationsGrid.FillDirection = Enum.FillDirection.Horizontal
 	AnimationsGrid.HorizontalAlignment = Enum.HorizontalAlignment.Left
 	AnimationsGrid.VerticalAlignment = Enum.VerticalAlignment.Top
-	AnimationsGrid.StartCorner = Enum.StartCorner.TopLeft
 
 	local AnimationsLoading = Instance.new("TextLabel")
 	AnimationsLoading.Name = "AnimationsLoading"
@@ -732,8 +716,7 @@ function library.new(library, name, theme)
 		local messageLabel = Instance.new("TextLabel")
 		messageLabel.Parent = messageFrame
 		messageLabel.BackgroundTransparency = 1
-		messageLabel.Size = UDim2.new(1, -20, 1, 0)
-		messageLabel.Position = UDim2.new(isUser and 1 or 0, -20, 0, 0)
+		messageLabel.Size = UDim2.new(1, 0, 1, 0)
 		messageLabel.Font = Enum.Font.Gotham
 		messageLabel.TextSize = 14
 		messageLabel.TextWrapped = true
@@ -748,7 +731,7 @@ function library.new(library, name, theme)
 			local textHeight = messageLabel.TextBounds.Y
 			messageFrame.Size = UDim2.new(1, 0, 0, textHeight + 10)
 			ChatHistory.CanvasSize = UDim2.new(0, 0, 0, ChatHistoryL.AbsoluteContentSize.Y + 20)
-			ChatHistory.CanvasPosition = Vector2.new(0, ChatHistory.CanvasSize.Y.Offset)
+			ChatHistory.CanvasPosition = Vector2.new(0, ChatHistory.CanvasPosition.Y + textHeight + 10)
 		end)
 	end
 
@@ -886,9 +869,6 @@ function library.new(library, name, theme)
 		end
 		if config.aiCustomMode ~= nil then
 			aiCustomMode = config.aiCustomMode
-		end
-		if config.animationPageEnabled ~= nil then
-			animationPageEnabled = config.animationPageEnabled
 		end
 		
 		return true
@@ -1276,9 +1256,9 @@ function library.new(library, name, theme)
 				local HttpService = game:GetService("HttpService")
 				local systemContent
 				if aiCustomMode then
-					systemContent = "你是一个UI助手，请根据用户指令返回简洁的修改建议。对于颜色：只返回颜色名称或十六进制代码。对于布局：只返回布局类型。对于透明度：只返回透明度级别。对于尺寸：只返回尺寸类型。对于字体：只返回字体大小。对于按钮：只返回按钮样式。对于动画：只返回动画速度。对于保存/复制：返回相应指令。对于JSON配置：直接返回配置内容。对于帮助：返回帮助指令。"
+					systemContent = "你是一个UI自定义助手，请根据用户的请求分析其意图，并返回简洁的修改指令。支持的颜色：红/蓝/绿/黄/紫/橙/粉/青/黑/白/灰/金/银/默认，或十六进制代码。支持的布局：紧凑/宽松/默认。支持的透明度：高/低/默认。支持的尺寸：大/小/默认。支持的字体：大/小/默认。支持的按钮样式：圆角/方形/默认。支持的动画速度：快/慢/关闭/默认。支持的操作：保存/复制/重置/帮助。"
 				else
-					systemContent = "你是一个友好的AI助手，请用自然语言回应用户的消息。"
+					systemContent = "你是一个友好的AI助手，请用自然语言回应用户的消息。用户可能想聊天、寻求建议或询问信息。请以 helpful 和 friendly 的方式回应。"
 				end
 				
 				local payload = {
@@ -2735,7 +2715,6 @@ function library.new(library, name, theme)
 	if currentConfig.dragModeEnabled ~= nil then dragModeEnabled = currentConfig.dragModeEnabled end
 	if currentConfig.faceCharacterEnabled ~= nil then faceCharacterEnabled = currentConfig.faceCharacterEnabled end
 	if currentConfig.aiCustomMode ~= nil then aiCustomMode = currentConfig.aiCustomMode end
-	if currentConfig.animationPageEnabled ~= nil then animationPageEnabled = currentConfig.animationPageEnabled end
 
 	if aiCustomMode then
 		ModeToggleBtn.Text = "自定义模式"
@@ -2880,48 +2859,39 @@ function library.new(library, name, theme)
 			local success, result = pcall(function()
 				local cursor = ""
 				local allItems = {}
-				local maxPages = 5
-				local currentPage = 0
 				
 				repeat
-					currentPage = currentPage + 1
-					local data = fetchCatalogItems(cursor)
-					if data.items then
-						for _, item in ipairs(data.items) do
-							table.insert(allItems, {
-								id = item.id,
-								name = item.name,
-								thumbnailUrl = item.thumbnailUrl,
-								type = item.type
-							})
-						end
+					local data = fetchCatalogItems("Animations", cursor)
+					for _, item in ipairs(data.items) do
+						table.insert(allItems, item)
 					end
-					cursor = data.nextCursor or ""
+					cursor = data.nextCursor
 					wait(0.1)
-				until cursor == "" or currentPage >= maxPages
+				until cursor == "" or cursor == nil
 				
-				return allItems
+				for _, item in ipairs(allItems) do
+					if item.type == "Bundle" then
+						table.insert(animationBundles, {
+							id = item.id,
+							name = item.name,
+							thumbnailUrl = item.thumbnailUrl
+						})
+					else
+						table.insert(allAnimations, {
+							id = item.id,
+							name = item.name,
+							thumbnailUrl = item.thumbnailUrl
+						})
+					end
+				end
 			end)
 			
 			AnimationsLoading.Visible = false
 			
-			if success and result then
-				allAnimations = {}
-				animationBundles = {}
-				
-				for _, item in ipairs(result) do
-					if item.type == "Bundle" then
-						table.insert(animationBundles, item)
-					else
-						table.insert(allAnimations, item)
-					end
-				end
-				
+			if success then
 				updateAnimationsGrid()
-				addChatMessage("✅ 成功加载 " .. #allAnimations .. " 个动画和 " .. #animationBundles .. " 个动画包", false)
 			else
-				addChatMessage("❌ 加载动画失败: " .. tostring(result), false)
-				addChatMessage("💡 提示：可能需要使用VPN或代理才能访问动画商城", false)
+				addChatMessage("加载动画失败: " .. tostring(result), false)
 			end
 		end)
 	end
@@ -2955,9 +2925,6 @@ function library.new(library, name, theme)
 			Tween(AnimationsBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
 			Tween(AnimationsBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
 		end
-		
-		local config = getCurrentConfig()
-		saveConfig(config)
 	end)
 
 	FaceBtn.MouseButton1Click:Connect(function()
