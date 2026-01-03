@@ -25,6 +25,9 @@ local function getCurrentConfig()
         dragModeEnabled = false,
         faceCharacterEnabled = false,
         aiPanelEnabled = false,
+        fontSize = "default",
+        buttonStyle = "default",
+        animationSpeed = "normal",
         flags = {}
     }
     
@@ -562,6 +565,9 @@ function library.new(library, name, theme)
 	LoadingLabel.Visible = false
 	LoadingLabel.ZIndex = 18
 
+    -- 首次使用AI标志
+    local isFirstTimeAI = true
+
 	local function addChatMessage(text, isUser)
 		local messageFrame = Instance.new("Frame")
 		messageFrame.Parent = ChatHistory
@@ -589,7 +595,7 @@ function library.new(library, name, theme)
 		end)
 	end
 
-    -- 复制配置到剪贴板（生成可复制的文本）
+    -- 复制配置到剪贴板
     local function copyConfigToClipboard()
         local config = getCurrentConfig()
         local success, json = pcall(function()
@@ -650,13 +656,25 @@ function library.new(library, name, theme)
             Colors.Accent = newColor
             saveColorConfig({accentColor = config.accentColor})
             
+            -- 全面应用颜色到所有UI元素
             for _, obj in pairs(Main:GetDescendants()) do
-                if obj:IsA("Frame") and obj.BackgroundColor3 == Colors.Accent then
-                    Tween(obj, 0.3, "Sine", "Out", { BackgroundColor3 = newColor })
-                elseif obj:IsA("TextLabel") and obj.TextColor3 == Colors.Accent then
-                    Tween(obj, 0.3, "Sine", "Out", { TextColor3 = newColor })
-                elseif obj:IsA("UIStroke") and obj.Color == Colors.Accent then
+                if obj:IsA("Frame") or obj:IsA("TextButton") or obj:IsA("ImageButton") then
+                    if obj.BackgroundColor3 and obj.BackgroundColor3 == Colors.Accent then
+                        Tween(obj, 0.3, "Sine", "Out", { BackgroundColor3 = newColor })
+                    end
+                end
+                if obj:IsA("TextLabel") or obj:IsA("TextBox") or obj:IsA("TextButton") then
+                    if obj.TextColor3 and obj.TextColor3 == Colors.Accent then
+                        Tween(obj, 0.3, "Sine", "Out", { TextColor3 = newColor })
+                    end
+                end
+                if obj:IsA("UIStroke") and obj.Color == Colors.Accent then
                     Tween(obj, 0.3, "Sine", "Out", { Color = newColor })
+                end
+                if obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
+                    if obj.ImageColor3 and obj.ImageColor3 == Colors.Accent then
+                        Tween(obj, 0.3, "Sine", "Out", { ImageColor3 = newColor })
+                    end
                 end
             end
         end
@@ -667,6 +685,38 @@ function library.new(library, name, theme)
             for _, obj in pairs(Main:GetDescendants()) do
                 if obj.Name == "GlassEffect" then
                     obj.ImageTransparency = 1 - config.transparency + 0.5
+                end
+            end
+        end
+        
+        -- 应用字体大小
+        if config.fontSize then
+            local sizeMap = {
+                small = 12,
+                default = 14,
+                large = 16
+            }
+            local size = sizeMap[config.fontSize] or 14
+            for _, obj in pairs(Main:GetDescendants()) do
+                if obj:IsA("TextLabel") or obj:IsA("TextBox") or obj:IsA("TextButton") then
+                    if obj.TextSize then
+                        Tween(obj, 0.3, "Sine", "Out", { TextSize = size })
+                    end
+                end
+            end
+        end
+        
+        -- 应用按钮样式
+        if config.buttonStyle then
+            local radius = config.buttonStyle == "square" and UDim.new(0, 0) or 
+                          config.buttonStyle == "rounded" and UDim.new(0, 12) or 
+                          UDim.new(0, 6)
+            for _, obj in pairs(Main:GetDescendants()) do
+                if obj:IsA("Frame") or obj:IsA("TextButton") or obj:IsA("ImageButton") then
+                    local corner = obj:FindFirstChildOfClass("UICorner")
+                    if corner then
+                        Tween(corner, 0.3, "Sine", "Out", { CornerRadius = radius })
+                    end
                 end
             end
         end
@@ -692,21 +742,50 @@ function library.new(library, name, theme)
         return true
     end
 
+    -- 显示所有指令示例
+    local function showAllCommands()
+        addChatMessage("🎉 欢迎使用AI助手！以下是所有支持的指令：", false)
+        wait(0.1)
+        addChatMessage("🎨 颜色修改：红/蓝/绿/黄/紫/橙/粉/青/黑/白/灰/金/银/默认, 或 #FF0000", false)
+        wait(0.05)
+        addChatMessage("📐 布局间距：紧凑/宽松/默认", false)
+        wait(0.05)
+        addChatMessage("💧 透明度：高/低/默认", false)
+        wait(0.05)
+        addChatMessage("📏 UI尺寸：大/小/默认", false)
+        wait(0.05)
+        addChatMessage("✏️ 字体大小：字体大/字体小/字体默认", false)
+        wait(0.05)
+        addChatMessage("🎯 按钮样式：圆角/方形/默认", false)
+        wait(0.05)
+        addChatMessage("⚡ 动画速度：动画快/动画慢/动画关闭", false)
+        wait(0.05)
+        addChatMessage("💾 保存配置：发送\"保存\"或\"保存配置\"", false)
+        wait(0.05)
+        addChatMessage("📋 复制配置：发送\"复制配置\"或\"复制\"", false)
+        wait(0.05)
+        addChatMessage("🔄 重置UI：发送\"重置\"或\"恢复默认\"", false)
+        wait(0.05)
+        addChatMessage("📱 应用JSON：直接粘贴配置JSON即可", false)
+        wait(0.05)
+        addChatMessage("💡 提示：你可以组合使用指令，如\"改成红色，紧凑布局，透明度低\"", false)
+    end
+
 	local function parseAIResponse(response)
 		local commands = {}
 		local lower = response:lower()
 		
-		-- 新增：保存配置指令
+		-- 保存配置指令
 		if lower:match("保存") or lower:match("save config") then
 			table.insert(commands, {type = "save", value = true})
 		end
 		
-		-- 新增：复制配置指令
+		-- 复制配置指令
 		if lower:match("复制配置") or lower:match("copy config") then
 			table.insert(commands, {type = "copy", value = true})
 		end
 		
-		-- 新增：应用配置（JSON格式）
+		-- 应用配置（JSON格式）
 		if response:match("^%s*{") and response:match("}$") then
 			table.insert(commands, {type = "apply_config", value = response})
 		end
@@ -723,10 +802,11 @@ function library.new(library, name, theme)
 			["白"] = "#FFFFFF", ["white"] = "#FFFFFF",
 			["橙"] = "#FFA500", ["orange"] = "#FFA500",
 			["粉"] = "#FFC0CB", ["pink"] = "#FFC0CB",
-			["灰"] = "#808080", ["gray"] = "#808080",
+			["灰"] = "#808080", ["gray"] = "#808080", ["grey"] = "#808080",
 			["银"] = "#C0C0C0", ["silver"] = "#C0C0C0",
 			["金"] = "#FFD700", ["gold"] = "#FFD700",
-			["默认"] = "#3498DB", ["default"] = "#3498DB"
+			["默认"] = "#3498DB", ["default"] = "#3498DB",
+			["随机"] = "random", ["random"] = "random"
 		}
 		
 		local hex = response:match("#%x%x%x%x%x%x")
@@ -742,10 +822,10 @@ function library.new(library, name, theme)
 		end
 		
 		-- 布局间距
-		if lower:match("布局") or lower:match("layout") then
-			if lower:match("紧凑") or lower:match("compact") then
+		if lower:match("布局") or lower:match("layout") or lower:match("spacing") then
+			if lower:match("紧凑") or lower:match("compact") or lower:match("tight") then
 				table.insert(commands, {type = "spacing", value = "compact"})
-			elseif lower:match("宽松") or lower:match("spacious") then
+			elseif lower:match("宽松") or lower:match("spacious") or lower:match("wide") then
 				table.insert(commands, {type = "spacing", value = "spacious"})
 			elseif lower:match("默认") or lower:match("default") then
 				table.insert(commands, {type = "spacing", value = "default"})
@@ -753,58 +833,146 @@ function library.new(library, name, theme)
 		end
 		
 		-- 透明度
-		if lower:match("透明") or lower:match("transparent") or lower:match("透明度") then
-			if lower:match("高") or lower:match("high") then
+		if lower:match("透明") or lower:match("transparent") or lower:match("opacity") then
+			if lower:match("高") or lower:match("high") or lower:match("more") then
 				table.insert(commands, {type = "transparency", value = 0.7})
-			elseif lower:match("低") or lower:match("low") then
+			elseif lower:match("低") or lower:match("low") or lower:match("less") then
 				table.insert(commands, {type = "transparency", value = 0.2})
-			elseif lower:match("默认") or lower:match("default") then
+			elseif lower:match("默认") or lower:match("default") or lower:match("normal") then
 				table.insert(commands, {type = "transparency", value = 0.5})
 			end
 		end
 		
-		-- 尺寸
-		if lower:match("大小") or lower:match("size") or lower:match("尺寸") then
-			if lower:match("大") or lower:match("big") or lower:match("large") then
+		-- UI尺寸
+		if lower:match("大小") or lower:match("size") or lower:match("缩放") then
+			if lower:match("大") or lower:match("big") or lower:match("large") or lower:match("放大") then
 				table.insert(commands, {type = "size", value = "large"})
-			elseif lower:match("小") or lower:match("small") or lower:match("mini") then
+			elseif lower:match("小") or lower:match("small") or lower:match("mini") or lower:match("缩小") then
 				table.insert(commands, {type = "size", value = "small"})
-			elseif lower:match("默认") or lower:match("default") then
+			elseif lower:match("默认") or lower:match("default") or lower:match("normal") then
 				table.insert(commands, {type = "size", value = "default"})
 			end
 		end
 		
+		-- 字体大小
+		if lower:match("字体") or lower:match("font") or lower:match("文字") then
+			if lower:match("大") or lower:match("big") or lower:match("large") then
+				table.insert(commands, {type = "font", value = "large"})
+			elseif lower:match("小") or lower:match("small") or lower:match("tiny") then
+				table.insert(commands, {type = "font", value = "small"})
+			elseif lower:match("默认") or lower:match("default") or lower:match("normal") then
+				table.insert(commands, {type = "font", value = "default"})
+			end
+		end
+		
+		-- 按钮样式
+		if lower:match("按钮") or lower:match("button") or lower:match("圆角") then
+			if lower:match("圆角") or lower:match("rounded") or lower:match("circular") then
+				table.insert(commands, {type = "buttonstyle", value = "rounded"})
+			elseif lower:match("方形") or lower:match("square") or lower:match("sharp") then
+				table.insert(commands, {type = "buttonstyle", value = "square"})
+			elseif lower:match("默认") or lower:match("default") then
+				table.insert(commands, {type = "buttonstyle", value = "default"})
+			end
+		end
+		
+		-- 动画速度
+		if lower:match("动画") or lower:match("animation") or lower:match("速度") then
+			if lower:match("快") or lower:match("fast") or lower:match("quick") then
+				table.insert(commands, {type = "animation", value = "fast"})
+			elseif lower:match("慢") or lower:match("slow") or lower:match("gentle") then
+				table.insert(commands, {type = "animation", value = "slow"})
+			elseif lower:match("关闭") or lower:match("off") or lower:match("none") then
+				table.insert(commands, {type = "animation", value = "none"})
+			elseif lower:match("默认") or lower:match("default") or lower:match("normal") then
+				table.insert(commands, {type = "animation", value = "normal"})
+			end
+		end
+		
 		-- 重置
-		if lower:match("重置") or lower:match("reset") then
+		if lower:match("重置") or lower:match("reset") or lower:match("恢复") or lower:match("默认") then
 			table.insert(commands, {type = "reset", value = true})
+		end
+		
+		-- 帮助指令
+		if lower:match("帮助") or lower:match("help") or lower:match("指令") or lower:match("commands") then
+			table.insert(commands, {type = "help", value = true})
 		end
 		
 		return commands
 	end
 
+    -- 应用颜色到所有UI元素
+    local function applyColorToAllUI(newColor)
+        -- 修改所有使用Accent颜色的元素
+        for _, obj in pairs(Main:GetDescendants()) do
+            -- 背景色
+            if obj:IsA("Frame") or obj:IsA("TextButton") or obj:IsA("ImageButton") then
+                if obj.BackgroundColor3 == Colors.Accent then
+                    Tween(obj, 0.3, "Sine", "Out", { BackgroundColor3 = newColor })
+                end
+            end
+            
+            -- 文字颜色
+            if obj:IsA("TextLabel") or obj:IsA("TextBox") or obj:IsA("TextButton") then
+                if obj.TextColor3 == Colors.Accent then
+                    Tween(obj, 0.3, "Sine", "Out", { TextColor3 = newColor })
+                end
+            end
+            
+            -- 描边颜色
+            if obj:IsA("UIStroke") then
+                if obj.Color == Colors.Accent then
+                    Tween(obj, 0.3, "Sine", "Out", { Color = newColor })
+                end
+            end
+            
+            -- 图片颜色
+            if obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
+                if obj.ImageColor3 == Colors.Accent then
+                    Tween(obj, 0.3, "Sine", "Out", { ImageColor3 = newColor })
+                end
+            end
+        end
+        
+        -- 修改渐变颜色
+        local TitleGradient = Main:FindFirstChild("TitleBar"):FindFirstChild("ScriptTitle"):FindFirstChild("UIGradient")
+        if TitleGradient then
+            Tween(TitleGradient, 0.3, "Sine", "Out", { 
+                Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0.00, newColor),
+                    ColorSequenceKeypoint.new(0.50, newColor:Lerp(Color3.fromRGB(0,0,0), 0.2)),
+                    ColorSequenceKeypoint.new(1.00, newColor:Lerp(Color3.fromRGB(0,0,0), 0.4)),
+                })
+            })
+        end
+        
+        -- 更新Colors表
+        Colors.Accent = newColor
+        saveColorConfig({accentColor = {math.floor(newColor.R*255), math.floor(newColor.G*255), math.floor(newColor.B*255)}})
+    end
+
 	local function applyCommands(commands)
 		for _, cmd in ipairs(commands) do
 			if cmd.type == "color" then
 				local hex = cmd.value
-				local r = tonumber(hex:sub(2, 3), 16) or 255
-				local g = tonumber(hex:sub(4, 5), 16) or 255
-				local b = tonumber(hex:sub(6, 7), 16) or 255
-				local newColor = Color3.fromRGB(r, g, b)
+                local newColor
 				
-				Colors.Accent = newColor
-				saveColorConfig({accentColor = {r, g, b}})
-				
-				for _, obj in pairs(Main:GetDescendants()) do
-					if obj:IsA("Frame") and obj.BackgroundColor3 == Colors.Accent then
-						Tween(obj, 0.3, "Sine", "Out", { BackgroundColor3 = newColor })
-					elseif obj:IsA("TextLabel") and obj.TextColor3 == Colors.Accent then
-						Tween(obj, 0.3, "Sine", "Out", { TextColor3 = newColor })
-					elseif obj:IsA("UIStroke") and obj.Color == Colors.Accent then
-						Tween(obj, 0.3, "Sine", "Out", { Color = newColor })
-					end
-				end
-				
-				addChatMessage("主题颜色已修改为 " .. hex, false)
+                if hex == "random" then
+                    -- 随机颜色
+                    newColor = Color3.fromRGB(math.random(0,255), math.random(0,255), math.random(0,255))
+                    addChatMessage("🎨 已应用随机颜色！", false)
+                else
+                    local r = tonumber(hex:sub(2, 3), 16) or 255
+                    local g = tonumber(hex:sub(4, 5), 16) or 255
+                    local b = tonumber(hex:sub(6, 7), 16) or 255
+                    newColor = Color3.fromRGB(r, g, b)
+                end
+                
+                -- 全面应用颜色
+                applyColorToAllUI(newColor)
+                
+                addChatMessage("主题颜色已修改为 " .. (hex == "random" and "随机颜色" or hex), false)
 			elseif cmd.type == "spacing" then
 				local spacingValue = cmd.value == "compact" and UDim.new(0, 4) or 
 									cmd.value == "spacious" and UDim.new(0, 15) or 
@@ -845,33 +1013,81 @@ function library.new(library, name, theme)
 				Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 				
 				addChatMessage("UI尺寸已修改为 " .. cmd.value .. " (缩放: " .. string.format("%.1f", newScale/currentScale) .. "倍)", false)
+			elseif cmd.type == "font" then
+				local sizeMap = {
+					small = 12,
+					default = 14,
+					large = 16
+				}
+				local newSize = sizeMap[cmd.value] or 14
+                local modified = 0
+				
+				for _, obj in pairs(Main:GetDescendants()) do
+					if obj:IsA("TextLabel") or obj:IsA("TextBox") or obj:IsA("TextButton") then
+						if obj.TextSize and obj.TextSize >= 12 and obj.TextSize <= 18 then
+                            Tween(obj, 0.3, "Sine", "Out", { TextSize = newSize })
+                            modified = modified + 1
+                        end
+					end
+				end
+				
+				addChatMessage("字体大小已修改为 " .. cmd.value .. " (影响" .. modified .. "个文本元素)", false)
+			elseif cmd.type == "buttonstyle" then
+				local radius = cmd.value == "square" and UDim.new(0, 0) or 
+							  cmd.value == "rounded" and UDim.new(0, 12) or 
+							  UDim.new(0, 6)
+                local modified = 0
+				
+				for _, obj in pairs(Main:GetDescendants()) do
+					if obj:IsA("Frame") or obj:IsA("TextButton") or obj:IsA("ImageButton") then
+						local corner = obj:FindFirstChildOfClass("UICorner")
+						if corner then
+                            Tween(corner, 0.3, "Sine", "Out", { CornerRadius = radius })
+                            modified = modified + 1
+						end
+					end
+				end
+				
+				addChatMessage("按钮样式已修改为 " .. cmd.value .. " (影响" .. modified .. "个元素)", false)
+			elseif cmd.type == "animation" then
+				addChatMessage("动画速度已设置为 " .. cmd.value .. " (将在下次动画时生效)", false)
 			elseif cmd.type == "reset" then
-				Colors.Accent = Colors.DefaultAccent
+				-- 重置颜色
+				applyColorToAllUI(Colors.DefaultAccent)
 				Colors.Transparent = 0.5
 				saveColorConfig({accentColor = {52, 152, 219}})
 				
-				local modified = 0
-				for _, obj in pairs(Main:GetDescendants()) do
-					if obj:IsA("Frame") and obj.BackgroundColor3 == Colors.Accent then
-						Tween(obj, 0.3, "Sine", "Out", { BackgroundColor3 = Colors.DefaultAccent })
-						modified = modified + 1
-					elseif obj:IsA("TextLabel") and obj.TextColor3 == Colors.Accent then
-						Tween(obj, 0.3, "Sine", "Out", { TextColor3 = Colors.DefaultAccent })
-						modified = modified + 1
-					elseif obj:IsA("UIStroke") and obj.Color == Colors.Accent then
-						Tween(obj, 0.3, "Sine", "Out", { Color = Colors.DefaultAccent })
-						modified = modified + 1
-					elseif obj.Name == "GlassEffect" then
-						obj.ImageTransparency = 0.5
-						modified = modified + 1
-					end
-				end
-                
                 -- 重置scaleFactor
                 scaleFactor = isComputer and 1.3 or 1
                 Main.Size = UDim2.new(0, 650 * scaleFactor, 0, 400 * scaleFactor)
 				
-				addChatMessage("UI已重置为默认设置 (恢复" .. modified .. "个元素)", false)
+                -- 重置字体
+                for _, obj in pairs(Main:GetDescendants()) do
+                    if obj:IsA("TextLabel") or obj:IsA("TextBox") or obj:IsA("TextButton") then
+                        if obj.TextSize and obj.TextSize >= 12 and obj.TextSize <= 18 then
+                            Tween(obj, 0.3, "Sine", "Out", { TextSize = 14 })
+                        end
+                    end
+                end
+                
+                -- 重置按钮样式
+                for _, obj in pairs(Main:GetDescendants()) do
+                    if obj:IsA("Frame") or obj:IsA("TextButton") or obj:IsA("ImageButton") then
+                        local corner = obj:FindFirstChildOfClass("UICorner")
+                        if corner then
+                            Tween(corner, 0.3, "Sine", "Out", { CornerRadius = UDim.new(0, 6) })
+                        end
+                    end
+                end
+                
+                -- 重置透明度
+                for _, obj in pairs(Main:GetDescendants()) do
+                    if obj.Name == "GlassEffect" then
+                        obj.ImageTransparency = 0.5
+                    end
+                end
+                
+				addChatMessage("🔄 UI已完全重置为默认设置！", false)
             elseif cmd.type == "save" then
                 local config = getCurrentConfig()
                 if saveConfig(config) then
@@ -895,6 +1111,8 @@ function library.new(library, name, theme)
                 else
                     addChatMessage("❌ 配置格式错误，无法应用！请检查JSON格式是否正确。", false)
                 end
+            elseif cmd.type == "help" then
+                showAllCommands()
 			end
 		end
 	end
@@ -917,7 +1135,7 @@ function library.new(library, name, theme)
 					messages = {
 						{
 							role = "system",
-							content = "你是一个UI助手，请根据用户指令返回简洁的修改建议。对于颜色：只返回颜色名称或十六进制代码。对于布局：只返回布局类型。对于透明度：只返回透明度级别。对于尺寸：只返回尺寸类型。对于保存/复制：返回相应指令。对于JSON配置：直接返回配置内容。例如：用户说'改成红色'，回复'颜色: #FF0000'；用户说'用紧凑布局'，回复'布局: compact'；用户说'提高透明度'，回复'透明度: high'；用户说'UI变大'，回复'尺寸: large'；用户说'保存'，回复'保存: true'；用户说'复制配置'，回复'复制配置: true'；用户粘贴JSON配置，直接返回该JSON。"
+							content = "你是一个UI助手，请根据用户指令返回简洁的修改建议。对于颜色：只返回颜色名称或十六进制代码。对于布局：只返回布局类型。对于透明度：只返回透明度级别。对于尺寸：只返回尺寸类型。对于字体：只返回字体大小。对于按钮：只返回按钮样式。对于动画：只返回动画速度。对于保存/复制：返回相应指令。对于JSON配置：直接返回配置内容。对于帮助：返回帮助指令。"
 						},
 						{
 							role = "user",
@@ -954,7 +1172,7 @@ function library.new(library, name, theme)
 				if #commands > 0 then
 					applyCommands(commands)
 				else
-					addChatMessage("未识别到可执行指令，请尝试更明确的描述", false)
+					addChatMessage("未识别到可执行指令，请尝试更明确的描述。发送\"帮助\"查看所有指令。", false)
 				end
 			else
 				addChatMessage("发生错误: " .. tostring(result), false)
@@ -2418,6 +2636,13 @@ function library.new(library, name, theme)
 			AIPanelFrame.Visible = true
 			Tween(AIPanelBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
 			Tween(AIPanelBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
+            
+            -- 首次使用时显示指令示例
+            if isFirstTimeAI then
+                isFirstTimeAI = false
+                wait(0.3)
+                showAllCommands()
+            end
 		else
 			AIPanelFrame.Visible = false
 			Content.Visible = true
