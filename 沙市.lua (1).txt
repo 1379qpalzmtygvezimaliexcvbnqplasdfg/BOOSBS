@@ -569,7 +569,7 @@ function library.new(library, name, theme)
 	AIInput.Size = UDim2.new(1, -10, 1, 0)
 	AIInput.Position = UDim2.new(0, 5, 0, 0)
 	AIInput.Font = Enum.Font.Gotham
-	AIInput.PlaceholderText = "输入指令"
+	AIInput.PlaceholderText = "输入指令,例如: 把主题改成红色"
 	AIInput.Text = ""
 	AIInput.TextColor3 = Colors.Text
 	AIInput.TextSize = 14
@@ -990,7 +990,7 @@ function library.new(library, name, theme)
 				
                 if hex == "random" then
                     newColor = Color3.fromRGB(math.random(0,255), math.random(0,255), math.random(0,255))
-                    addChatMessage("已应用随机颜色！", false)
+                    addChatMessage("🎨 已应用随机颜色！", false)
                 else
                     local r = tonumber(hex:sub(2, 3), 16) or 255
                     local g = tonumber(hex:sub(4, 5), 16) or 255
@@ -1108,19 +1108,19 @@ function library.new(library, name, theme)
                     end
                 end
                 
-				addChatMessage("UI已完全重置为默认设置！", false)
+				addChatMessage("🔄 UI已完全重置为默认设置！", false)
             elseif cmd.type == "save" then
                 local config = getCurrentConfig()
                 if saveConfig(config) then
-                    addChatMessage("配置已保存！下次启动时将自动应用此配置。", false)
+                    addChatMessage("✅ 配置已保存！下次启动时将自动应用此配置。", false)
                 else
-                    addChatMessage("保存配置失败！", false)
+                    addChatMessage("❌ 保存配置失败！", false)
                 end
             elseif cmd.type == "copy" then
                 if copyConfigToClipboard() then
-                    addChatMessage("配置已复制到剪贴板！你可以将这段JSON发送给AI来应用相同的配置。", false)
+                    addChatMessage("✅ 配置已复制到剪贴板！你可以将这段JSON发送给AI来应用相同的配置。", false)
                 else
-                    addChatMessage("复制配置失败！", false)
+                    addChatMessage("❌ 复制配置失败！", false)
                 end
             elseif cmd.type == "apply_config" then
                 local success, config = pcall(function()
@@ -1128,9 +1128,9 @@ function library.new(library, name, theme)
                 end)
                 if success then
                     applyFullConfig(config)
-                    addChatMessage("配置已成功应用！所有UI设置已更新。", false)
+                    addChatMessage("✅ 配置已成功应用！所有UI设置已更新。", false)
                 else
-                    addChatMessage("配置格式错误，无法应用！请检查JSON格式是否正确。", false)
+                    addChatMessage("❌ 配置格式错误，无法应用！请检查JSON格式是否正确。", false)
                 end
             elseif cmd.type == "help" then
                 showAllCommands()
@@ -1508,27 +1508,27 @@ function library.new(library, name, theme)
 	GridLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
 	GridLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
-	local function fetchCatalogItems(searchTerm, cursor)
+	local function fetchCatalogItems(itemType, cursor)
 		local HttpService = game:GetService("HttpService")
-		local PROXY_URL = "https://rproxy.kirbs.net"
-		
-		local keyword = searchTerm or ""
-		local endpoint = string.format(
-			"%s/v1/search/items/details?Category=Animations&Limit=100&Keyword=%s&cursor=%s",
-			PROXY_URL,
-			HttpService:UrlEncode(keyword),
-			cursor or ""
-		)
+		local ANIMATIONS_URL = "https://raw.githubusercontent.com/7yd7/sniper-Emote/refs/heads/test/AnimationSniper.json"
 		
 		local success, data = pcall(function()
-			local response = game:HttpGet(endpoint)
+			local response = game:HttpGet(ANIMATIONS_URL)
 			return HttpService:JSONDecode(response)
 		end)
 		
 		if success then
+			local items = {}
+			for _, anim in ipairs(data or {}) do
+				table.insert(items, {
+					id = anim.id or anim.animationId,
+					name = anim.name or "动画",
+					type = "Asset"
+				})
+			end
 			return {
-				items = data.data or {},
-				nextCursor = data.nextPageCursor or ""
+				items = items,
+				nextCursor = ""
 			}
 		else
 			return {items = {}, nextCursor = ""}
@@ -1537,24 +1537,32 @@ function library.new(library, name, theme)
 
 	local function fetchAssetDetails(assetIds)
 		local HttpService = game:GetService("HttpService")
-		local PROXY_URL = "https://rproxy.kirbs.net"
-		
-		local endpoint = string.format(
-			"%s/v1/assets?assetIds=%s",
-			PROXY_URL,
-			table.concat(assetIds, ",")
-		)
+		local EMOTES_URL = "https://raw.githubusercontent.com/7yd7/sniper-Emote/refs/heads/test/EmoteSniper.json"
 		
 		local success, data = pcall(function()
-			local response = game:HttpGet(endpoint)
+			local response = game:HttpGet(EMOTES_URL)
 			return HttpService:JSONDecode(response)
 		end)
 		
 		if success then
-			return data.data or {}
+			local items = {}
+			for _, emote in ipairs(data or {}) do
+				if not assetIds or table.find(assetIds, tostring(emote.id)) then
+					table.insert(items, {
+						id = emote.id,
+						name = emote.name or "动作",
+						type = "Asset"
+					})
+				end
+			end
+			return items
 		else
 			return {}
 		end
+	end
+
+	local function fetchBundleItems(bundleId)
+		return {}
 	end
 
 	local function loadAnimations(searchTerm)
@@ -1565,7 +1573,7 @@ function library.new(library, name, theme)
 		end
 		
 		spawn(function()
-			local animationsData = fetchCatalogItems(searchTerm)
+			local animationsData = fetchCatalogItems("Animations")
 			local animations = animationsData.items
 			
 			if #animations == 0 then
@@ -1579,96 +1587,72 @@ function library.new(library, name, theme)
 				errorLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
 				errorLabel.Text = "无法加载动画，请检查网络连接"
 				errorLabel.ZIndex = 17
-				AnimationsGrid.CanvasSize = UDim2.new(0, 0, 0, 50)
 				return
-			end
-			
-			local assetIds = {}
-			for _, anim in ipairs(animations) do
-				table.insert(assetIds, anim.id)
-			end
-			
-			local details = fetchAssetDetails(assetIds)
-			local detailMap = {}
-			for _, detail in ipairs(details) do
-				detailMap[detail.id] = detail
 			end
 			
 			for i, anim in ipairs(animations) do
 				if i <= 100 then
 					local animName = anim.name or "动画"
-					local animId = anim.id
-					local detail = detailMap[animId] or {}
-					local thumbnailId = detail.thumbnailTargetId or detail.thumbnailId or animId
 					
-					local animButton = Instance.new("ImageButton")
-					animButton.Name = "Anim_" .. animId
-					animButton.Parent = AnimationsGrid
-					animButton.BackgroundColor3 = Colors.Primary
-					animButton.BackgroundTransparency = 0.3
-					animButton.Size = UDim2.new(0, 80, 0, 100)
-					animButton.AutoButtonColor = false
-					animButton.ZIndex = 17
-					
-					animButton.Image = "rbxassetid://" .. thumbnailId
-					
-					local animCorner = Instance.new("UICorner")
-					animCorner.CornerRadius = UDim.new(0, 6)
-					animCorner.Parent = animButton
-					
-					local animTitle = Instance.new("TextLabel")
-					animTitle.Parent = animButton
-					animTitle.BackgroundColor3 = Colors.Secondary
-					animTitle.BackgroundTransparency = 0.5
-					animTitle.Position = UDim2.new(0, 0, 0, 80)
-					animTitle.Size = UDim2.new(1, 0, 0, 20)
-					animTitle.Font = Enum.Font.GothamSemibold
-					animTitle.Text = animName
-					animTitle.TextColor3 = Colors.Text
-					animTitle.TextSize = 10
-					animTitle.TextWrapped = true
-					animTitle.ZIndex = 18
-					
-					local titleCorner = Instance.new("UICorner")
-					titleCorner.CornerRadius = UDim.new(0, 6)
-					titleCorner.Parent = animTitle
-					
-					animButton.MouseButton1Click:Connect(function()
-						local character = services.Players.LocalPlayer.Character
-						if character and character:FindFirstChild("Humanoid") then
-							local animation = Instance.new("Animation")
-							animation.AnimationId = "rbxassetid://" .. animId
-							
-							local animator = character.Humanoid:FindFirstChildOfClass("Animator")
-							if not animator then
-								animator = Instance.new("Animator")
+					if searchTerm == "" or animName:lower():find(searchTerm:lower(), 1, true) then
+						local animButton = Instance.new("ImageButton")
+						animButton.Name = "Anim_" .. anim.id
+						animButton.Parent = AnimationsGrid
+						animButton.BackgroundColor3 = Colors.Primary
+						animButton.BackgroundTransparency = 0.3
+						animButton.Size = UDim2.new(0, 80, 0, 100)
+						animButton.AutoButtonColor = false
+						animButton.ZIndex = 17
+						
+						animButton.Image = "rbxthumb://type=Asset&id=" .. anim.id .. "&w=150&h=150"
+						
+						local animCorner = Instance.new("UICorner")
+						animCorner.CornerRadius = UDim.new(0, 6)
+						animCorner.Parent = animButton
+						
+						local animTitle = Instance.new("TextLabel")
+						animTitle.Parent = animButton
+						animTitle.BackgroundColor3 = Colors.Secondary
+						animTitle.BackgroundTransparency = 0.5
+						animTitle.Position = UDim2.new(0, 0, 0, 80)
+						animTitle.Size = UDim2.new(1, 0, 0, 20)
+						animTitle.Font = Enum.Font.GothamSemibold
+						animTitle.Text = animName
+						animTitle.TextColor3 = Colors.Text
+						animTitle.TextSize = 10
+						animTitle.TextWrapped = true
+						animTitle.ZIndex = 18
+						
+						local titleCorner = Instance.new("UICorner")
+						titleCorner.CornerRadius = UDim.new(0, 6)
+						titleCorner.Parent = animTitle
+						
+						animButton.MouseButton1Click:Connect(function()
+							local character = services.Players.LocalPlayer.Character
+							if character and character:FindFirstChild("Humanoid") then
+								local animation = Instance.new("Animation")
+								animation.AnimationId = "rbxassetid://" .. anim.id
+								
+								local animator = character.Humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator")
 								animator.Parent = character.Humanoid
+								
+								local animationTrack = animator:LoadAnimation(animation)
+								animationTrack:Play()
+								
+								addChatMessage("正在播放动画: " .. animName, false)
 							end
-							
-							local animationTrack = animator:LoadAnimation(animation)
-							animationTrack:Play()
-							
-							addChatMessage("正在播放动画: " .. animName, false)
-						else
-							addChatMessage("错误: 角色未找到或没有Humanoid", false)
-						end
-					end)
-					
-					animButton.MouseEnter:Connect(function()
-						Tween(animButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
-					end)
-					
-					animButton.MouseLeave:Connect(function()
-						Tween(animButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
-					end)
-					
-					wait(0.01)
+						end)
+						
+						animButton.MouseEnter:Connect(function()
+							Tween(animButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
+						end)
+						
+						animButton.MouseLeave:Connect(function()
+							Tween(animButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
+						end)
+					end
 				end
 			end
-			
-			wait(0.1)
-			local contentHeight = GridLayout.AbsoluteContentSize.Y
-			AnimationsGrid.CanvasSize = UDim2.new(0, 0, 0, contentHeight + 10)
 		end)
 	end
 
@@ -1689,7 +1673,7 @@ function library.new(library, name, theme)
 			AnimationsFrame.Visible = true
 			Tween(AnimationsBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
 			Tween(AnimationsBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
-			loadAnimations(AnimSearchBox.Text)
+			loadAnimations("")
 		else
 			AnimationsFrame.Visible = false
 			Content.Visible = true
@@ -2062,7 +2046,7 @@ function library.new(library, name, theme)
 			ObjsL.SortOrder = Enum.SortOrder.LayoutOrder
 			ObjsL.Padding = UDim.new(0, 8)
 			
-			local open = TabVal == nil or TabVal == true
+			local open = TabVal
 			if TabVal ~= false then
 				Section.Size = UDim2.new(0.975, 0, 0, open and 42 + ObjsL.AbsoluteContentSize.Y + 10 or 42)
 				SectionOpened.ImageTransparency = (open and 0 or 1)
