@@ -689,7 +689,8 @@ function library.new(library, name, theme)
             stroke.Thickness = 2
             stroke.Parent = textBox
             
-            addChatMessage("配置已复制到剪贴板！", false)
+            addChatMessage("配置已生成！请在下方文本框中全选并复制配置：", false)
+            addChatMessage(json, false)
             
             spawn(function()
                 wait(3)
@@ -939,47 +940,47 @@ function library.new(library, name, theme)
 		return commands
 	end
 
-	local function applyColorToAllUI(newColor)
-		for _, obj in pairs(Main:GetDescendants()) do
-			if obj:IsA("Frame") or obj:IsA("TextButton") or obj:IsA("ImageButton") then
-				if obj.BackgroundColor3 == Colors.Accent then
-					Tween(obj, 0.3, "Sine", "Out", { BackgroundColor3 = newColor })
-				end
-			end
-			
-			if obj:IsA("TextLabel") or obj:IsA("TextBox") or obj:IsA("TextButton") then
-				if obj.TextColor3 == Colors.Accent then
-					Tween(obj, 0.3, "Sine", "Out", { TextColor3 = newColor })
-				end
-			end
-			
-			if obj:IsA("UIStroke") then
-				if obj.Color == Colors.Accent then
-					Tween(obj, 0.3, "Sine", "Out", { Color = newColor })
-				end
-			end
-			
-			if obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
-				if obj.ImageColor3 == Colors.Accent then
-					Tween(obj, 0.3, "Sine", "Out", { ImageColor3 = newColor })
-				end
-			end
-		end
-		
-		local TitleGradient = Main:FindFirstChild("TitleBar"):FindFirstChild("ScriptTitle"):FindFirstChild("UIGradient")
-		if TitleGradient then
-			Tween(TitleGradient, 0.3, "Sine", "Out", { 
-				Color = ColorSequence.new({
-					ColorSequenceKeypoint.new(0.00, newColor),
-					ColorSequenceKeypoint.new(0.50, newColor:Lerp(Color3.fromRGB(0,0,0), 0.2)),
-					ColorSequenceKeypoint.new(1.00, newColor:Lerp(Color3.fromRGB(0,0,0), 0.4)),
-				})
-			})
-		end
-		
-		Colors.Accent = newColor
-		saveColorConfig({accentColor = {math.floor(newColor.R*255), math.floor(newColor.G*255), math.floor(newColor.B*255)}})
-	end
+    local function applyColorToAllUI(newColor)
+        for _, obj in pairs(Main:GetDescendants()) do
+            if obj:IsA("Frame") or obj:IsA("TextButton") or obj:IsA("ImageButton") then
+                if obj.BackgroundColor3 == Colors.Accent then
+                    Tween(obj, 0.3, "Sine", "Out", { BackgroundColor3 = newColor })
+                end
+            end
+            
+            if obj:IsA("TextLabel") or obj:IsA("TextBox") or obj:IsA("TextButton") then
+                if obj.TextColor3 == Colors.Accent then
+                    Tween(obj, 0.3, "Sine", "Out", { TextColor3 = newColor })
+                end
+            end
+            
+            if obj:IsA("UIStroke") then
+                if obj.Color == Colors.Accent then
+                    Tween(obj, 0.3, "Sine", "Out", { Color = newColor })
+                end
+            end
+            
+            if obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
+                if obj.ImageColor3 == Colors.Accent then
+                    Tween(obj, 0.3, "Sine", "Out", { ImageColor3 = newColor })
+                end
+            end
+        end
+        
+        local TitleGradient = Main:FindFirstChild("TitleBar"):FindFirstChild("ScriptTitle"):FindFirstChild("UIGradient")
+        if TitleGradient then
+            Tween(TitleGradient, 0.3, "Sine", "Out", { 
+                Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0.00, newColor),
+                    ColorSequenceKeypoint.new(0.50, newColor:Lerp(Color3.fromRGB(0,0,0), 0.2)),
+                    ColorSequenceKeypoint.new(1.00, newColor:Lerp(Color3.fromRGB(0,0,0), 0.4)),
+                })
+            })
+        end
+        
+        Colors.Accent = newColor
+        saveColorConfig({accentColor = {math.floor(newColor.R*255), math.floor(newColor.G*255), math.floor(newColor.B*255)}})
+    end
 
 	local function applyCommands(commands)
 		for _, cmd in ipairs(commands) do
@@ -1510,175 +1511,166 @@ function library.new(library, name, theme)
 	GridLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	GridLayout.VerticalAlignment = Enum.VerticalAlignment.Top
 
-	local function loadAnimations(searchTerm)
-		for _, child in pairs(AnimationsGrid:GetChildren()) do
-			if child:IsA("ImageButton") or child:IsA("TextLabel") then
-				child:Destroy()
+local function loadAnimations(searchTerm)
+	for _, child in pairs(AnimationsGrid:GetChildren()) do
+		if child:IsA("ImageButton") or child:IsA("TextLabel") then
+			child:Destroy()
+		end
+	end
+	
+	local loadingLabel = Instance.new("TextLabel")
+	loadingLabel.Name = "LoadingLabel"
+	loadingLabel.Parent = AnimationsGrid
+	loadingLabel.BackgroundTransparency = 1
+	loadingLabel.Size = UDim2.new(1, 0, 0, 50)
+	loadingLabel.Font = Enum.Font.Gotham
+	loadingLabel.TextSize = 14
+	loadingLabel.TextColor3 = Colors.Text
+	loadingLabel.Text = "正在加载动画..."
+	loadingLabel.ZIndex = 17
+	
+	spawn(function()
+		local HttpService = game:GetService("HttpService")
+		local animationList = {}
+		
+		local url = "https://catalog.roblox.com/v1/search/items/details?Category=11&Limit=100&SortType=2"
+		if searchTerm and searchTerm ~= "" then
+			url = url .. "&Keyword=" .. HttpService:UrlEncode(searchTerm)
+		end
+		
+		local success, response = pcall(function()
+			return game:HttpGet(url, true)
+		end)
+		
+		if not success then
+			loadingLabel.Text = "网络请求失败: " .. tostring(response)
+			wait(3)
+			loadingLabel:Destroy()
+			return
+		end
+		
+		local dataSuccess, data = pcall(function()
+			return HttpService:JSONDecode(response)
+		end)
+		
+		if not dataSuccess or not data or not data.data then
+			loadingLabel.Text = "数据解析失败，请稍后重试"
+			wait(3)
+			loadingLabel:Destroy()
+			return
+		end
+		
+		for _, item in ipairs(data.data) do
+			if item.itemType == "Asset" and item.assetType == 24 then
+				table.insert(animationList, {
+					id = item.id,
+					name = item.name or "未命名动画"
+				})
 			end
 		end
 		
-		local loadingLabel = Instance.new("TextLabel")
-		loadingLabel.Name = "LoadingLabel"
-		loadingLabel.Parent = AnimationsGrid
-		loadingLabel.BackgroundTransparency = 1
-		loadingLabel.Size = UDim2.new(1, 0, 0, 50)
-		loadingLabel.Font = Enum.Font.Gotham
-		loadingLabel.TextSize = 14
-		loadingLabel.TextColor3 = Colors.Text
-		loadingLabel.Text = "正在加载动画..."
-		loadingLabel.ZIndex = 17
+		if #animationList == 0 then
+			loadingLabel.Text = "未找到相关动画"
+			wait(2)
+			loadingLabel:Destroy()
+			return
+		end
 		
-		spawn(function()
-			local HttpService = game:GetService("HttpService")
+		loadingLabel:Destroy()
+		
+		for _, anim in ipairs(animationList) do
+			local animButton = Instance.new("ImageButton")
+			animButton.Name = "Anim_" .. anim.id
+			animButton.Parent = AnimationsGrid
+			animButton.BackgroundColor3 = Colors.Primary
+			animButton.BackgroundTransparency = 0.3
+			animButton.Size = UDim2.new(0, 80, 0, 100)
+			animButton.AutoButtonColor = false
+			animButton.ZIndex = 17
 			
-			local success, data = pcall(function()
-				local url = "https://catalog.roblox.com/v1/search/items/details?Category=11&Limit=100&SortType=2"
-				if searchTerm and searchTerm ~= "" then
-					url = url .. "&Keyword=" .. HttpService:UrlEncode(searchTerm)
+			animButton.Image = "rbxassetid://" .. anim.id
+			animButton.ScaleType = Enum.ScaleType.Crop
+			
+			local animCorner = Instance.new("UICorner")
+			animCorner.CornerRadius = UDim.new(0, 6)
+			animCorner.Parent = animButton
+			
+			local animTitle = Instance.new("TextLabel")
+			animTitle.Parent = animButton
+			animTitle.BackgroundColor3 = Colors.Secondary
+			animTitle.BackgroundTransparency = 0.5
+			animTitle.Position = UDim2.new(0, 0, 0, 80)
+			animTitle.Size = UDim2.new(1, 0, 0, 20)
+			animTitle.Font = Enum.Font.GothamSemibold
+			local displayName = anim.name
+			if #displayName > 8 then
+				displayName = displayName:sub(1, 8) .. "..."
+			end
+			animTitle.Text = displayName
+			animTitle.TextColor3 = Colors.Text
+			animTitle.TextSize = 10
+			animTitle.TextWrapped = true
+			animTitle.ZIndex = 18
+			
+			local titleCorner = Instance.new("UICorner")
+			titleCorner.CornerRadius = UDim.new(0, 6)
+			titleCorner.Parent = animTitle
+			
+			animButton.MouseButton1Click:Connect(function()
+				Tween(animButton, 0.1, "Sine", "Out", { BackgroundTransparency = 0 })
+				wait(0.1)
+				Tween(animButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
+				
+				local player = services.Players.LocalPlayer
+				local character = player.Character
+				if not character or not character:FindFirstChild("Humanoid") then
+					addChatMessage("❌ 无法播放动画：角色未加载", false)
+					return
 				end
 				
-				local response = HttpService:GetAsync(url, true)
-				return HttpService:JSONDecode(response)
+				local humanoid = character.Humanoid
+				local animator = humanoid:FindFirstChildOfClass("Animator")
+				
+				if not animator then
+					animator = Instance.new("Animator")
+					animator.Parent = humanoid
+				end
+				
+				local animationId = tonumber(anim.id)
+				if not animationId then
+					addChatMessage("❌ 动画ID无效", false)
+					return
+				end
+				
+				local success, animation = pcall(function()
+					local anim = Instance.new("Animation")
+					anim.AnimationId = "rbxassetid://" .. animationId
+					return animator:LoadAnimation(anim)
+				end)
+				
+				if success and animation then
+					animation:Play()
+					addChatMessage("▶️ 正在播放: " .. anim.name, false)
+				else
+					addChatMessage("❌ 动画加载失败", false)
+				end
 			end)
 			
-			if not success or not data or not data.data then
-				loadingLabel.Text = "加载失败，请稍后重试"
-				wait(2)
-				loadingLabel:Destroy()
-				return
-			end
+			animButton.MouseEnter:Connect(function()
+				Tween(animButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
+			end)
 			
-			loadingLabel:Destroy()
-			
-			local animationList = {}
-			for _, item in ipairs(data.data) do
-				if item.itemType == "Asset" and item.assetType == 24 then
-					table.insert(animationList, {
-						id = item.id,
-						name = item.name or "未命名动画"
-					})
-				end
-			end
-			
-			if #animationList == 0 then
-				local noResultLabel = Instance.new("TextLabel")
-				noResultLabel.Name = "NoResultLabel"
-				noResultLabel.Parent = AnimationsGrid
-				noResultLabel.BackgroundTransparency = 1
-				noResultLabel.Size = UDim2.new(1, 0, 0, 50)
-				noResultLabel.Font = Enum.Font.Gotham
-				noResultLabel.TextSize = 14
-				noResultLabel.TextColor3 = Colors.Text
-				noResultLabel.Text = "未找到动画，请尝试其他关键词"
-				noResultLabel.ZIndex = 17
-				return
-			end
-			
-			for _, anim in ipairs(animationList) do
-				local animButton = Instance.new("ImageButton")
-				animButton.Name = "Anim_" .. anim.id
-				animButton.Parent = AnimationsGrid
-				animButton.BackgroundColor3 = Colors.Primary
-				animButton.BackgroundTransparency = 0.3
-				animButton.Size = UDim2.new(0, 80, 0, 100)
-				animButton.AutoButtonColor = false
-				animButton.ZIndex = 17
-				
-				animButton.Image = "https://www.roblox.com/asset-thumbnail/image?assetId=" .. anim.id .. "&width=420&height=420&format=png"
-				animButton.ScaleType = Enum.ScaleType.Crop
-				
-				local animCorner = Instance.new("UICorner")
-				animCorner.CornerRadius = UDim.new(0, 6)
-				animCorner.Parent = animButton
-				
-				local animTitle = Instance.new("TextLabel")
-				animTitle.Parent = animButton
-				animTitle.BackgroundColor3 = Colors.Secondary
-				animTitle.BackgroundTransparency = 0.5
-				animTitle.Position = UDim2.new(0, 0, 0, 80)
-				animTitle.Size = UDim2.new(1, 0, 0, 20)
-				animTitle.Font = Enum.Font.GothamSemibold
-				local displayName = anim.name
-				if #displayName > 8 then
-					displayName = displayName:sub(1, 8) .. "..."
-				end
-				animTitle.Text = displayName
-				animTitle.TextColor3 = Colors.Text
-				animTitle.TextSize = 10
-				animTitle.TextWrapped = true
-				animTitle.ZIndex = 18
-				
-				local titleCorner = Instance.new("UICorner")
-				titleCorner.CornerRadius = UDim.new(0, 6)
-				titleCorner.Parent = animTitle
-				
-				animButton.MouseButton1Click:Connect(function()
-					Tween(animButton, 0.1, "Sine", "Out", { BackgroundTransparency = 0 })
-					wait(0.1)
-					Tween(animButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
-					
-					local player = services.Players.LocalPlayer
-					local character = player.Character
-					if not character or not character:FindFirstChild("Humanoid") then
-						addChatMessage("❌ 无法播放动画：角色未加载", false)
-						return
-					end
-					
-					local humanoid = character.Humanoid
-					local animator = humanoid:FindFirstChildOfClass("Animator")
-					
-					if not animator then
-						animator = Instance.new("Animator")
-						animator.Parent = humanoid
-					end
-					
-					local animationId = tonumber(anim.id)
-					if not animationId or animationId <= 0 then
-						addChatMessage("❌ 动画ID无效", false)
-						return
-					end
-					
-					local success, animation = pcall(function()
-						local anim = Instance.new("Animation")
-						anim.AnimationId = "rbxassetid://" .. animationId
-						
-						local loadedAnim = animator:LoadAnimation(anim)
-						if loadedAnim and loadedAnim.Length > 0 then
-							return loadedAnim
-						else
-							error("动画加载失败")
-						end
-					end)
-					
-					if success and animation then
-						animation:Play()
-						addChatMessage("▶️ 正在播放: " .. anim.name, false)
-						
-						spawn(function()
-							wait(animation.Length + 0.5)
-							addChatMessage("⏸️ 动画播放完成: " .. anim.name, false)
-						end)
-					else
-						addChatMessage("❌ 动画加载失败: " .. tostring(anim.name), false)
-						warn("动画加载错误: ", result)
-					end
-				end)
-				
-				animButton.MouseEnter:Connect(function()
-					Tween(animButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
-				end)
-				
-				animButton.MouseLeave:Connect(function()
-					Tween(animButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
-				end)
-			end
-		end)
-	end
+			animButton.MouseLeave:Connect(function()
+				Tween(animButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
+			end)
+		end
+	end)
+end
 
 	AnimSearchBox:GetPropertyChangedSignal("Text"):Connect(function()
 		local searchText = AnimSearchBox.Text
 		if #searchText > 2 or searchText == "" then
-			wait(0.5)
+			wait(0.3)
 			if AnimSearchBox.Text == searchText then
 				loadAnimations(searchText)
 			end
@@ -1698,10 +1690,7 @@ function library.new(library, name, theme)
 			AnimationsFrame.Visible = true
 			Tween(AnimationsBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
 			Tween(AnimationsBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
-			
-			if AnimSearchBox.Text == "" and #AnimationsGrid:GetChildren() == 0 then
-				loadAnimations("")
-			end
+			loadAnimations("")
 		else
 			AnimationsFrame.Visible = false
 			Content.Visible = true
