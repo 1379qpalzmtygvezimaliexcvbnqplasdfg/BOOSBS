@@ -350,12 +350,29 @@ function library.new(library, name, theme)
 	DropShadow.ScaleType = Enum.ScaleType.Slice
 	DropShadow.SliceCenter = Rect.new(49, 49, 450, 450)
 	
+	local DeleteBtn = Instance.new("TextButton")
+	DeleteBtn.Name = "DeleteBtn"
+	DeleteBtn.Parent = Main
+	DeleteBtn.BackgroundColor3 = Colors.Secondary
+	DeleteBtn.BackgroundTransparency = Colors.Transparent
+	DeleteBtn.Position = UDim2.new(0, 10, 0, 10)
+	DeleteBtn.Size = UDim2.new(0, 25, 0, 25)
+	DeleteBtn.Font = Enum.Font.GothamBold
+	DeleteBtn.Text = "🗑️"
+	DeleteBtn.TextColor3 = Colors.Text
+	DeleteBtn.TextSize = 14
+	DeleteBtn.ZIndex = 10
+	
+	local DeleteBtnC = Instance.new("UICorner")
+	DeleteBtnC.CornerRadius = UDim.new(0, 6)
+	DeleteBtnC.Parent = DeleteBtn
+
 	local FaceBtn = Instance.new("ImageButton")
 	FaceBtn.Name = "FaceBtn"
 	FaceBtn.Parent = Main
 	FaceBtn.BackgroundColor3 = Colors.Secondary
 	FaceBtn.BackgroundTransparency = Colors.Transparent
-	FaceBtn.Position = UDim2.new(1, -125, 0, 10)
+	FaceBtn.Position = UDim2.new(0, 40, 0, 10)
 	FaceBtn.Size = UDim2.new(0, 25, 0, 25)
 	FaceBtn.Image = "rbxassetid://3926305904"
 	FaceBtn.ImageRectOffset = Vector2.new(644, 124)
@@ -374,7 +391,7 @@ function library.new(library, name, theme)
 	DragModeBtn.Parent = Main
 	DragModeBtn.BackgroundColor3 = Colors.Secondary
 	DragModeBtn.BackgroundTransparency = Colors.Transparent
-	DragModeBtn.Position = UDim2.new(1, -95, 0, 10)
+	DragModeBtn.Position = UDim2.new(0, 70, 0, 10)
 	DragModeBtn.Size = UDim2.new(0, 25, 0, 25)
 	DragModeBtn.Image = "rbxassetid://3926305904"
 	DragModeBtn.ImageRectOffset = Vector2.new(564, 444)
@@ -393,7 +410,7 @@ function library.new(library, name, theme)
 	AIPanelBtn.Parent = Main
 	AIPanelBtn.BackgroundColor3 = Colors.Secondary
 	AIPanelBtn.BackgroundTransparency = Colors.Transparent
-	AIPanelBtn.Position = UDim2.new(1, -65, 0, 10)
+	AIPanelBtn.Position = UDim2.new(0, 100, 0, 10)
 	AIPanelBtn.Size = UDim2.new(0, 25, 0, 25)
 	AIPanelBtn.Image = "rbxassetid://3926305904"
 	AIPanelBtn.ImageRectOffset = Vector2.new(484, 444)
@@ -412,7 +429,7 @@ function library.new(library, name, theme)
 	AutoFitBtn.Parent = Main
 	AutoFitBtn.BackgroundColor3 = Colors.Secondary
 	AutoFitBtn.BackgroundTransparency = Colors.Transparent
-	AutoFitBtn.Position = UDim2.new(1, -155, 0, 10)
+	AutoFitBtn.Position = UDim2.new(0, 130, 0, 10)
 	AutoFitBtn.Size = UDim2.new(0, 25, 0, 25)
 	AutoFitBtn.Image = "rbxassetid://3926305904"
 	AutoFitBtn.ImageRectOffset = Vector2.new(244, 164)
@@ -431,7 +448,7 @@ function library.new(library, name, theme)
 	ScaleBtn.Parent = Main
 	ScaleBtn.BackgroundColor3 = Colors.Secondary
 	ScaleBtn.BackgroundTransparency = Colors.Transparent
-	ScaleBtn.Position = UDim2.new(1, -185, 0, 10)
+	ScaleBtn.Position = UDim2.new(0, 160, 0, 10)
 	ScaleBtn.Size = UDim2.new(0, 25, 0, 25)
 	ScaleBtn.Image = "rbxassetid://3926305904"
 	ScaleBtn.ImageRectOffset = Vector2.new(324, 364)
@@ -450,7 +467,7 @@ function library.new(library, name, theme)
 	AnimationsBtn.Parent = Main
 	AnimationsBtn.BackgroundColor3 = Colors.Secondary
 	AnimationsBtn.BackgroundTransparency = Colors.Transparent
-	AnimationsBtn.Position = UDim2.new(1, -35, 0, 10)
+	AnimationsBtn.Position = UDim2.new(0, 190, 0, 10)
 	AnimationsBtn.Size = UDim2.new(0, 25, 0, 25)
 	AnimationsBtn.Image = "rbxassetid://3926305904"
 	AnimationsBtn.ImageRectOffset = Vector2.new(724, 204)
@@ -472,7 +489,7 @@ function library.new(library, name, theme)
 	CloseBtn.Position = UDim2.new(1, -35, 0, 10)
 	CloseBtn.Size = UDim2.new(0, 25, 0, 25)
 	CloseBtn.Font = Enum.Font.GothamBold
-	CloseBtn.Text = "✕"
+	CloseBtn.Text = "×"
 	CloseBtn.TextColor3 = Colors.Text
 	CloseBtn.TextSize = 20
 	CloseBtn.ZIndex = 10
@@ -1317,97 +1334,26 @@ function library.new(library, name, theme)
 		spawn(function()
 			Ripple(CloseBtn)
 		end)
-		
-		local confirmDialog = Instance.new("Frame")
-		confirmDialog.Name = "ConfirmDialog"
-		confirmDialog.Parent = Main
-		confirmDialog.BackgroundColor3 = Colors.Secondary
-		confirmDialog.BackgroundTransparency = 0
-		confirmDialog.Position = UDim2.new(0.5, -150, 0.5, -60)
-		confirmDialog.Size = UDim2.new(0, 300, 0, 120)
-		confirmDialog.ZIndex = 100
-		
-		local confirmDialogC = Instance.new("UICorner")
-		confirmDialogC.CornerRadius = UDim.new(0, 8)
-		confirmDialogC.Parent = confirmDialog
-		
-		CreateGlassEffect(confirmDialog)
-		
-		local confirmStroke = Instance.new("UIStroke")
-		confirmStroke.Color = Colors.Primary
-		confirmStroke.Thickness = 2
-		confirmStroke.Parent = confirmDialog
-		
-		local confirmTitle = Instance.new("TextLabel")
-		confirmTitle.Parent = confirmDialog
-		confirmTitle.BackgroundTransparency = 1
-		confirmTitle.Position = UDim2.new(0, 0, 0, 15)
-		confirmTitle.Size = UDim2.new(1, 0, 0, 30)
-		confirmTitle.Font = Enum.Font.GothamBold
-		confirmTitle.Text = "确认删除UI"
-		confirmTitle.TextColor3 = Colors.Text
-		confirmTitle.TextSize = 18
-		confirmTitle.ZIndex = 101
-		
-		local confirmText = Instance.new("TextLabel")
-		confirmText.Parent = confirmDialog
-		confirmText.BackgroundTransparency = 1
-		confirmText.Position = UDim2.new(0, 0, 0, 45)
-		confirmText.Size = UDim2.new(1, 0, 0, 30)
-		confirmText.Font = Enum.Font.Gotham
-		confirmText.Text = "确定要完全删除这个UI吗？"
-		confirmText.TextColor3 = Colors.Text
-		confirmText.TextSize = 14
-		confirmText.ZIndex = 101
-		
-		local yesBtn = Instance.new("TextButton")
-		yesBtn.Parent = confirmDialog
-		yesBtn.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
-		yesBtn.Position = UDim2.new(0.2, 0, 1, -40)
-		yesBtn.Size = UDim2.new(0, 80, 0, 30)
-		yesBtn.Font = Enum.Font.GothamBold
-		yesBtn.Text = "删除"
-		yesBtn.TextColor3 = Colors.White
-		yesBtn.TextSize = 14
-		yesBtn.ZIndex = 101
-		
-		local yesBtnC = Instance.new("UICorner")
-		yesBtnC.CornerRadius = UDim.new(0, 6)
-		yesBtnC.Parent = yesBtn
-		
-		local noBtn = Instance.new("TextButton")
-		noBtn.Parent = confirmDialog
-		noBtn.BackgroundColor3 = Colors.Primary
-		noBtn.Position = UDim2.new(0.6, 0, 1, -40)
-		noBtn.Size = UDim2.new(0, 80, 0, 30)
-		noBtn.Font = Enum.Font.GothamBold
-		noBtn.Text = "取消"
-		noBtn.TextColor3 = Colors.Text
-		noBtn.TextSize = 14
-		noBtn.ZIndex = 101
-		
-		local noBtnC = Instance.new("UICorner")
-		noBtnC.CornerRadius = UDim.new(0, 6)
-		noBtnC.Parent = noBtn
-		
-		yesBtn.MouseButton1Click:Connect(function()
-			if canvasPart then
-				canvasPart:Destroy()
-			end
-			if dogent then
-				dogent:Destroy()
-			end
-			if switchGui then
-				switchGui:Destroy()
-			end
-			if renderConnection then
-				renderConnection:Disconnect()
-			end
+		Main.Visible = false
+	end)
+	
+	DeleteBtn.MouseButton1Click:Connect(function()
+		spawn(function()
+			Ripple(DeleteBtn)
 		end)
-		
-		noBtn.MouseButton1Click:Connect(function()
-			confirmDialog:Destroy()
-		end)
+        
+        if canvasPart then
+            canvasPart:Destroy()
+        end
+        if switchGui then
+            switchGui:Destroy()
+        end
+        if renderConnection then
+            renderConnection:Disconnect()
+        end
+        
+        addChatMessage("🗑️ UI系统已完全删除！", false)
+        wait(0.5)
 	end)
 	
 	local TitleBar = Instance.new("Frame")
@@ -1597,24 +1543,36 @@ function library.new(library, name, theme)
 	GridLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
 	GridLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
+	local defaultAnimations = {
+		{ id = "507771019", name = "躺平" },
+		{ id = "507771019", name = "仰卧起坐" },
+		{ id = "3333368534", name = "战斗姿势" },
+		{ id = "3338025566", name = "冲刺" },
+		{ id = "3338168198", name = "攻击1" },
+		{ id = "3338172552", name = "攻击2" },
+		{ id = "3338238416", name = "攻击3" },
+		{ id = "3338268596", name = "跳跃" },
+		{ id = "3338298453", name = "落地" },
+		{ id = "3338332751", name = "步行" },
+		{ id = "3338338942", name = "奔跑" },
+		{ id = "3338342917", name = "闲置" },
+		{ id = "7846516419", name = "坐下" },
+		{ id = "8429801611", name = "舞蹈" },
+		{ id = "7825680595", name = "挥手" }
+	}
+
 	local function fetchCatalogItems(itemType, cursor)
 		local HttpService = game:GetService("HttpService")
-		local PROXY_URL = "https://rproxy.kirbs.net"
-		
-		local endpoint = string.format(
-			"%s/v1/search/items?category=Animations&limit=100&cursor=%s",
-			PROXY_URL,
-			cursor or ""
-		)
 		
 		local success, data = pcall(function()
-			local response = game:HttpGet(endpoint)
+			local proxyUrl = "https://catalog.roproxy.com/v1/search/items?category=Animations&limit=50&cursor=" .. (cursor or "")
+			local response = game:HttpGet(proxyUrl)
 			return HttpService:JSONDecode(response)
 		end)
 		
-		if success then
+		if success and data and data.data then
 			return {
-				items = data.data or {},
+				items = data.data,
 				nextCursor = data.nextPageCursor or ""
 			}
 		else
@@ -1624,49 +1582,15 @@ function library.new(library, name, theme)
 
 	local function fetchAssetDetails(assetIds)
 		local HttpService = game:GetService("HttpService")
-		local PROXY_URL = "https://rproxy.kirbs.net"
-		
-		local endpoint = string.format(
-			"%s/v1/assets?assetIds=%s",
-			PROXY_URL,
-			table.concat(assetIds, ",")
-		)
 		
 		local success, data = pcall(function()
-			local response = game:HttpGet(endpoint)
+			local proxyUrl = "https://catalog.roproxy.com/v1/assets?assetIds=" .. table.concat(assetIds, ",")
+			local response = game:HttpGet(proxyUrl)
 			return HttpService:JSONDecode(response)
 		end)
 		
-		if success then
-			return data.data or {}
-		else
-			return {}
-		end
-	end
-
-	local function fetchBundleItems(bundleId)
-		local HttpService = game:GetService("HttpService")
-		local PROXY_URL = "https://rproxy.kirbs.net"
-		
-		local endpoint = string.format(
-			"%s/v1/bundles/%s/bundleItems",
-			PROXY_URL,
-			bundleId
-		)
-		
-		local success, data = pcall(function()
-			local response = game:HttpGet(endpoint)
-			return HttpService:JSONDecode(response)
-		end)
-		
-		if success then
-			local bundledItems = {}
-			for _, item in pairs(data.data or {}) do
-				if item.type == "Asset" then
-					table.insert(bundledItems, item.id)
-				end
-			end
-			return bundledItems
+		if success and data and data.data then
+			return data.data
 		else
 			return {}
 		end
@@ -1680,51 +1604,21 @@ function library.new(library, name, theme)
 		end
 		
 		spawn(function()
-			local loadingLabel = Instance.new("TextLabel")
-			loadingLabel.Name = "LoadingLabel"
-			loadingLabel.Parent = AnimationsGrid
-			loadingLabel.BackgroundTransparency = 1
-			loadingLabel.Size = UDim2.new(1, 0, 0, 50)
-			loadingLabel.Font = Enum.Font.GothamSemibold
-			loadingLabel.Text = "正在加载动画..."
-			loadingLabel.TextColor3 = Colors.Text
-			loadingLabel.TextSize = 14
-			loadingLabel.ZIndex = 17
-			
-			local success, animationsData = pcall(function()
-				return fetchCatalogItems("Animations")
-			end)
-			
-			if loadingLabel and loadingLabel.Parent then
-				loadingLabel:Destroy()
-			end
-			
-			if not success or not animationsData or not animationsData.items then
-				local errorLabel = Instance.new("TextLabel")
-				errorLabel.Name = "ErrorLabel"
-				errorLabel.Parent = AnimationsGrid
-				errorLabel.BackgroundTransparency = 1
-				errorLabel.Size = UDim2.new(1, 0, 0, 100)
-				errorLabel.Position = UDim2.new(0, 0, 0.3, 0)
-				errorLabel.Font = Enum.Font.GothamSemibold
-				errorLabel.Text = "无法加载动画\n请检查网络连接或稍后再试"
-				errorLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-				errorLabel.TextSize = 14
-				errorLabel.TextWrapped = true
-				errorLabel.ZIndex = 17
-				return
-			end
-			
+			local animationsData = fetchCatalogItems("Animations")
 			local animations = animationsData.items
-			local loadedCount = 0
+			
+			if #animations == 0 then
+				animations = defaultAnimations
+			end
 			
 			for i, anim in ipairs(animations) do
 				if i <= 100 then
 					local animName = anim.name or "动画"
+					local animId = anim.id or anim.assetId or "507771019"
 					
 					if searchTerm == "" or animName:lower():find(searchTerm:lower(), 1, true) then
 						local animButton = Instance.new("ImageButton")
-						animButton.Name = "Anim_" .. (anim.id or i)
+						animButton.Name = "Anim_" .. animId
 						animButton.Parent = AnimationsGrid
 						animButton.BackgroundColor3 = Colors.Primary
 						animButton.BackgroundTransparency = 0.3
@@ -1759,7 +1653,7 @@ function library.new(library, name, theme)
 							local character = services.Players.LocalPlayer.Character
 							if character and character:FindFirstChild("Humanoid") then
 								local animation = Instance.new("Animation")
-								animation.AnimationId = "rbxassetid://" .. anim.id
+								animation.AnimationId = "rbxassetid://" .. animId
 								
 								local animator = character.Humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator")
 								animator.Parent = character.Humanoid
@@ -1778,23 +1672,8 @@ function library.new(library, name, theme)
 						animButton.MouseLeave:Connect(function()
 							Tween(animButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
 						end)
-						
-						loadedCount = loadedCount + 1
 					end
 				end
-			end
-			
-			if loadedCount == 0 and searchTerm ~= "" then
-				local noResultLabel = Instance.new("TextLabel")
-				noResultLabel.Name = "NoResultLabel"
-				noResultLabel.Parent = AnimationsGrid
-				noResultLabel.BackgroundTransparency = 1
-				noResultLabel.Size = UDim2.new(1, 0, 0, 50)
-				noResultLabel.Font = Enum.Font.GothamSemibold
-				noResultLabel.Text = "未找到匹配的动画: " .. searchTerm
-				noResultLabel.TextColor3 = Colors.Placeholder
-				noResultLabel.TextSize = 14
-				noResultLabel.ZIndex = 17
 			end
 		end)
 	end
@@ -3064,6 +2943,7 @@ function library.new(library, name, theme)
 			uiFollowEnabled = true
 			Tween(DragModeBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
 			Tween(DragModeBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
+			TitleBar.Active = false
 		end
         
         local config = getCurrentConfig()
