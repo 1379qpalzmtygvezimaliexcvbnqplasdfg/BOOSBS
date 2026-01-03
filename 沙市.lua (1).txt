@@ -1510,7 +1510,7 @@ function library.new(library, name, theme)
 
 	local function fetchCatalogItems(itemType, cursor)
 		local HttpService = game:GetService("HttpService")
-		local PROXY_URL = "https://rproxy.kirbs.net"
+		local PROXY_URL = "https://catalog.roblox.com"
 		
 		local endpoint = string.format(
 			"%s/v1/search/items?category=Animations&limit=100&cursor=%s",
@@ -1535,7 +1535,7 @@ function library.new(library, name, theme)
 
 	local function fetchAssetDetails(assetIds)
 		local HttpService = game:GetService("HttpService")
-		local PROXY_URL = "https://rproxy.kirbs.net"
+		local PROXY_URL = "https://catalog.roblox.com"
 		
 		local endpoint = string.format(
 			"%s/v1/assets?assetIds=%s",
@@ -1557,7 +1557,7 @@ function library.new(library, name, theme)
 
 	local function fetchBundleItems(bundleId)
 		local HttpService = game:GetService("HttpService")
-		local PROXY_URL = "https://rproxy.kirbs.net"
+		local PROXY_URL = "https://catalog.roblox.com"
 		
 		local endpoint = string.format(
 			"%s/v1/bundles/%s/bundleItems",
