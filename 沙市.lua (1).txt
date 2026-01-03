@@ -10,6 +10,32 @@ library.flags = {}
 local configPath = "BS脚本/UI配置.txt"
 local colorConfigPath = "BS脚本/颜色配置.txt"
 
+-- 获取当前完整配置
+local function getCurrentConfig()
+    local config = {
+        autoFitScreen = false,
+        windowSize = {650, 400},
+        windowPosition = {0.5, 0.5},
+        accentColor = {Colors and Colors.Accent and math.floor(Colors.Accent.R * 255) or 52,
+                       Colors and Colors.Accent and math.floor(Colors.Accent.G * 255) or 152,
+                       Colors and Colors.Accent and math.floor(Colors.Accent.B * 255) or 219},
+        transparency = Colors and Colors.Transparent or 0.5,
+        scaleFactor = 1,
+        uiFollowEnabled = true,
+        dragModeEnabled = false,
+        faceCharacterEnabled = false,
+        aiPanelEnabled = false,
+        flags = {}
+    }
+    
+    -- 复制所有flags
+    for k, v in pairs(library.flags) do
+        config.flags[k] = v
+    end
+    
+    return config
+end
+
 local function saveConfig(config)
 	local success, encoded = pcall(function()
 		return game:GetService("HttpService"):JSONEncode(config)
@@ -23,7 +49,9 @@ local function saveConfig(config)
 			makefolder("BS脚本")
 		end
 		writefile(configPath, encoded)
+		return true
 	end
+	return false
 end
 
 local function loadConfig()
@@ -35,11 +63,7 @@ local function loadConfig()
 			return config
 		end
 	end
-	return {
-		autoFitScreen = false,
-		windowSize = {650, 400},
-		windowPosition = {0.5, 0.5}
-	}
+	return getCurrentConfig()
 end
 
 local function saveColorConfig(colorConfig)
@@ -565,10 +589,129 @@ function library.new(library, name, theme)
 		end)
 	end
 
+    -- 复制配置到剪贴板（生成可复制的文本）
+    local function copyConfigToClipboard()
+        local config = getCurrentConfig()
+        local success, json = pcall(function()
+            return game:GetService("HttpService"):JSONEncode(config, true)
+        end)
+        
+        if success then
+            -- 创建一个可复制的文本框
+            local clipboardGui = Instance.new("ScreenGui")
+            clipboardGui.Name = "ConfigClipboard"
+            clipboardGui.Parent = services.CoreGui
+            
+            local textBox = Instance.new("TextBox")
+            textBox.Size = UDim2.new(0, 400, 0, 300)
+            textBox.Position = UDim2.new(0.5, -200, 0.5, -150)
+            textBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+            textBox.TextColor3 = Color3.fromRGB(240, 240, 240)
+            textBox.TextSize = 12
+            textBox.Font = Enum.Font.Code
+            textBox.Text = json
+            textBox.MultiLine = true
+            textBox.ClearTextOnFocus = false
+            textBox.Parent = clipboardGui
+            
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, 8)
+            corner.Parent = textBox
+            
+            local stroke = Instance.new("UIStroke")
+            stroke.Color = Color3.fromRGB(52, 152, 219)
+            stroke.Thickness = 2
+            stroke.Parent = textBox
+            
+            addChatMessage("配置已生成！请在下方文本框中全选并复制配置：", false)
+            addChatMessage(json, false)
+            
+            -- 3秒后自动关闭
+            spawn(function()
+                wait(3)
+                clipboardGui:Destroy()
+            end)
+            
+            return true
+        end
+        return false
+    end
+
+    -- 应用完整配置
+    local function applyFullConfig(config)
+        if not config or type(config) ~= "table" then
+            return false
+        end
+        
+        -- 应用主题颜色
+        if config.accentColor then
+            local r, g, b = unpack(config.accentColor)
+            local newColor = Color3.fromRGB(r, g, b)
+            Colors.Accent = newColor
+            saveColorConfig({accentColor = config.accentColor})
+            
+            for _, obj in pairs(Main:GetDescendants()) do
+                if obj:IsA("Frame") and obj.BackgroundColor3 == Colors.Accent then
+                    Tween(obj, 0.3, "Sine", "Out", { BackgroundColor3 = newColor })
+                elseif obj:IsA("TextLabel") and obj.TextColor3 == Colors.Accent then
+                    Tween(obj, 0.3, "Sine", "Out", { TextColor3 = newColor })
+                elseif obj:IsA("UIStroke") and obj.Color == Colors.Accent then
+                    Tween(obj, 0.3, "Sine", "Out", { Color = newColor })
+                end
+            end
+        end
+        
+        -- 应用透明度
+        if config.transparency then
+            Colors.Transparent = config.transparency
+            for _, obj in pairs(Main:GetDescendants()) do
+                if obj.Name == "GlassEffect" then
+                    obj.ImageTransparency = 1 - config.transparency + 0.5
+                end
+            end
+        end
+        
+        -- 应用flags（开关、滑块、文本框等状态）
+        if config.flags then
+            for flag, value in pairs(config.flags) do
+                library.flags[flag] = value
+            end
+        end
+        
+        -- 应用UI模式
+        if config.uiFollowEnabled ~= nil then
+            uiFollowEnabled = config.uiFollowEnabled
+        end
+        if config.dragModeEnabled ~= nil then
+            dragModeEnabled = config.dragModeEnabled
+        end
+        if config.faceCharacterEnabled ~= nil then
+            faceCharacterEnabled = config.faceCharacterEnabled
+        end
+        
+        return true
+    end
+
 	local function parseAIResponse(response)
 		local commands = {}
 		local lower = response:lower()
 		
+		-- 新增：保存配置指令
+		if lower:match("保存") or lower:match("save config") then
+			table.insert(commands, {type = "save", value = true})
+		end
+		
+		-- 新增：复制配置指令
+		if lower:match("复制配置") or lower:match("copy config") then
+			table.insert(commands, {type = "copy", value = true})
+		end
+		
+		-- 新增：应用配置（JSON格式）
+		if response:match("^%s*{") and response:match("}$") then
+			table.insert(commands, {type = "apply_config", value = response})
+		end
+		
+		-- 颜色修改（支持中英文）
 		local colorMap = {
 			["红"] = "#FF0000", ["red"] = "#FF0000",
 			["蓝"] = "#0000FF", ["blue"] = "#0000FF",
@@ -598,6 +741,7 @@ function library.new(library, name, theme)
 			end
 		end
 		
+		-- 布局间距
 		if lower:match("布局") or lower:match("layout") then
 			if lower:match("紧凑") or lower:match("compact") then
 				table.insert(commands, {type = "spacing", value = "compact"})
@@ -608,6 +752,7 @@ function library.new(library, name, theme)
 			end
 		end
 		
+		-- 透明度
 		if lower:match("透明") or lower:match("transparent") or lower:match("透明度") then
 			if lower:match("高") or lower:match("high") then
 				table.insert(commands, {type = "transparency", value = 0.7})
@@ -618,6 +763,7 @@ function library.new(library, name, theme)
 			end
 		end
 		
+		-- 尺寸
 		if lower:match("大小") or lower:match("size") or lower:match("尺寸") then
 			if lower:match("大") or lower:match("big") or lower:match("large") then
 				table.insert(commands, {type = "size", value = "large"})
@@ -628,6 +774,7 @@ function library.new(library, name, theme)
 			end
 		end
 		
+		-- 重置
 		if lower:match("重置") or lower:match("reset") then
 			table.insert(commands, {type = "reset", value = true})
 		end
@@ -691,7 +838,9 @@ function library.new(library, name, theme)
 			elseif cmd.type == "size" then
 				local currentScale = scaleFactor
 				local newScale = cmd.value == "large" and 1.5 or cmd.value == "small" and 0.7 or 1.3
-				
+                
+                scaleFactor = newScale
+                
 				Main.Size = UDim2.new(0, 650 * newScale, 0, 400 * newScale)
 				Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 				
@@ -717,8 +866,35 @@ function library.new(library, name, theme)
 						modified = modified + 1
 					end
 				end
+                
+                -- 重置scaleFactor
+                scaleFactor = isComputer and 1.3 or 1
+                Main.Size = UDim2.new(0, 650 * scaleFactor, 0, 400 * scaleFactor)
 				
 				addChatMessage("UI已重置为默认设置 (恢复" .. modified .. "个元素)", false)
+            elseif cmd.type == "save" then
+                local config = getCurrentConfig()
+                if saveConfig(config) then
+                    addChatMessage("✅ 配置已保存！下次启动时将自动应用此配置。", false)
+                else
+                    addChatMessage("❌ 保存配置失败！", false)
+                end
+            elseif cmd.type == "copy" then
+                if copyConfigToClipboard() then
+                    addChatMessage("✅ 配置已复制到剪贴板！你可以将这段JSON发送给AI来应用相同的配置。", false)
+                else
+                    addChatMessage("❌ 复制配置失败！", false)
+                end
+            elseif cmd.type == "apply_config" then
+                local success, config = pcall(function()
+                    return game:GetService("HttpService"):JSONDecode(cmd.value)
+                end)
+                if success then
+                    applyFullConfig(config)
+                    addChatMessage("✅ 配置已成功应用！所有UI设置已更新。", false)
+                else
+                    addChatMessage("❌ 配置格式错误，无法应用！请检查JSON格式是否正确。", false)
+                end
 			end
 		end
 	end
@@ -741,14 +917,14 @@ function library.new(library, name, theme)
 					messages = {
 						{
 							role = "system",
-							content = "你是一个UI助手，请根据用户指令返回简洁的修改建议。对于颜色：只返回颜色名称或十六进制代码。对于布局：只返回布局类型。对于透明度：只返回透明度级别。对于尺寸：只返回尺寸类型。例如：用户说'改成红色'，回复'颜色: #FF0000'；用户说'用紧凑布局'，回复'布局: compact'；用户说'提高透明度'，回复'透明度: high'；用户说'UI变大'，回复'尺寸: large'；用户说'重置'，回复'重置: true'。"
+							content = "你是一个UI助手，请根据用户指令返回简洁的修改建议。对于颜色：只返回颜色名称或十六进制代码。对于布局：只返回布局类型。对于透明度：只返回透明度级别。对于尺寸：只返回尺寸类型。对于保存/复制：返回相应指令。对于JSON配置：直接返回配置内容。例如：用户说'改成红色'，回复'颜色: #FF0000'；用户说'用紧凑布局'，回复'布局: compact'；用户说'提高透明度'，回复'透明度: high'；用户说'UI变大'，回复'尺寸: large'；用户说'保存'，回复'保存: true'；用户说'复制配置'，回复'复制配置: true'；用户粘贴JSON配置，直接返回该JSON。"
 						},
 						{
 							role = "user",
 							content = userMessage
 						}
 					},
-					max_tokens = 100
+					max_tokens = 500
 				}
 				
 				local response = request({
@@ -1515,6 +1691,10 @@ function library.new(library, name, theme)
 						})
 						library.flags[flag] = state
 						callback(state)
+                        
+                        -- 保存配置
+                        local config = getCurrentConfig()
+                        saveConfig(config)
 					end,
 					Module = ToggleModule,
 				}
@@ -1710,11 +1890,18 @@ function library.new(library, name, theme)
 				TB.BackgroundTransparency = 1
 				TB.Size = UDim2.new(1, 0, 1, 0)
 				TB.Font = Enum.Font.Gotham
+				TB.PlaceholderText = default
 				TB.Text = default
 				TB.TextColor3 = Colors.Text
 				TB.PlaceholderColor3 = Colors.Placeholder
 				TB.TextSize = 14
 				TB.ClearTextOnFocus = true
+                
+                -- 从加载的配置中恢复值
+                if currentConfig.flags and currentConfig.flags[flag] ~= nil then
+                    TB.Text = tostring(currentConfig.flags[flag])
+                    library.flags[flag] = currentConfig.flags[flag]
+                end
 				
 				TB.Focused:Connect(function()
 					if TB.Text == default then
@@ -1732,6 +1919,10 @@ function library.new(library, name, theme)
 					end
 					library.flags[flag] = TB.Text
 					callback(TB.Text)
+                    
+                    -- 保存配置
+                    local config = getCurrentConfig()
+                    saveConfig(config)
 				end)
 				
 				TB:GetPropertyChangedSignal("TextBounds"):Connect(function()
@@ -1746,6 +1937,10 @@ function library.new(library, name, theme)
 						TB.Text = tostring(value)
 						library.flags[flag] = value
 						callback(value)
+                        
+                        -- 保存配置
+                        local config = getCurrentConfig()
+                        saveConfig(config)
 					end,
 					Module = TextboxModule
 				}
@@ -1890,8 +2085,17 @@ function library.new(library, name, theme)
 						SliderValue.Text = tostring(value)
 						Tween(SliderPart, 0.1, "Linear", "Out", { Size = UDim2.new(percent, 0, 1, 0) })
 						callback(tonumber(value))
+                        
+                        -- 保存配置
+                        local config = getCurrentConfig()
+                        saveConfig(config)
 					end,
 				}
+                
+                -- 从加载的配置中恢复值
+                if currentConfig.flags and currentConfig.flags[flag] ~= nil then
+                    funcs:SetValue(currentConfig.flags[flag])
+                end
 				
 				MinSlider.MouseButton1Click:Connect(function()
 					local currentValue = library.flags[flag]
@@ -2063,6 +2267,10 @@ function library.new(library, name, theme)
 							callback(Option.Text)
 							DropdownText.Text = Option.Text
 							library.flags[flag] = Option.Text
+                            
+                            -- 保存配置
+                            local config = getCurrentConfig()
+                            saveConfig(config)
 						end)
 					end,
 					
@@ -2107,6 +2315,18 @@ function library.new(library, name, theme)
 				funcs:SetOptions(options)
 				return funcs
 			end
+            
+            -- 从加载的配置中恢复下拉菜单选择
+            if currentConfig.flags and currentConfig.flags[flag] then
+                local selectedValue = currentConfig.flags[flag]
+                for _, option in ipairs(options) do
+                    if option == selectedValue then
+                        DropdownText.Text = selectedValue
+                        library.flags[flag] = selectedValue
+                        break
+                    end
+                end
+            end
 			
 			section.TextBox = section.Textbox
 			section.textbox = section.Textbox
@@ -2128,6 +2348,11 @@ function library.new(library, name, theme)
 	local faceCharacterEnabled = false
 	local aiPanelEnabled = false
 
+    -- 从配置恢复UI模式
+    if currentConfig.uiFollowEnabled ~= nil then uiFollowEnabled = currentConfig.uiFollowEnabled end
+    if currentConfig.dragModeEnabled ~= nil then dragModeEnabled = currentConfig.dragModeEnabled end
+    if currentConfig.faceCharacterEnabled ~= nil then faceCharacterEnabled = currentConfig.faceCharacterEnabled end
+
 	FaceBtn.MouseButton1Click:Connect(function()
 		spawn(function()
 			Ripple(FaceBtn)
@@ -2148,6 +2373,10 @@ function library.new(library, name, theme)
 			Tween(FaceBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
 			Tween(FaceBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
 		end
+        
+        -- 保存配置
+        local config = getCurrentConfig()
+        saveConfig(config)
 	end)
 
 	DragModeBtn.MouseButton1Click:Connect(function()
@@ -2171,6 +2400,10 @@ function library.new(library, name, theme)
 			Tween(DragModeBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
 			TitleBar.Active = false
 		end
+        
+        -- 保存配置
+        local config = getCurrentConfig()
+        saveConfig(config)
 	end)
 
 	AIPanelBtn.MouseButton1Click:Connect(function()
@@ -2191,6 +2424,10 @@ function library.new(library, name, theme)
 			Tween(AIPanelBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
 			Tween(AIPanelBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
 		end
+        
+        -- 保存配置
+        local config = getCurrentConfig()
+        saveConfig(config)
 	end)
 	
 	local function update3DPosition(dt)
@@ -2221,6 +2458,9 @@ function library.new(library, name, theme)
 	end
 	
 	renderConnection = game:GetService("RunService").RenderStepped:Connect(update3DPosition)
+    
+    -- 应用加载的配置
+    applyFullConfig(currentConfig)
 	
 	Tween(FaceBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
 	Tween(DragModeBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
