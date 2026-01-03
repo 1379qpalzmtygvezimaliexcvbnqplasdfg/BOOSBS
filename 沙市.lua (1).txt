@@ -8,7 +8,6 @@ library.currentTab = nil
 library.flags = {}
 
 local configPath = "BS脚本/UI配置.txt"
-local colorPresetsPath = "BS脚本/颜色预设.json"
 
 local function saveConfig(config)
 	local success, encoded = pcall(function()
@@ -40,27 +39,6 @@ local function loadConfig()
 		windowSize = {650, 400},
 		windowPosition = {0.5, 0.5}
 	}
-end
-
-local function saveColorPresets(presets)
-	local success, encoded = pcall(function()
-		return game:GetService("HttpService"):JSONEncode(presets)
-	end)
-	if success then
-		writefile(colorPresetsPath, encoded)
-	end
-end
-
-local function loadColorPresets()
-	if isfile(colorPresetsPath) then
-		local success, presets = pcall(function()
-			return game:GetService("HttpService"):JSONDecode(readfile(colorPresetsPath))
-		end)
-		if success then
-			return presets
-		end
-	end
-	return {}
 end
 
 local services = setmetatable({}, {
@@ -337,7 +315,7 @@ function library.new(library, name, theme)
 	MainBG.Size = UDim2.new(1, 0, 1, 0)
 	MainBG.Image = "rbxassetid://102621341311637"
 	MainBG.ZIndex = 0
-	MainBG.ImageTransparency = 0.25
+	MainBG.ImageTransparency = 0.2
 	
 	local MainC = Instance.new("UICorner")
 	MainC.CornerRadius = UDim.new(0, 8)
@@ -370,12 +348,69 @@ function library.new(library, name, theme)
 	DropShadow.ScaleType = Enum.ScaleType.Slice
 	DropShadow.SliceCenter = Rect.new(49, 49, 450, 450)
 	
+	local FaceBtn = Instance.new("ImageButton")
+	FaceBtn.Name = "FaceBtn"
+	FaceBtn.Parent = Main
+	FaceBtn.BackgroundColor3 = Colors.Secondary
+	FaceBtn.BackgroundTransparency = Colors.Transparent
+	FaceBtn.Position = UDim2.new(1, -125, 0, 10)
+	FaceBtn.Size = UDim2.new(0, 25, 0, 25)
+	FaceBtn.Image = "rbxassetid://3926305904"
+	FaceBtn.ImageRectOffset = Vector2.new(644, 124)
+	FaceBtn.ImageRectSize = Vector2.new(36, 36)
+	FaceBtn.ImageColor3 = Colors.Text
+	FaceBtn.ZIndex = 10
+
+	local FaceBtnC = Instance.new("UICorner")
+	FaceBtnC.CornerRadius = UDim.new(0, 6)
+	FaceBtnC.Parent = FaceBtn
+
+	CreateGlassEffect(FaceBtn)
+
+	local DragModeBtn = Instance.new("ImageButton")
+	DragModeBtn.Name = "DragModeBtn"
+	DragModeBtn.Parent = Main
+	DragModeBtn.BackgroundColor3 = Colors.Secondary
+	DragModeBtn.BackgroundTransparency = Colors.Transparent
+	DragModeBtn.Position = UDim2.new(1, -95, 0, 10)
+	DragModeBtn.Size = UDim2.new(0, 25, 0, 25)
+	DragModeBtn.Image = "rbxassetid://3926305904"
+	DragModeBtn.ImageRectOffset = Vector2.new(564, 444)
+	DragModeBtn.ImageRectSize = Vector2.new(36, 36)
+	DragModeBtn.ImageColor3 = Colors.Text
+	DragModeBtn.ZIndex = 10
+
+	local DragModeBtnC = Instance.new("UICorner")
+	DragModeBtnC.CornerRadius = UDim.new(0, 6)
+	DragModeBtnC.Parent = DragModeBtn
+
+	CreateGlassEffect(DragModeBtn)
+
+	local ColorPageBtn = Instance.new("ImageButton")
+	ColorPageBtn.Name = "ColorPageBtn"
+	ColorPageBtn.Parent = Main
+	ColorPageBtn.BackgroundColor3 = Colors.Secondary
+	ColorPageBtn.BackgroundTransparency = Colors.Transparent
+	ColorPageBtn.Position = UDim2.new(1, -65, 0, 10)
+	ColorPageBtn.Size = UDim2.new(0, 25, 0, 25)
+	ColorPageBtn.Image = "rbxassetid://3926305904"
+	ColorPageBtn.ImageRectOffset = Vector2.new(404, 324)
+	ColorPageBtn.ImageRectSize = Vector2.new(36, 36)
+	ColorPageBtn.ImageColor3 = Colors.Text
+	ColorPageBtn.ZIndex = 10
+
+	local ColorPageBtnC = Instance.new("UICorner")
+	ColorPageBtnC.CornerRadius = UDim.new(0, 6)
+	ColorPageBtnC.Parent = ColorPageBtn
+
+	CreateGlassEffect(ColorPageBtn)
+
 	local AutoFitBtn = Instance.new("ImageButton")
 	AutoFitBtn.Name = "AutoFitBtn"
 	AutoFitBtn.Parent = Main
 	AutoFitBtn.BackgroundColor3 = Colors.Secondary
 	AutoFitBtn.BackgroundTransparency = Colors.Transparent
-	AutoFitBtn.Position = UDim2.new(1, -95, 0, 10)
+	AutoFitBtn.Position = UDim2.new(1, -155, 0, 10)
 	AutoFitBtn.Size = UDim2.new(0, 25, 0, 25)
 	AutoFitBtn.Image = "rbxassetid://3926305904"
 	AutoFitBtn.ImageRectOffset = Vector2.new(244, 164)
@@ -394,7 +429,7 @@ function library.new(library, name, theme)
 	ScaleBtn.Parent = Main
 	ScaleBtn.BackgroundColor3 = Colors.Secondary
 	ScaleBtn.BackgroundTransparency = Colors.Transparent
-	ScaleBtn.Position = UDim2.new(1, -65, 0, 10)
+	ScaleBtn.Position = UDim2.new(1, -185, 0, 10)
 	ScaleBtn.Size = UDim2.new(0, 25, 0, 25)
 	ScaleBtn.Image = "rbxassetid://3926305904"
 	ScaleBtn.ImageRectOffset = Vector2.new(324, 364)
@@ -424,64 +459,185 @@ function library.new(library, name, theme)
 	local CloseBtnC = Instance.new("UICorner")
 	CloseBtnC.CornerRadius = UDim.new(0, 6)
 	CloseBtnC.Parent = CloseBtn
-	
-	local FacePlayerBtn = Instance.new("ImageButton")
-	FacePlayerBtn.Name = "FacePlayerBtn"
-	FacePlayerBtn.Parent = Main
-	FacePlayerBtn.BackgroundColor3 = Colors.Secondary
-	FacePlayerBtn.BackgroundTransparency = Colors.Transparent
-	FacePlayerBtn.Position = UDim2.new(1, -125, 0, 10)
-	FacePlayerBtn.Size = UDim2.new(0, 25, 0, 25)
-	FacePlayerBtn.Image = "rbxassetid://3926305904"
-	FacePlayerBtn.ImageRectOffset = Vector2.new(604, 124)
-	FacePlayerBtn.ImageRectSize = Vector2.new(36, 36)
-	FacePlayerBtn.ImageColor3 = Colors.Text
-	FacePlayerBtn.ZIndex = 10
-	
-	local FacePlayerBtnC = Instance.new("UICorner")
-	FacePlayerBtnC.CornerRadius = UDim.new(0, 6)
-	FacePlayerBtnC.Parent = FacePlayerBtn
-	
-	CreateGlassEffect(FacePlayerBtn)
-	
-	local DragModeBtn = Instance.new("ImageButton")
-	DragModeBtn.Name = "DragModeBtn"
-	DragModeBtn.Parent = Main
-	DragModeBtn.BackgroundColor3 = Colors.Secondary
-	DragModeBtn.BackgroundTransparency = Colors.Transparent
-	DragModeBtn.Position = UDim2.new(1, -155, 0, 10)
-	DragModeBtn.Size = UDim2.new(0, 25, 0, 25)
-	DragModeBtn.Image = "rbxassetid://3926305904"
-	DragModeBtn.ImageRectOffset = Vector2.new(484, 44)
-	DragModeBtn.ImageRectSize = Vector2.new(36, 36)
-	DragModeBtn.ImageColor3 = Colors.Text
-	DragModeBtn.ZIndex = 10
-	
-	local DragModeBtnC = Instance.new("UICorner")
-	DragModeBtnC.CornerRadius = UDim.new(0, 6)
-	DragModeBtnC.Parent = DragModeBtn
-	
-	CreateGlassEffect(DragModeBtn)
-	
-	local ColorPaletteBtn = Instance.new("ImageButton")
-	ColorPaletteBtn.Name = "ColorPaletteBtn"
-	ColorPaletteBtn.Parent = Main
-	ColorPaletteBtn.BackgroundColor3 = Colors.Secondary
-	ColorPaletteBtn.BackgroundTransparency = Colors.Transparent
-	ColorPaletteBtn.Position = UDim2.new(1, -185, 0, 10)
-	ColorPaletteBtn.Size = UDim2.new(0, 25, 0, 25)
-	ColorPaletteBtn.Image = "rbxassetid://3926305904"
-	ColorPaletteBtn.ImageRectOffset = Vector2.new(124, 924)
-	ColorPaletteBtn.ImageRectSize = Vector2.new(36, 36)
-	ColorPaletteBtn.ImageColor3 = Colors.Text
-	ColorPaletteBtn.ZIndex = 10
-	
-	local ColorPaletteBtnC = Instance.new("UICorner")
-	ColorPaletteBtnC.CornerRadius = UDim.new(0, 6)
-	ColorPaletteBtnC.Parent = ColorPaletteBtn
-	
-	CreateGlassEffect(ColorPaletteBtn)
-	
+
+	local ColorPageFrame = Instance.new("Frame")
+	ColorPageFrame.Name = "ColorPageFrame"
+	ColorPageFrame.Parent = Main
+	ColorPageFrame.BackgroundColor3 = Colors.Secondary
+	ColorPageFrame.BackgroundTransparency = Colors.Transparent
+	ColorPageFrame.Position = UDim2.new(0, 0, 0, 100)
+	ColorPageFrame.Size = UDim2.new(1, 0, 1, -100)
+	ColorPageFrame.Visible = false
+	ColorPageFrame.ZIndex = 15
+
+	local ColorPageC = Instance.new("UICorner")
+	ColorPageC.CornerRadius = UDim.new(0, 8)
+	ColorPageC.Parent = ColorPageFrame
+
+	CreateGlassEffect(ColorPageFrame)
+
+	local ColorPageTitle = Instance.new("TextLabel")
+	ColorPageTitle.Name = "ColorPageTitle"
+	ColorPageTitle.Parent = ColorPageFrame
+	ColorPageTitle.BackgroundTransparency = 1
+	ColorPageTitle.Position = UDim2.new(0, 15, 0, 15)
+	ColorPageTitle.Size = UDim2.new(1, -30, 0, 30)
+	ColorPageTitle.Font = Enum.Font.GothamBlack
+	ColorPageTitle.Text = "调色板 - 点击右上角按钮返回"
+	ColorPageTitle.TextColor3 = Colors.Text
+	ColorPageTitle.TextSize = 18
+	ColorPageTitle.TextXAlignment = Enum.TextXAlignment.Left
+	ColorPageTitle.ZIndex = 16
+
+	local ColorPresetsFrame = Instance.new("Frame")
+	ColorPresetsFrame.Name = "ColorPresetsFrame"
+	ColorPresetsFrame.Parent = ColorPageFrame
+	ColorPresetsFrame.BackgroundTransparency = 1
+	ColorPresetsFrame.Position = UDim2.new(0, 15, 0, 60)
+	ColorPresetsFrame.Size = UDim2.new(1, -30, 1, -75)
+	ColorPresetsFrame.ZIndex = 16
+
+	local PresetsLayout = Instance.new("UIGridLayout")
+	PresetsLayout.Parent = ColorPresetsFrame
+	PresetsLayout.CellPadding = UDim2.new(0, 10, 0, 10)
+	PresetsLayout.CellSize = UDim2.new(0, 80, 0, 80)
+	PresetsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+	local selectedColor = Color3.fromRGB(255, 255, 255)
+	local colorPresets = {}
+	local presetsPath = "BS脚本/颜色预设.txt"
+
+	local function saveColorPresets()
+		local success, encoded = pcall(function()
+			return game:GetService("HttpService"):JSONEncode(colorPresets)
+		end)
+		if success then
+			if not isfolder("BS脚本") then
+				makefolder("BS脚本")
+			end
+			writefile(presetsPath, encoded)
+		end
+	end
+
+	local function loadColorPresets()
+		if isfile(presetsPath) then
+			local success, presets = pcall(function()
+				return game:GetService("HttpService"):JSONDecode(readfile(presetsPath))
+			end)
+			if success then
+				colorPresets = presets
+				return
+			end
+		end
+		colorPresets = {
+			{ Name = "红色", Color = {255, 0, 0} },
+			{ Name = "绿色", Color = {0, 255, 0} },
+			{ Name = "蓝色", Color = {0, 0, 255} },
+			{ Name = "黄色", Color = {255, 255, 0} },
+			{ Name = "紫色", Color = {255, 0, 255} },
+			{ Name = "青色", Color = {0, 255, 255} },
+			{ Name = "白色", Color = {255, 255, 255} },
+			{ Name = "黑色", Color = {0, 0, 0} },
+		}
+		saveColorPresets()
+	end
+
+	local function createPresetButton(presetData, index)
+		local presetFrame = Instance.new("TextButton")
+		presetFrame.Name = "Preset_" .. index
+		presetFrame.Parent = ColorPresetsFrame
+		presetFrame.BackgroundColor3 = Color3.fromRGB(unpack(presetData.Color))
+		presetFrame.BackgroundTransparency = 0.2
+		presetFrame.Size = UDim2.new(0, 80, 0, 80)
+		presetFrame.AutoButtonColor = false
+		presetFrame.Font = Enum.Font.GothamSemibold
+		presetFrame.Text = presetData.Name
+		presetFrame.TextColor3 = Colors.Text
+		presetFrame.TextSize = 14
+		presetFrame.TextWrapped = true
+		presetFrame.ZIndex = 17
+		
+		local PresetC = Instance.new("UICorner")
+		PresetC.CornerRadius = UDim.new(0, 8)
+		PresetC.Parent = presetFrame
+		
+		local presetStroke = Instance.new("UIStroke")
+		presetStroke.Color = Colors.White
+		presetStroke.Thickness = 2
+		presetStroke.Transparency = 0.8
+		presetStroke.Parent = presetFrame
+		
+		presetFrame.MouseButton1Click:Connect(function()
+			selectedColor = Color3.fromRGB(unpack(presetData.Color))
+			Colors.Accent = selectedColor
+			updateThemeColors()
+		end)
+		
+		presetFrame.MouseButton2Click:Connect(function()
+			table.remove(colorPresets, index)
+			presetFrame:Destroy()
+			saveColorPresets()
+			loadColorPresetsFrame()
+		end)
+	end
+
+	local function loadColorPresetsFrame()
+		for _, child in ipairs(ColorPresetsFrame:GetChildren()) do
+			if child:IsA("TextButton") then
+				child:Destroy()
+			end
+		end
+		
+		for i, preset in ipairs(colorPresets) do
+			createPresetButton(preset, i)
+		end
+		
+		local addPresetBtn = Instance.new("TextButton")
+		addPresetBtn.Name = "AddPresetBtn"
+		addPresetBtn.Parent = ColorPresetsFrame
+		addPresetBtn.BackgroundColor3 = Colors.Primary
+		addPresetBtn.BackgroundTransparency = 0.5
+		addPresetBtn.Size = UDim2.new(0, 80, 0, 80)
+		addPresetBtn.AutoButtonColor = false
+		addPresetBtn.Font = Enum.Font.GothamBlack
+		addPresetBtn.Text = "+"
+		addPresetBtn.TextColor3 = Colors.Text
+		addPresetBtn.TextSize = 40
+		addPresetBtn.ZIndex = 17
+		
+		local AddPresetC = Instance.new("UICorner")
+		AddPresetC.CornerRadius = UDim.new(0, 8)
+		AddPresetC.Parent = addPresetBtn
+		
+		addPresetBtn.MouseButton1Click:Connect(function()
+			local newPreset = {
+				Name = "预设" .. (#colorPresets + 1),
+				Color = {math.floor(selectedColor.R * 255), math.floor(selectedColor.G * 255), math.floor(selectedColor.B * 255)}
+			}
+			table.insert(colorPresets, newPreset)
+			saveColorPresets()
+			createPresetButton(newPreset, #colorPresets)
+		end)
+	end
+
+	function updateThemeColors()
+		for _, obj in pairs(Main:GetDescendants()) do
+			if obj:IsA("Frame") and obj.BackgroundColor3 == Colors.Accent then
+				Tween(obj, 0.3, "Sine", "Out", { BackgroundColor3 = selectedColor })
+			elseif obj:IsA("TextLabel") and obj.TextColor3 == Colors.Accent then
+				Tween(obj, 0.3, "Sine", "Out", { TextColor3 = selectedColor })
+			elseif obj:IsA("UIStroke") and obj.Color == Colors.Accent then
+				Tween(obj, 0.3, "Sine", "Out", { Color = selectedColor })
+			end
+		end
+		Colors.Accent = selectedColor
+	end
+
+	local uiFollowEnabled = true
+	local dragModeEnabled = false
+	local faceCharacterEnabled = false
+	local colorPageEnabled = false
+
 	Open.MouseButton1Click:Connect(function()
 		Main.Visible = not Main.Visible
 		if Main.Visible then
@@ -553,6 +709,13 @@ function library.new(library, name, theme)
 		Tween(AutoFitBtn, 0, "Sine", "Out", { ImageColor3 = Colors.Text })
 		Tween(AutoFitBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
 	end
+	
+	CloseBtn.MouseButton1Click:Connect(function()
+		spawn(function()
+			Ripple(CloseBtn)
+		end)
+		Main.Visible = false
+	end)
 	
 	local TitleBar = Instance.new("Frame")
 	TitleBar.Name = "TitleBar"
@@ -651,207 +814,6 @@ function library.new(library, name, theme)
 	Content.Position = UDim2.new(0, 0, 0, 100)
 	Content.Size = UDim2.new(1, 0, 1, -100)
 	
-	local ColorPaletteFrame = Instance.new("Frame")
-	ColorPaletteFrame.Name = "ColorPaletteFrame"
-	ColorPaletteFrame.Parent = Main
-	ColorPaletteFrame.BackgroundColor3 = Colors.Primary
-	ColorPaletteFrame.BackgroundTransparency = 0.2
-	ColorPaletteFrame.Size = UDim2.new(1, 0, 1, 0)
-	ColorPaletteFrame.Position = UDim2.new(0, 0, 0, 0)
-	ColorPaletteFrame.ZIndex = 5
-	ColorPaletteFrame.Visible = false
-	
-	local ColorPaletteTitle = Instance.new("TextLabel")
-	ColorPaletteTitle.Name = "ColorPaletteTitle"
-	ColorPaletteTitle.Parent = ColorPaletteFrame
-	ColorPaletteTitle.BackgroundTransparency = 1
-	ColorPaletteTitle.Position = UDim2.new(0, 15, 0, 10)
-	ColorPaletteTitle.Size = UDim2.new(1, -30, 0, 30)
-	ColorPaletteTitle.Font = Enum.Font.GothamBold
-	ColorPaletteTitle.Text = "调色板"
-	ColorPaletteTitle.TextColor3 = Colors.Text
-	ColorPaletteTitle.TextSize = 18
-	ColorPaletteTitle.ZIndex = 6
-	
-	local HueWheel = Instance.new("ImageButton")
-	HueWheel.Name = "HueWheel"
-	HueWheel.Parent = ColorPaletteFrame
-	HueWheel.BackgroundTransparency = 1
-	HueWheel.Position = UDim2.new(0.5, -80, 0, 50)
-	HueWheel.Size = UDim2.new(0, 160, 0, 160)
-	HueWheel.Image = "rbxassetid://6020299385"
-	HueWheel.ImageTransparency = 0.2
-	HueWheel.ZIndex = 6
-	
-	local HueWheelC = Instance.new("UICorner")
-	HueWheelC.CornerRadius = UDim.new(0, 80)
-	HueWheelC.Parent = HueWheel
-	
-	local HuePicker = Instance.new("Frame")
-	HuePicker.Name = "HuePicker"
-	HuePicker.Parent = HueWheel
-	HuePicker.BackgroundColor3 = Colors.White
-	HuePicker.BackgroundTransparency = 0.3
-	HuePicker.BorderSizePixel = 0
-	HuePicker.Size = UDim2.new(0, 8, 0, 8)
-	HuePicker.ZIndex = 7
-	local HuePickerC = Instance.new("UICorner")
-	HuePickerC.CornerRadius = UDim.new(0, 4)
-	HuePickerC.Parent = HuePicker
-	
-	local BrightnessBar = Instance.new("ImageButton")
-	BrightnessBar.Name = "BrightnessBar"
-	BrightnessBar.Parent = ColorPaletteFrame
-	BrightnessBar.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-	BrightnessBar.Position = UDim2.new(0.5, -100, 0, 220)
-	BrightnessBar.Size = UDim2.new(0, 200, 0, 20)
-	BrightnessBar.ZIndex = 6
-	local BrightnessBarC = Instance.new("UICorner")
-	BrightnessBarC.CornerRadius = UDim.new(0, 4)
-	BrightnessBarC.Parent = BrightnessBar
-	
-	local BrightnessGradient = Instance.new("UIGradient")
-	BrightnessGradient.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
-	})
-	BrightnessGradient.Rotation = 90
-	BrightnessGradient.Parent = BrightnessBar
-	
-	local BrightnessPicker = Instance.new("Frame")
-	BrightnessPicker.Name = "BrightnessPicker"
-	BrightnessPicker.Parent = BrightnessBar
-	BrightnessPicker.BackgroundColor3 = Colors.White
-	BrightnessPicker.BackgroundTransparency = 0.5
-	BrightnessPicker.BorderSizePixel = 0
-	BrightnessPicker.Size = UDim2.new(1, 0, 0, 4)
-	BrightnessPicker.Position = UDim2.new(0, 0, 0, 0)
-	BrightnessPicker.ZIndex = 7
-	local BrightnessPickerC = Instance.new("UICorner")
-	BrightnessPickerC.CornerRadius = UDim.new(0, 2)
-	BrightnessPickerC.Parent = BrightnessPicker
-	
-	local RGBInputs = Instance.new("Frame")
-	RGBInputs.Name = "RGBInputs"
-	RGBInputs.Parent = ColorPaletteFrame
-	RGBInputs.BackgroundTransparency = 1
-	RGBInputs.Position = UDim2.new(0.5, -100, 0, 260)
-	RGBInputs.Size = UDim2.new(0, 200, 0, 30)
-	RGBInputs.ZIndex = 6
-	
-	local RGBLayout = Instance.new("UIListLayout")
-	RGBLayout.Parent = RGBInputs
-	RGBLayout.FillDirection = Enum.FillDirection.Horizontal
-	RGBLayout.Padding = UDim.new(0, 5)
-	RGBLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	
-	local RBox = Instance.new("TextBox")
-	RBox.Name = "RBox"
-	RBox.Parent = RGBInputs
-	RBox.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-	RBox.BackgroundTransparency = 0.3
-	RBox.Size = UDim2.new(0, 60, 1, 0)
-	RBox.Font = Enum.Font.Gotham
-	RBox.PlaceholderText = "R"
-	RBox.Text = "255"
-	RBox.TextColor3 = Colors.Text
-	RBox.TextSize = 14
-	RBox.ZIndex = 6
-	local RBoxC = Instance.new("UICorner")
-	RBoxC.CornerRadius = UDim.new(0, 4)
-	RBoxC.Parent = RBox
-	
-	local GBox = Instance.new("TextBox")
-	GBox.Name = "GBox"
-	GBox.Parent = RGBInputs
-	GBox.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-	GBox.BackgroundTransparency = 0.3
-	GBox.Size = UDim2.new(0, 60, 1, 0)
-	GBox.Font = Enum.Font.Gotham
-	GBox.PlaceholderText = "G"
-	GBox.Text = "255"
-	GBox.TextColor3 = Colors.Text
-	GBox.TextSize = 14
-	GBox.ZIndex = 6
-	local GBoxC = Instance.new("UICorner")
-	GBoxC.CornerRadius = UDim.new(0, 4)
-	GBoxC.Parent = GBox
-	
-	local BBox = Instance.new("TextBox")
-	BBox.Name = "BBox"
-	BBox.Parent = RGBInputs
-	BBox.BackgroundColor3 = Color3.fromRGB(50, 50, 200)
-	BBox.BackgroundTransparency = 0.3
-	BBox.Size = UDim2.new(0, 60, 1, 0)
-	BBox.Font = Enum.Font.Gotham
-	BBox.PlaceholderText = "B"
-	BBox.Text = "255"
-	BBox.TextColor3 = Colors.Text
-	BBox.TextSize = 14
-	BBox.ZIndex = 6
-	local BBoxC = Instance.new("UICorner")
-	BBoxC.CornerRadius = UDim.new(0, 4)
-	BBoxC.Parent = BBox
-	
-	local HexBox = Instance.new("TextBox")
-	HexBox.Name = "HexBox"
-	HexBox.Parent = ColorPaletteFrame
-	HexBox.BackgroundColor3 = Colors.Secondary
-	HexBox.BackgroundTransparency = 0.3
-	HexBox.Position = UDim2.new(0.5, -100, 0, 300)
-	HexBox.Size = UDim2.new(0, 200, 0, 30)
-	HexBox.Font = Enum.Font.Gotham
-	HexBox.PlaceholderText = "Hex"
-	HexBox.Text = "#FFFFFF"
-	HexBox.TextColor3 = Colors.Text
-	HexBox.TextSize = 14
-	HexBox.ZIndex = 6
-	local HexBoxC = Instance.new("UICorner")
-	HexBoxC.CornerRadius = UDim.new(0, 4)
-	HexBoxC.Parent = HexBox
-	
-	local SaveColorBtn = Instance.new("TextButton")
-	SaveColorBtn.Name = "SaveColorBtn"
-	SaveColorBtn.Parent = ColorPaletteFrame
-	SaveColorBtn.BackgroundColor3 = Colors.Secondary
-	SaveColorBtn.BackgroundTransparency = 0.3
-	SaveColorBtn.Position = UDim2.new(0.5, -50, 0, 340)
-	SaveColorBtn.Size = UDim2.new(0, 100, 0, 30)
-	SaveColorBtn.Font = Enum.Font.GothamBold
-	SaveColorBtn.Text = "保存颜色"
-	SaveColorBtn.TextColor3 = Colors.Text
-	SaveColorBtn.TextSize = 16
-	SaveColorBtn.ZIndex = 6
-	local SaveColorBtnC = Instance.new("UICorner")
-	SaveColorBtnC.CornerRadius = UDim.new(0, 4)
-	SaveColorBtnC.Parent = SaveColorBtn
-	
-	local SavedColorsLabel = Instance.new("TextLabel")
-	SavedColorsLabel.Name = "SavedColorsLabel"
-	SavedColorsLabel.Parent = ColorPaletteFrame
-	SavedColorsLabel.BackgroundTransparency = 1
-	SavedColorsLabel.Position = UDim2.new(0, 15, 0, 380)
-	SavedColorsLabel.Size = UDim2.new(1, -30, 0, 30)
-	SavedColorsLabel.Font = Enum.Font.GothamBold
-	SavedColorsLabel.Text = "已保存的颜色"
-	SavedColorsLabel.TextColor3 = Colors.Text
-	SavedColorsLabel.TextSize = 16
-	SavedColorsLabel.ZIndex = 6
-	
-	local SavedColorsFrame = Instance.new("Frame")
-	SavedColorsFrame.Name = "SavedColorsFrame"
-	SavedColorsFrame.Parent = ColorPaletteFrame
-	SavedColorsFrame.BackgroundTransparency = 1
-	SavedColorsFrame.Position = UDim2.new(0, 15, 0, 410)
-	SavedColorsFrame.Size = UDim2.new(1, -30, 0, 150)
-	SavedColorsFrame.ZIndex = 6
-	
-	local SavedColorsLayout = Instance.new("UIGridLayout")
-	SavedColorsLayout.Parent = SavedColorsFrame
-	SavedColorsLayout.CellSize = UDim2.new(0, 40, 0, 40)
-	SavedColorsLayout.CellPadding = UDim.new(0, 5)
-	SavedColorsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	
 	local SideBar = Instance.new("Frame")
 	SideBar.Name = "SideBar"
 	SideBar.Parent = Content
@@ -896,7 +858,6 @@ function library.new(library, name, theme)
 	
 	local allTabs = {}
 	local tabInfos = {}
-	local savedColorsData = loadColorPresets()
 	
 	SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
 		local searchText = SearchBox.Text:lower()
@@ -1988,6 +1949,402 @@ function library.new(library, name, theme)
 				return funcs
 			end
 			
+			function section.ColorPicker(section, text, flag, default, callback)
+				local callback = callback or function() end
+				assert(text, "No text provided")
+				assert(flag, "No flag provided")
+				library.flags[flag] = default or Color3.fromRGB(255, 255, 255)
+				table.insert(tabInfo.searchableComponents, text)
+				table.insert(sectionInfo.components, text)
+				
+				local ColorModule = Instance.new("Frame")
+				ColorModule.Name = "ColorPickerModule"
+				ColorModule.Parent = Objs
+				ColorModule.BackgroundTransparency = 1
+				ColorModule.ClipsDescendants = true
+				ColorModule.Size = UDim2.new(1, 0, 0, 40)
+				
+				local ColorBack = Instance.new("TextButton")
+				ColorBack.Name = "ColorBack"
+				ColorBack.Parent = ColorModule
+				ColorBack.BackgroundColor3 = Colors.Secondary
+				ColorBack.BackgroundTransparency = 0.3
+				ColorBack.Size = UDim2.new(1, 0, 1, 0)
+				ColorBack.AutoButtonColor = false
+				ColorBack.Font = Enum.Font.GothamSemibold
+				ColorBack.Text = "   " .. text
+				ColorBack.TextColor3 = Colors.Text
+				ColorBack.TextSize = 15
+				ColorBack.TextXAlignment = Enum.TextXAlignment.Left
+				ColorBack.RichText = false
+				
+				CreateGlassEffect(ColorBack)
+				
+				local ColorBackC = Instance.new("UICorner")
+				ColorBackC.CornerRadius = UDim.new(0, 6)
+				ColorBackC.Parent = ColorBack
+				
+				sectionInfo.originalTexts[ColorModule] = text
+				
+				local ColorPreview = Instance.new("Frame")
+				ColorPreview.Name = "ColorPreview"
+				ColorPreview.Parent = ColorBack
+				ColorPreview.BackgroundColor3 = library.flags[flag]
+				ColorPreview.Position = UDim2.new(1, -40, 0.5, -12)
+				ColorPreview.Size = UDim2.new(0, 24, 0, 24)
+				ColorPreview.BorderSizePixel = 0
+				
+				local ColorPreviewC = Instance.new("UICorner")
+				ColorPreviewC.CornerRadius = UDim.new(0, 6)
+				ColorPreviewC.Parent = ColorPreview
+				
+				local ColorPickerFrame = Instance.new("Frame")
+				ColorPickerFrame.Name = "ColorPickerFrame"
+				ColorPickerFrame.Parent = ColorModule
+				ColorPickerFrame.BackgroundColor3 = Colors.Secondary
+				ColorPickerFrame.BackgroundTransparency = 0.2
+				ColorPickerFrame.Size = UDim2.new(1, 0, 0, 180)
+				ColorPickerFrame.Position = UDim2.new(0, 0, 0, 40)
+				ColorPickerFrame.Visible = false
+				ColorPickerFrame.ZIndex = 5
+				
+				local ColorPickerFrameC = Instance.new("UICorner")
+				ColorPickerFrameC.CornerRadius = UDim.new(0, 8)
+				ColorPickerFrameC.Parent = ColorPickerFrame
+				
+				local HueWheel = Instance.new("ImageButton")
+				HueWheel.Name = "HueWheel"
+				HueWheel.Parent = ColorPickerFrame
+				HueWheel.BackgroundTransparency = 1
+				HueWheel.Position = UDim2.new(0, 10, 0, 10)
+				HueWheel.Size = UDim2.new(0, 120, 0, 120)
+				HueWheel.Image = "rbxassetid://6020299385"
+				HueWheel.ImageTransparency = 0.2
+				HueWheel.ZIndex = 6
+				
+				local HueWheelC = Instance.new("UICorner")
+				HueWheelC.CornerRadius = UDim.new(0, 60)
+				HueWheelC.Parent = HueWheel
+				
+				local HuePicker = Instance.new("Frame")
+				HuePicker.Name = "HuePicker"
+				HuePicker.Parent = HueWheel
+				HuePicker.BackgroundColor3 = Colors.White
+				HuePicker.BackgroundTransparency = 0.3
+				HuePicker.BorderSizePixel = 0
+				HuePicker.Size = UDim2.new(0, 8, 0, 8)
+				HuePicker.ZIndex = 7
+				local HuePickerC = Instance.new("UICorner")
+				HuePickerC.CornerRadius = UDim.new(0, 4)
+				HuePickerC.Parent = HuePicker
+				
+				local BrightnessBar = Instance.new("ImageButton")
+				BrightnessBar.Name = "BrightnessBar"
+				BrightnessBar.Parent = ColorPickerFrame
+				BrightnessBar.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+				BrightnessBar.Position = UDim2.new(0, 140, 0, 10)
+				BrightnessBar.Size = UDim2.new(0, 20, 0, 120)
+				BrightnessBar.ZIndex = 6
+				local BrightnessBarC = Instance.new("UICorner")
+				BrightnessBarC.CornerRadius = UDim.new(0, 4)
+				BrightnessBarC.Parent = BrightnessBar
+				
+				local BrightnessGradient = Instance.new("UIGradient")
+				BrightnessGradient.Color = ColorSequence.new({
+					ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+					ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
+				})
+				BrightnessGradient.Rotation = 90
+				BrightnessGradient.Parent = BrightnessBar
+				
+				local BrightnessPicker = Instance.new("Frame")
+				BrightnessPicker.Name = "BrightnessPicker"
+				BrightnessPicker.Parent = BrightnessBar
+				BrightnessPicker.BackgroundColor3 = Colors.White
+				BrightnessPicker.BackgroundTransparency = 0.5
+				BrightnessPicker.BorderSizePixel = 0
+				BrightnessPicker.Size = UDim2.new(1, 0, 0, 4)
+				BrightnessPicker.Position = UDim2.new(0, 0, 0, 0)
+				BrightnessPicker.ZIndex = 7
+				local BrightnessPickerC = Instance.new("UICorner")
+				BrightnessPickerC.CornerRadius = UDim.new(0, 2)
+				BrightnessPickerC.Parent = BrightnessPicker
+				
+				local RGBInputs = Instance.new("Frame")
+				RGBInputs.Name = "RGBInputs"
+				RGBInputs.Parent = ColorPickerFrame
+				RGBInputs.BackgroundTransparency = 1
+				RGBInputs.Position = UDim2.new(0, 10, 0, 140)
+				RGBInputs.Size = UDim2.new(1, -20, 0, 30)
+				RGBInputs.ZIndex = 6
+				
+				local RGBLayout = Instance.new("UIListLayout")
+				RGBLayout.Parent = RGBInputs
+				RGBLayout.FillDirection = Enum.FillDirection.Horizontal
+				RGBLayout.Padding = UDim.new(0, 5)
+				RGBLayout.SortOrder = Enum.SortOrder.LayoutOrder
+				
+				local RBox = Instance.new("TextBox")
+				RBox.Name = "RBox"
+				RBox.Parent = RGBInputs
+				RBox.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+				RBox.BackgroundTransparency = 0.3
+				RBox.Size = UDim2.new(0, 50, 1, 0)
+				RBox.Font = Enum.Font.Gotham
+				RBox.PlaceholderText = "R"
+				RBox.Text = "255"
+				RBox.TextColor3 = Colors.Text
+				RBox.TextSize = 14
+				RBox.ClearTextOnFocus = true
+				RBox.Focused:Connect(function()
+					if RBox.Text == RBox.PlaceholderText then
+						RBox.Text = ""
+					end
+				end)
+				local RBoxC = Instance.new("UICorner")
+				RBoxC.CornerRadius = UDim.new(0, 4)
+				RBoxC.Parent = RBox
+				
+				local GBox = Instance.new("TextBox")
+				GBox.Name = "GBox"
+				GBox.Parent = RGBInputs
+				GBox.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+				GBox.BackgroundTransparency = 0.3
+				GBox.Size = UDim2.new(0, 50, 1, 0)
+				GBox.Font = Enum.Font.Gotham
+				GBox.PlaceholderText = "G"
+				GBox.Text = "255"
+				GBox.TextColor3 = Colors.Text
+				GBox.TextSize = 14
+				GBox.ClearTextOnFocus = true
+				GBox.Focused:Connect(function()
+					if GBox.Text == GBox.PlaceholderText then
+						GBox.Text = ""
+					end
+				end)
+				local GBoxC = Instance.new("UICorner")
+				GBoxC.CornerRadius = UDim.new(0, 4)
+				GBoxC.Parent = GBox
+				
+				local BBox = Instance.new("TextBox")
+				BBox.Name = "BBox"
+				BBox.Parent = RGBInputs
+				BBox.BackgroundColor3 = Color3.fromRGB(50, 50, 200)
+				BBox.BackgroundTransparency = 0.3
+				BBox.Size = UDim2.new(0, 50, 1, 0)
+				BBox.Font = Enum.Font.Gotham
+				BBox.PlaceholderText = "B"
+				BBox.Text = "255"
+				BBox.TextColor3 = Colors.Text
+				BBox.TextSize = 14
+				BBox.ClearTextOnFocus = true
+				BBox.Focused:Connect(function()
+					if BBox.Text == BBox.PlaceholderText then
+						BBox.Text = ""
+					end
+				end)
+				local BBoxC = Instance.new("UICorner")
+				BBoxC.CornerRadius = UDim.new(0, 4)
+				BBoxC.Parent = BBox
+				
+				local HexBox = Instance.new("TextBox")
+				HexBox.Name = "HexBox"
+				HexBox.Parent = RGBInputs
+				HexBox.BackgroundColor3 = Colors.Primary
+				HexBox.BackgroundTransparency = 0.5
+				HexBox.Size = UDim2.new(0, 80, 1, 0)
+				HexBox.Font = Enum.Font.Gotham
+				HexBox.PlaceholderText = "Hex"
+				HexBox.Text = "#FFFFFF"
+				HexBox.TextColor3 = Colors.Text
+				HexBox.TextSize = 14
+				HexBox.ClearTextOnFocus = true
+				HexBox.Focused:Connect(function()
+					if HexBox.Text == HexBox.PlaceholderText then
+						HexBox.Text = ""
+					end
+				end)
+				local HexBoxC = Instance.new("UICorner")
+				HexBoxC.CornerRadius = UDim.new(0, 4)
+				HexBoxC.Parent = HexBox
+				
+				local currentHSV = {0, 1, 1}
+				local currentColor = Color3.fromRGB(255, 255, 255)
+				local isSetting = false
+				
+				local function updateColorFromHSV()
+					if isSetting then return end
+					currentColor = HSVtoRGB(currentHSV[1], currentHSV[2], currentHSV[3])
+					ColorPreview.BackgroundColor3 = currentColor
+					library.flags[flag] = currentColor
+					
+					local r, g, b = math.floor(currentColor.R * 255), math.floor(currentColor.G * 255), math.floor(currentColor.B * 255)
+					RBox.Text = tostring(r)
+					GBox.Text = tostring(g)
+					BBox.Text = tostring(b)
+					HexBox.Text = string.format("#%02X%02X%02X", r, g, b)
+					
+					callback(currentColor)
+				end
+				
+				local function updateColorFromRGB()
+					if isSetting then return end
+					local r = math.clamp(tonumber(RBox.Text) or 0, 0, 255)
+					local g = math.clamp(tonumber(GBox.Text) or 0, 0, 255)
+					local b = math.clamp(tonumber(BBox.Text) or 0, 0, 255)
+					
+					currentColor = Color3.fromRGB(r, g, b)
+					local h, s, v = RGBtoHSV(currentColor)
+					currentHSV = {h, s, v}
+					
+					ColorPreview.BackgroundColor3 = currentColor
+					library.flags[flag] = currentColor
+					
+					HuePicker.Position = UDim2.new(0.5 + math.cos(math.rad(h)) * s * 0.4, -4, 0.5 - math.sin(math.rad(h)) * s * 0.4, -4)
+					BrightnessPicker.Position = UDim2.new(0, 0, 0, math.clamp((1 - v) * 120, 0, 120))
+					
+					local baseColor = HSVtoRGB(h, 1, 1)
+					BrightnessBar.BackgroundColor3 = baseColor
+					
+					HexBox.Text = string.format("#%02X%02X%02X", r, g, b)
+					callback(currentColor)
+				end
+				
+				local function updateColorFromHex()
+					if isSetting then return end
+					local hex = HexBox.Text:gsub("#", "")
+					if #hex ~= 6 then return end
+					
+					local r = tonumber(hex:sub(1, 2), 16) or 0
+					local g = tonumber(hex:sub(3, 4), 16) or 0
+					local b = tonumber(hex:sub(5, 6), 16) or 0
+					
+					currentColor = Color3.fromRGB(r, g, b)
+					local h, s, v = RGBtoHSV(currentColor)
+					currentHSV = {h, s, v}
+					
+					ColorPreview.BackgroundColor3 = currentColor
+					library.flags[flag] = currentColor
+					
+					HuePicker.Position = UDim2.new(0.5 + math.cos(math.rad(h)) * s * 0.4, -4, 0.5 - math.sin(math.rad(h)) * s * 0.4, -4)
+					BrightnessPicker.Position = UDim2.new(0, 0, 0, math.clamp((1 - v) * 120, 0, 120))
+					
+					local baseColor = HSVtoRGB(h, 1, 1)
+					BrightnessBar.BackgroundColor3 = baseColor
+					
+					RBox.Text = tostring(r)
+					GBox.Text = tostring(g)
+					BBox.Text = tostring(b)
+					
+					callback(currentColor)
+				end
+				
+				RBox.FocusLost:Connect(updateColorFromRGB)
+				GBox.FocusLost:Connect(updateColorFromRGB)
+				BBox.FocusLost:Connect(updateColorFromRGB)
+				HexBox.FocusLost:Connect(updateColorFromHex)
+				
+				local draggingHue = false
+				local draggingBrightness = false
+				
+				HueWheel.InputBegan:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then
+						draggingHue = true
+					end
+				end)
+				
+				BrightnessBar.InputBegan:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then
+						draggingBrightness = true
+					end
+				end)
+				
+				services.UserInputService.InputEnded:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then
+						draggingHue = false
+						draggingBrightness = false
+					end
+				end)
+				
+				services.UserInputService.InputChanged:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseMovement then
+						if draggingHue then
+							local center = Vector2.new(HueWheel.AbsolutePosition.X + HueWheel.AbsoluteSize.X/2, HueWheel.AbsolutePosition.Y + HueWheel.AbsoluteSize.Y/2)
+							local pos = Vector2.new(input.Position.X, input.Position.Y)
+							local delta = pos - center
+							local angle = math.deg(math.atan2(-delta.Y, delta.X))
+							if angle < 0 then angle = angle + 360 end
+							
+							local distance = math.min(delta.Magnitude / (HueWheel.AbsoluteSize.X/2), 1)
+							currentHSV = {angle, distance, currentHSV[3]}
+							
+							HuePicker.Position = UDim2.new(0.5 + math.cos(math.rad(angle)) * distance * 0.4, -4, 0.5 - math.sin(math.rad(angle)) * distance * 0.4, -4)
+							
+							local baseColor = HSVtoRGB(angle, 1, 1)
+							BrightnessBar.BackgroundColor3 = baseColor
+							
+							updateColorFromHSV()
+						end
+						
+						if draggingBrightness then
+							local pos = input.Position.Y - BrightnessBar.AbsolutePosition.Y
+							local percent = math.clamp(pos / BrightnessBar.AbsoluteSize.Y, 0, 1)
+							
+							currentHSV[3] = 1 - percent
+							BrightnessPicker.Position = UDim2.new(0, 0, 0, percent * 120)
+							
+							updateColorFromHSV()
+						end
+					end
+				end)
+				
+				ColorBack.MouseButton1Click:Connect(function()
+					ColorPickerFrame.Visible = not ColorPickerFrame.Visible
+					if ColorPickerFrame.Visible then
+						ColorModule.Size = UDim2.new(1, 0, 0, 220)
+					else
+						ColorModule.Size = UDim2.new(1, 0, 0, 40)
+					end
+				end)
+				
+				updateColorFromHSV()
+				
+				local funcs = {
+					SetValue = function(self, color)
+						if typeof(color) ~= "Color3" then return end
+						isSetting = true
+						currentColor = color
+						library.flags[flag] = color
+						
+						local h, s, v = RGBtoHSV(color)
+						currentHSV = {h, s, v}
+						
+						ColorPreview.BackgroundColor3 = color
+						
+						HuePicker.Position = UDim2.new(0.5 + math.cos(math.rad(h)) * s * 0.4, -4, 0.5 - math.sin(math.rad(h)) * s * 0.4, -4)
+						BrightnessPicker.Position = UDim2.new(0, 0, 0, math.clamp((1 - v) * 120, 0, 120))
+						
+						local baseColor = HSVtoRGB(h, 1, 1)
+						BrightnessBar.BackgroundColor3 = baseColor
+						
+						local r, g, b = math.floor(color.R * 255), math.floor(color.G * 255), math.floor(color.B * 255)
+						RBox.Text = tostring(r)
+						GBox.Text = tostring(g)
+						BBox.Text = tostring(b)
+						HexBox.Text = string.format("#%02X%02X%02X", r, g, b)
+						
+						isSetting = false
+						callback(color)
+					end,
+					Module = ColorModule,
+				}
+				
+				library.flags[flag] = currentColor
+				callback(currentColor)
+				
+				return funcs
+			end
+			
 			section.TextBox = section.Textbox
 			section.textbox = section.Textbox
 			section.KeyBind = section.Keybind
@@ -2001,28 +2358,71 @@ function library.new(library, name, theme)
 		return tab
 	end
 	
-	local facePlayerEnabled = false
-	local dragModeEnabled = false
-	local colorPaletteEnabled = false
+	local SCALE = 0.008
+	local LookView = Vector3.new(0, 0.5, -10)
+	local dragOffset3D = Vector2.new(0, 0)
+	local dragging3D = false
+	local dragStart3D = Vector2.new(0, 0)
+
+	local dragConnection1
+	local dragConnection2
+	local dragConnection3
 	
-	FacePlayerBtn.MouseButton1Click:Connect(function()
+	local function setupDrag()
+		dragConnection1 = TitleBar.InputBegan:Connect(function(input)
+			if dragModeEnabled and input.UserInputType == Enum.UserInputType.MouseButton1 then
+				dragging3D = true
+				dragStart3D = Vector2.new(input.Position.X, input.Position.Y)
+				dragOffset3D = Vector2.new(LookView.X, LookView.Y)
+			end
+		end)
+
+		dragConnection2 = TitleBar.InputEnded:Connect(function(input)
+			if dragModeEnabled and input.UserInputType == Enum.UserInputType.MouseButton1 then
+				dragging3D = false
+			end
+		end)
+
+		dragConnection3 = services.UserInputService.InputChanged:Connect(function(input)
+			if dragging3D and dragModeEnabled and input.UserInputType == Enum.UserInputType.MouseMovement then
+				local delta = Vector2.new(input.Position.X - dragStart3D.X, input.Position.Y - dragStart3D.Y) * 0.01
+				LookView = Vector3.new(dragOffset3D.X + delta.X, dragOffset3D.Y - delta.Y, LookView.Z)
+			end
+		end)
+	end
+	
+	local function removeDrag()
+		if dragConnection1 then dragConnection1:Disconnect() end
+		if dragConnection2 then dragConnection2:Disconnect() end
+		if dragConnection3 then dragConnection3:Disconnect() end
+		dragConnection1 = nil
+		dragConnection2 = nil
+		dragConnection3 = nil
+	end
+	
+	FaceBtn.MouseButton1Click:Connect(function()
 		spawn(function()
-			Ripple(FacePlayerBtn)
+			Ripple(FaceBtn)
 		end)
 		
-		facePlayerEnabled = not facePlayerEnabled
+		faceCharacterEnabled = not faceCharacterEnabled
 		
-		if facePlayerEnabled then
+		if faceCharacterEnabled then
+			uiFollowEnabled = false
 			dragModeEnabled = false
-			Tween(FacePlayerBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
+			Tween(FaceBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
+			Tween(FaceBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
 			Tween(DragModeBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
-			Tween(TitleBar, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
+			Tween(DragModeBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
+			removeDrag()
+			TitleBar.Active = false
 		else
-			Tween(FacePlayerBtn, 0.2, "Sine", "out", { ImageColor3 = Colors.Text })
-			Tween(TitleBar, 0.2, "Sine", "out", { BackgroundTransparency = Colors.Transparent })
+			uiFollowEnabled = true
+			Tween(FaceBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
+			Tween(FaceBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
 		end
 	end)
-	
+
 	DragModeBtn.MouseButton1Click:Connect(function()
 		spawn(function()
 			Ripple(DragModeBtn)
@@ -2031,266 +2431,62 @@ function library.new(library, name, theme)
 		dragModeEnabled = not dragModeEnabled
 		
 		if dragModeEnabled then
-			facePlayerEnabled = false
-			Main.Draggable = true
+			uiFollowEnabled = false
+			faceCharacterEnabled = false
 			Tween(DragModeBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
-			Tween(FacePlayerBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
-			Tween(TitleBar, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
+			Tween(DragModeBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
+			Tween(FaceBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
+			Tween(FaceBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
+			setupDrag()
+			TitleBar.Active = true
 		else
-			Main.Draggable = false
+			uiFollowEnabled = true
 			Tween(DragModeBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
-			Tween(TitleBar, 0.2, "Sine", "Out", { BackgroundTransparency = Colors.Transparent })
+			Tween(DragModeBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
+			removeDrag()
+			TitleBar.Active = false
 		end
 	end)
-	
-	ColorPaletteBtn.MouseButton1Click:Connect(function()
+
+	ColorPageBtn.MouseButton1Click:Connect(function()
 		spawn(function()
-			Ripple(ColorPaletteBtn)
+			Ripple(ColorPageBtn)
 		end)
 		
-		colorPaletteEnabled = not colorPaletteEnabled
+		colorPageEnabled = not colorPageEnabled
 		
-		if colorPaletteEnabled then
+		if colorPageEnabled then
 			Content.Visible = false
-			ColorPaletteFrame.Visible = true
-			Tween(ColorPaletteBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
+			ColorPageFrame.Visible = true
+			Tween(ColorPageBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
+			Tween(ColorPageBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
+			loadColorPresets()
+			loadColorPresetsFrame()
 		else
+			ColorPageFrame.Visible = false
 			Content.Visible = true
-			ColorPaletteFrame.Visible = false
-			Tween(ColorPaletteBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
+			Tween(ColorPageBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
+			Tween(ColorPageBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
 		end
 	end)
 	
-	Main.Draggable = false
-	
-	local currentHSV = {0, 1, 1}
-	local currentColor = Color3.fromRGB(255, 255, 255)
-	local isSetting = false
-	
-	local function updateColorFromInputs()
-		if isSetting then return end
-		local r = math.clamp(tonumber(RBox.Text) or 0, 0, 255)
-		local g = math.clamp(tonumber(GBox.Text) or 0, 0, 255)
-		local b = math.clamp(tonumber(BBox.Text) or 0, 0, 255)
-		
-		currentColor = Color3.fromRGB(r, g, b)
-		local h, s, v = RGBtoHSV(currentColor)
-		currentHSV = {h, s, v}
-		
-		HuePicker.Position = UDim2.new(0.5 + math.cos(math.rad(h)) * s * 0.4, -4, 0.5 - math.sin(math.rad(h)) * s * 0.4, -4)
-		BrightnessPicker.Position = UDim2.new(0, 0, 0, math.clamp((1 - v) * 20, 0, 20))
-		
-		local baseColor = HSVtoRGB(h, 1, 1)
-		BrightnessBar.BackgroundColor3 = baseColor
-		
-		HexBox.Text = string.format("#%02X%02X%02X", r, g, b)
-	end
-	
-	local function updateSavedColorsDisplay()
-		for _, child in pairs(SavedColorsFrame:GetChildren()) do
-			if child:IsA("TextButton") then
-				child:Destroy()
-			end
-		end
-		
-		for _, colorData in ipairs(savedColorsData) do
-			local ColorBtn = Instance.new("TextButton")
-			ColorBtn.Name = "SavedColor"
-			ColorBtn.Parent = SavedColorsFrame
-			ColorBtn.BackgroundColor3 = Color3.fromRGB(colorData.r, colorData.g, colorData.b)
-			ColorBtn.BackgroundTransparency = 0
-			ColorBtn.Size = UDim2.new(0, 40, 0, 40)
-			ColorBtn.Text = ""
-			ColorBtn.ZIndex = 6
-			local ColorBtnC = Instance.new("UICorner")
-			ColorBtnC.CornerRadius = UDim.new(0, 4)
-			ColorBtnC.Parent = ColorBtn
-			
-			ColorBtn.MouseButton1Click:Connect(function()
-				isSetting = true
-				currentColor = Color3.fromRGB(colorData.r, colorData.g, colorData.b)
-				local h, s, v = RGBtoHSV(currentColor)
-				currentHSV = {h, s, v}
-				
-				HuePicker.Position = UDim2.new(0.5 + math.cos(math.rad(h)) * s * 0.4, -4, 0.5 - math.sin(math.rad(h)) * s * 0.4, -4)
-				BrightnessPicker.Position = UDim2.new(0, 0, 0, math.clamp((1 - v) * 20, 0, 20))
-				
-				local baseColor = HSVtoRGB(h, 1, 1)
-				BrightnessBar.BackgroundColor3 = baseColor
-				
-				RBox.Text = tostring(colorData.r)
-				GBox.Text = tostring(colorData.g)
-				BBox.Text = tostring(colorData.b)
-				HexBox.Text = string.format("#%02X%02X%02X", colorData.r, colorData.g, colorData.b)
-				
-				isSetting = false
-			end)
-		end
-	end
-	
-	local function saveCurrentColor()
-		local r = math.floor(currentColor.R * 255)
-		local g = math.floor(currentColor.G * 255)
-		local b = math.floor(currentColor.B * 255)
-		
-		for _, existing in ipairs(savedColorsData) do
-			if existing.r == r and existing.g == g and existing.b == b then
-				return
-			end
-		end
-		
-		table.insert(savedColorsData, {
-			r = r,
-			g = g,
-			b = b,
-			hex = string.format("#%02X%02X%02X", r, g, b)
-		})
-		
-		saveColorPresets(savedColorsData)
-		updateSavedColorsDisplay()
-	end
-	
-	RBox.FocusLost:Connect(updateColorFromInputs)
-	GBox.FocusLost:Connect(updateColorFromInputs)
-	BBox.FocusLost:Connect(updateColorFromInputs)
-	HexBox.FocusLost:Connect(function()
-		local hex = HexBox.Text:gsub("#", "")
-		if #hex ~= 6 then return end
-		
-		local r = tonumber(hex:sub(1, 2), 16) or 0
-		local g = tonumber(hex:sub(3, 4), 16) or 0
-		local b = tonumber(hex:sub(5, 6), 16) or 0
-		
-		currentColor = Color3.fromRGB(r, g, b)
-		local h, s, v = RGBtoHSV(currentColor)
-		currentHSV = {h, s, v}
-		
-		RBox.Text = tostring(r)
-		GBox.Text = tostring(g)
-		BBox.Text = tostring(b)
-		
-		isSetting = true
-		HuePicker.Position = UDim2.new(0.5 + math.cos(math.rad(h)) * s * 0.4, -4, 0.5 - math.sin(math.rad(h)) * s * 0.4, -4)
-		BrightnessPicker.Position = UDim2.new(0, 0, 0, math.clamp((1 - v) * 20, 0, 20))
-		local baseColor = HSVtoRGB(h, 1, 1)
-		BrightnessBar.BackgroundColor3 = baseColor
-		isSetting = false
-	end)
-	
-	SaveColorBtn.MouseButton1Click:Connect(function()
-		saveCurrentColor()
-	end)
-	
-	local draggingHue = false
-	local draggingBrightness = false
-	
-	HueWheel.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			draggingHue = true
-		end
-	end)
-	
-	BrightnessBar.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			draggingBrightness = true
-		end
-	end)
-	
-	services.UserInputService.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			draggingHue = false
-			draggingBrightness = false
-		end
-	end)
-	
-	services.UserInputService.InputChanged:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement then
-			if draggingHue then
-				local center = Vector2.new(HueWheel.AbsolutePosition.X + HueWheel.AbsoluteSize.X/2, HueWheel.AbsolutePosition.Y + HueWheel.AbsoluteSize.Y/2)
-				local pos = Vector2.new(input.Position.X, input.Position.Y)
-				local delta = pos - center
-				local angle = math.deg(math.atan2(-delta.Y, delta.X))
-				if angle < 0 then angle = angle + 360 end
-				
-				local distance = math.min(delta.Magnitude / (HueWheel.AbsoluteSize.X/2), 1)
-				currentHSV = {angle, distance, currentHSV[3]}
-				
-				HuePicker.Position = UDim2.new(0.5 + math.cos(math.rad(angle)) * distance * 0.4, -4, 0.5 - math.sin(math.rad(angle)) * distance * 0.4, -4)
-				
-				local baseColor = HSVtoRGB(angle, 1, 1)
-				BrightnessBar.BackgroundColor3 = baseColor
-				
-				isSetting = false
-				currentColor = HSVtoRGB(currentHSV[1], currentHSV[2], currentHSV[3])
-				local r, g, b = math.floor(currentColor.R * 255), math.floor(currentColor.G * 255), math.floor(currentColor.B * 255)
-				RBox.Text = tostring(r)
-				GBox.Text = tostring(g)
-				BBox.Text = tostring(b)
-				HexBox.Text = string.format("#%02X%02X%02X", r, g, b)
-			end
-			
-			if draggingBrightness then
-				local pos = input.Position.Y - BrightnessBar.AbsolutePosition.Y
-				local percent = math.clamp(pos / BrightnessBar.AbsoluteSize.Y, 0, 1)
-				
-				currentHSV[3] = 1 - percent
-				BrightnessPicker.Position = UDim2.new(0, 0, 0, percent * 20)
-				
-				isSetting = false
-				currentColor = HSVtoRGB(currentHSV[1], currentHSV[2], currentHSV[3])
-				local r, g, b = math.floor(currentColor.R * 255), math.floor(currentColor.G * 255), math.floor(currentColor.B * 255)
-				RBox.Text = tostring(r)
-				GBox.Text = tostring(g)
-				BBox.Text = tostring(b)
-				HexBox.Text = string.format("#%02X%02X%02X", r, g, b)
-			end
-		end
-	end)
-	
-	updateSavedColorsDisplay()
-	
-	local SCALE = 0.008
-	local LookView = Vector3.new(0, 0.5, -10)
-	local dragOffset3D = Vector2.new(0, 0)
-	local dragging3D = false
-	local dragStart3D = Vector2.new(0, 0)
-
-	TitleBar.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			dragging3D = true
-			dragStart3D = Vector2.new(input.Position.X, input.Position.Y)
-			dragOffset3D = Vector2.new(LookView.X, LookView.Y)
-		end
-	end)
-
-	TitleBar.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			dragging3D = false
-		end
-	end)
-
-	services.UserInputService.InputChanged:Connect(function(input)
-		if dragging3D and input.UserInputType == Enum.UserInputType.MouseMovement then
-			local delta = Vector2.new(input.Position.X - dragStart3D.X, input.Position.Y - dragStart3D.Y) * 0.01
-			LookView = Vector3.new(dragOffset3D.X + delta.X, dragOffset3D.Y - delta.Y, LookView.Z)
-		end
-	end)
-
 	game:GetService("RunService").RenderStepped:Connect(function(dt)
 		if not canvasPart or not canvasPart.Parent then return end
 		
-		if colorPaletteEnabled then
+		if colorPageEnabled then
 			return
 		end
 		
-		if facePlayerEnabled then
-			local character = player.Character
+		if faceCharacterEnabled then
+			local character = services.Players.LocalPlayer.Character
 			if character and character:FindFirstChild("HumanoidRootPart") then
-				local hrp = character.HumanoidRootPart
-				local offset = Vector3.new(0, 2, -5)
-				canvasPart.CFrame = hrp.CFrame * CFrame.new(offset)
+				local rootPart = character.HumanoidRootPart
+				local fixedPosition = rootPart.CFrame * CFrame.new(0, 2, -5)
+				canvasPart.CFrame = fixedPosition
 			end
-		elseif not dragModeEnabled then
+		elseif dragModeEnabled then
+			canvasPart.CFrame = camera.CFrame * CFrame.new(LookView.X, LookView.Y, LookView.Z)
+		elseif uiFollowEnabled then
 			local offsetX = (mouse.X - mouse.ViewSizeX/2) * SCALE
 			local offsetY = (mouse.Y - mouse.ViewSizeY/2) * SCALE
 			
@@ -2302,9 +2498,15 @@ function library.new(library, name, theme)
 			services.TweenService:Create(canvasPart, TweenInfo.new(dt * 2), {
 				CFrame = goalCFrame
 			}):Play()
+		else
+			canvasPart.CFrame = camera.CFrame * CFrame.new(LookView.X, LookView.Y, LookView.Z)
 		end
 	end)
 	
+	Tween(FaceBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
+	Tween(DragModeBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
+	Tween(ColorPageBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
+
 	function window:Set3DOffset(offsetVector)
 		LookView = offsetVector
 	end
@@ -2317,6 +2519,7 @@ function library.new(library, name, theme)
 		if canvasPart then
 			canvasPart:Destroy()
 		end
+		removeDrag()
 	end
 
 	return window
