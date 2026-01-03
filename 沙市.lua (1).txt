@@ -1,4 +1,3 @@
--- 在文件最顶部添加以下代码
 local HttpService = game:GetService("HttpService")
 
 local function makeHttpRequest(url, method, headers, body)
@@ -13,8 +12,7 @@ local function makeHttpRequest(url, method, headers, body)
             if response.Success then
                 return HttpService:JSONDecode(response.Body)
             else
-                warn("HTTP请求失败:", response.StatusCode, response.Body)
-                return nil
+                return {error = response.StatusCode}
             end
         else
             local response = game:HttpGet(url)
@@ -23,8 +21,7 @@ local function makeHttpRequest(url, method, headers, body)
     end)
     
     if not success then
-        warn("HTTP请求异常:", result)
-        return nil
+        return {error = result}
     end
     
     return result
@@ -496,22 +493,6 @@ function library.new(library, name, theme)
 	
 	CreateGlassEffect(AnimationsBtn)
 	
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Name = "CloseBtn"
-CloseBtn.Parent = TitleBar  -- 改为放在标题栏
-CloseBtn.BackgroundColor3 = Colors.Secondary
-CloseBtn.BackgroundTransparency = 0.5
-CloseBtn.Position = UDim2.new(1, -45, 0, 8)  -- 右上角位置
-CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.Text = "×"
-CloseBtn.TextColor3 = Colors.Text
-CloseBtn.TextSize = 20
-CloseBtn.ZIndex = 10
-
-local CloseBtnC = Instance.new("UICorner")
-CloseBtnC.CornerRadius = UDim.new(0, 6)
-CloseBtnC.Parent = CloseBtn
 
 CreateGlassEffect(CloseBtn)
 
@@ -1058,7 +1039,6 @@ local function applyColorToAllUI(newColor)
             end
         end
         
-        -- 修复渐变
         if obj:IsA("UIGradient") then
             local parent = obj.Parent
             if parent and parent.Name == "ScriptTitle" then
@@ -1603,23 +1583,26 @@ end
 	GridLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
 local function fetchCatalogItems(itemType, cursor)
-	local PROXY_URL = "https://rproxy.kirbs.net"
-	local endpoint = string.format(
-		"%s/v1/search/items?category=Animations&limit=100&cursor=%s",
-		PROXY_URL,
-		cursor or ""
-	)
-	
-	local data = makeHttpRequest(endpoint, "GET")
-	
-	if data then
-		return {
-			items = data.data or {},
-			nextCursor = data.nextPageCursor or ""
-		}
-	else
-		return {items = {}, nextCursor = ""}
-	end
+    local proxyList = {
+        "https://catalog.roproxy.com/v1/search/items",
+        "https://rproxy.kirbs.net/v1/search/items",
+        "https://search.roproxy.com/v1/search/items"
+    }
+    
+    local params = string.format("?category=Animations&limit=100&cursor=%s", cursor or "")
+    
+    for _, baseUrl in ipairs(proxyList) do
+        local data = makeHttpRequest(baseUrl .. params, "GET")
+        if data and data.data then
+            return {
+                items = data.data or {},
+                nextCursor = data.nextPageCursor or ""
+            }
+        end
+        task.wait(0.1)
+    end
+    
+    return {items = {}, nextCursor = "", error = "所有代理都失败了"}
 end
 
 	local function fetchAssetDetails(assetIds)
@@ -1673,116 +1656,113 @@ end
 	end
 
 local function loadAnimations(searchTerm)
-	-- 清理现有内容
-	for _, child in pairs(AnimationsGrid:GetChildren()) do
-		if child:IsA("ImageButton") or child:IsA("TextLabel") then
-			child:Destroy()
-		end
-	end
-	
-	-- 显示加载提示
-	local loadingLabel = Instance.new("TextLabel")
-	loadingLabel.Name = "LoadingLabel"
-	loadingLabel.Parent = AnimationsGrid
-	loadingLabel.BackgroundTransparency = 1
-	loadingLabel.Size = UDim2.new(1, 0, 0, 30)
-	loadingLabel.Font = Enum.Font.GothamSemibold
-	loadingLabel.Text = "正在加载动画..."
-	loadingLabel.TextColor3 = Colors.Text
-	loadingLabel.TextSize = 16
-	loadingLabel.ZIndex = 17
-	
-	spawn(function()
-		local animationsData = fetchCatalogItems("Animations")
-		local animations = animationsData.items
-		
-		-- 移除加载提示
-		if loadingLabel then
-			loadingLabel:Destroy()
-		end
-		
-		if not animations or #animations == 0 then
-			local errorLabel = Instance.new("TextLabel")
-			errorLabel.Name = "ErrorLabel"
-			errorLabel.Parent = AnimationsGrid
-			errorLabel.BackgroundTransparency = 1
-			errorLabel.Size = UDim2.new(1, 0, 0, 30)
-			errorLabel.Font = Enum.Font.GothamSemibold
-			errorLabel.Text = "加载失败，请检查网络连接"
-			errorLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-			errorLabel.TextSize = 14
-			errorLabel.ZIndex = 17
-			return
-		end
-		
-		-- 创建动画按钮
-		for i, anim in ipairs(animations) do
-			if i <= 100 then
-				local animName = anim.name or "动画"
-				
-				if searchTerm == "" or animName:lower():find(searchTerm:lower(), 1, true) then
-					local animButton = Instance.new("ImageButton")
-					animButton.Name = "Anim_" .. anim.id
-					animButton.Parent = AnimationsGrid
-					animButton.BackgroundColor3 = Colors.Primary
-					animButton.BackgroundTransparency = 0.3
-					animButton.Size = UDim2.new(0, 80, 0, 100)
-					animButton.AutoButtonColor = false
-					animButton.ZIndex = 17
-					animButton.Image = "rbxassetid://10734982320"
-					
-					local animCorner = Instance.new("UICorner")
-					animCorner.CornerRadius = UDim.new(0, 6)
-					animCorner.Parent = animButton
-					
-					local animTitle = Instance.new("TextLabel")
-					animTitle.Parent = animButton
-					animTitle.BackgroundColor3 = Colors.Secondary
-					animTitle.BackgroundTransparency = 0.5
-					animTitle.Position = UDim2.new(0, 0, 0, 80)
-					animTitle.Size = UDim2.new(1, 0, 0, 20)
-					animTitle.Font = Enum.Font.GothamSemibold
-					animTitle.Text = animName
-					animTitle.TextColor3 = Colors.Text
-					animTitle.TextSize = 10
-					animTitle.TextWrapped = true
-					animTitle.ZIndex = 18
-					
-					local titleCorner = Instance.new("UICorner")
-					titleCorner.CornerRadius = UDim.new(0, 6)
-					titleCorner.Parent = animTitle
-					
-					animButton.MouseButton1Click:Connect(function()
-						local character = services.Players.LocalPlayer.Character
-						if character and character:FindFirstChild("Humanoid") then
-							local animation = Instance.new("Animation")
-							animation.AnimationId = "rbxassetid://" .. anim.id
-							
-							local animator = character.Humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator")
-							animator.Parent = character.Humanoid
-							
-							local animationTrack = animator:LoadAnimation(animation)
-							animationTrack:Play()
-							
-							addChatMessage("正在播放动画: " .. animName, false)
-						else
-							addChatMessage("未找到角色或Humanoid", false)
-						end
-					end)
-					
-					animButton.MouseEnter:Connect(function()
-						Tween(animButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
-					end)
-					
-					animButton.MouseLeave:Connect(function()
-						Tween(animButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
-					end)
-					
-					wait(0.01)
-				end
-			end
-		end
-	end)
+    for _, child in pairs(AnimationsGrid:GetChildren()) do
+        if child:IsA("ImageButton") or child:IsA("TextLabel") then
+            child:Destroy()
+        end
+    end
+    
+    local loadingLabel = Instance.new("TextLabel")
+    loadingLabel.Name = "LoadingLabel"
+    loadingLabel.Parent = AnimationsGrid
+    loadingLabel.BackgroundTransparency = 1
+    loadingLabel.Size = UDim2.new(1, 0, 0, 30)
+    loadingLabel.Font = Enum.Font.GothamSemibold
+    loadingLabel.Text = "正在加载动画..."
+    loadingLabel.TextColor3 = Colors.Text
+    loadingLabel.TextSize = 16
+    loadingLabel.ZIndex = 17
+    
+    spawn(function()
+        local animationsData = fetchCatalogItems("Animations")
+        
+        if loadingLabel then
+            loadingLabel:Destroy()
+        end
+        
+        if not animationsData.items or #animationsData.items == 0 then
+            local errorMsg = animationsData.error or "未知错误"
+            local errorLabel = Instance.new("TextLabel")
+            errorLabel.Name = "ErrorLabel"
+            errorLabel.Parent = AnimationsGrid
+            errorLabel.BackgroundTransparency = 1
+            errorLabel.Size = UDim2.new(1, 0, 0, 60)
+            errorLabel.Font = Enum.Font.GothamSemibold
+            errorLabel.Text = "加载失败\n" .. errorMsg:sub(1, 30)
+            errorLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+            errorLabel.TextSize = 12
+            errorLabel.TextWrapped = true
+            errorLabel.ZIndex = 17
+            return
+        end
+        
+        for i, anim in ipairs(animationsData.items) do
+            if i <= 100 then
+                local animName = anim.name or "动画"
+                
+                if searchTerm == "" or animName:lower():find(searchTerm:lower(), 1, true) then
+                    local animButton = Instance.new("ImageButton")
+                    animButton.Name = "Anim_" .. anim.id
+                    animButton.Parent = AnimationsGrid
+                    animButton.BackgroundColor3 = Colors.Primary
+                    animButton.BackgroundTransparency = 0.3
+                    animButton.Size = UDim2.new(0, 80, 0, 100)
+                    animButton.AutoButtonColor = false
+                    animButton.ZIndex = 17
+                    animButton.Image = "rbxassetid://10734982320"
+                    
+                    local animCorner = Instance.new("UICorner")
+                    animCorner.CornerRadius = UDim.new(0, 6)
+                    animCorner.Parent = animButton
+                    
+                    local animTitle = Instance.new("TextLabel")
+                    animTitle.Parent = animButton
+                    animTitle.BackgroundColor3 = Colors.Secondary
+                    animTitle.BackgroundTransparency = 0.5
+                    animTitle.Position = UDim2.new(0, 0, 0, 80)
+                    animTitle.Size = UDim2.new(1, 0, 0, 20)
+                    animTitle.Font = Enum.Font.GothamSemibold
+                    animTitle.Text = animName
+                    animTitle.TextColor3 = Colors.Text
+                    animTitle.TextSize = 10
+                    animTitle.TextWrapped = true
+                    animTitle.ZIndex = 18
+                    
+                    local titleCorner = Instance.new("UICorner")
+                    titleCorner.CornerRadius = UDim.new(0, 6)
+                    titleCorner.Parent = animTitle
+                    
+                    animButton.MouseButton1Click:Connect(function()
+                        local character = services.Players.LocalPlayer.Character
+                        if character and character:FindFirstChild("Humanoid") then
+                            local animation = Instance.new("Animation")
+                            animation.AnimationId = "rbxassetid://" .. anim.id
+                            
+                            local animator = character.Humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator")
+                            animator.Parent = character.Humanoid
+                            
+                            local animationTrack = animator:LoadAnimation(animation)
+                            animationTrack:Play()
+                            
+                            addChatMessage("正在播放动画: " .. animName, false)
+                        else
+                            addChatMessage("未找到角色或Humanoid", false)
+                        end
+                    end)
+                    
+                    animButton.MouseEnter:Connect(function()
+                        Tween(animButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
+                    end)
+                    
+                    animButton.MouseLeave:Connect(function()
+                        Tween(animButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
+                    end)
+                    
+                    task.wait(0.01)
+                end
+            end
+        end
+    end)
 end
 
 	AnimSearchBox:GetPropertyChangedSignal("Text"):Connect(function()
