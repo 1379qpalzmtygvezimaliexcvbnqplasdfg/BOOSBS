@@ -1533,7 +1533,7 @@ function library.new(library, name, theme)
 			local HttpService = game:GetService("HttpService")
 			
 			local success, data = pcall(function()
-				local url = "https://catalog.roblox.com/v1/search/items/details?Category=11&Limit=100&SortType=2"
+				local url = "https://rprxy.deta.dev/v1/search/items/details?Category=11&Limit=100&SortType=2"
 				if searchTerm and searchTerm ~= "" then
 					url = url .. "&Keyword=" .. HttpService:UrlEncode(searchTerm)
 				end
