@@ -350,124 +350,29 @@ function library.new(library, name, theme)
 	DropShadow.ScaleType = Enum.ScaleType.Slice
 	DropShadow.SliceCenter = Rect.new(49, 49, 450, 450)
 	
-	local DeleteBtn = Instance.new("TextButton")
-	DeleteBtn.Name = "DeleteBtn"
-	DeleteBtn.Parent = Main
-	DeleteBtn.BackgroundColor3 = Colors.Secondary
-	DeleteBtn.BackgroundTransparency = Colors.Transparent
-	DeleteBtn.Position = UDim2.new(0, 10, 0, 10)
-	DeleteBtn.Size = UDim2.new(0, 25, 0, 25)
-	DeleteBtn.Font = Enum.Font.GothamBold
-	DeleteBtn.Text = "🗑️"
-	DeleteBtn.TextColor3 = Colors.Text
-	DeleteBtn.TextSize = 14
-	DeleteBtn.ZIndex = 10
+	local CloseBtn = Instance.new("TextButton")
+	CloseBtn.Name = "CloseBtn"
+	CloseBtn.Parent = Main
+	CloseBtn.BackgroundColor3 = Colors.Secondary
+	CloseBtn.BackgroundTransparency = Colors.Transparent
+	CloseBtn.Position = UDim2.new(1, -215, 0, 10)
+	CloseBtn.Size = UDim2.new(0, 25, 0, 25)
+	CloseBtn.Font = Enum.Font.GothamBold
+	CloseBtn.Text = "×"
+	CloseBtn.TextColor3 = Colors.Text
+	CloseBtn.TextSize = 20
+	CloseBtn.ZIndex = 10
 	
-	local DeleteBtnC = Instance.new("UICorner")
-	DeleteBtnC.CornerRadius = UDim.new(0, 6)
-	DeleteBtnC.Parent = DeleteBtn
-
-	local FaceBtn = Instance.new("ImageButton")
-	FaceBtn.Name = "FaceBtn"
-	FaceBtn.Parent = Main
-	FaceBtn.BackgroundColor3 = Colors.Secondary
-	FaceBtn.BackgroundTransparency = Colors.Transparent
-	FaceBtn.Position = UDim2.new(0, 40, 0, 10)
-	FaceBtn.Size = UDim2.new(0, 25, 0, 25)
-	FaceBtn.Image = "rbxassetid://3926305904"
-	FaceBtn.ImageRectOffset = Vector2.new(644, 124)
-	FaceBtn.ImageRectSize = Vector2.new(36, 36)
-	FaceBtn.ImageColor3 = Colors.Text
-	FaceBtn.ZIndex = 10
-
-	local FaceBtnC = Instance.new("UICorner")
-	FaceBtnC.CornerRadius = UDim.new(0, 6)
-	FaceBtnC.Parent = FaceBtn
-
-	CreateGlassEffect(FaceBtn)
-
-	local DragModeBtn = Instance.new("ImageButton")
-	DragModeBtn.Name = "DragModeBtn"
-	DragModeBtn.Parent = Main
-	DragModeBtn.BackgroundColor3 = Colors.Secondary
-	DragModeBtn.BackgroundTransparency = Colors.Transparent
-	DragModeBtn.Position = UDim2.new(0, 70, 0, 10)
-	DragModeBtn.Size = UDim2.new(0, 25, 0, 25)
-	DragModeBtn.Image = "rbxassetid://3926305904"
-	DragModeBtn.ImageRectOffset = Vector2.new(564, 444)
-	DragModeBtn.ImageRectSize = Vector2.new(36, 36)
-	DragModeBtn.ImageColor3 = Colors.Text
-	DragModeBtn.ZIndex = 10
-
-	local DragModeBtnC = Instance.new("UICorner")
-	DragModeBtnC.CornerRadius = UDim.new(0, 6)
-	DragModeBtnC.Parent = DragModeBtn
-
-	CreateGlassEffect(DragModeBtn)
-
-	local AIPanelBtn = Instance.new("ImageButton")
-	AIPanelBtn.Name = "AIPanelBtn"
-	AIPanelBtn.Parent = Main
-	AIPanelBtn.BackgroundColor3 = Colors.Secondary
-	AIPanelBtn.BackgroundTransparency = Colors.Transparent
-	AIPanelBtn.Position = UDim2.new(0, 100, 0, 10)
-	AIPanelBtn.Size = UDim2.new(0, 25, 0, 25)
-	AIPanelBtn.Image = "rbxassetid://3926305904"
-	AIPanelBtn.ImageRectOffset = Vector2.new(484, 444)
-	AIPanelBtn.ImageRectSize = Vector2.new(36, 36)
-	AIPanelBtn.ImageColor3 = Colors.Text
-	AIPanelBtn.ZIndex = 10
-
-	local AIPanelBtnC = Instance.new("UICorner")
-	AIPanelBtnC.CornerRadius = UDim.new(0, 6)
-	AIPanelBtnC.Parent = AIPanelBtn
-
-	CreateGlassEffect(AIPanelBtn)
-
-	local AutoFitBtn = Instance.new("ImageButton")
-	AutoFitBtn.Name = "AutoFitBtn"
-	AutoFitBtn.Parent = Main
-	AutoFitBtn.BackgroundColor3 = Colors.Secondary
-	AutoFitBtn.BackgroundTransparency = Colors.Transparent
-	AutoFitBtn.Position = UDim2.new(0, 130, 0, 10)
-	AutoFitBtn.Size = UDim2.new(0, 25, 0, 25)
-	AutoFitBtn.Image = "rbxassetid://3926305904"
-	AutoFitBtn.ImageRectOffset = Vector2.new(244, 164)
-	AutoFitBtn.ImageRectSize = Vector2.new(36, 36)
-	AutoFitBtn.ImageColor3 = Colors.Text
-	AutoFitBtn.ZIndex = 10
-	
-	local AutoFitBtnC = Instance.new("UICorner")
-	AutoFitBtnC.CornerRadius = UDim.new(0, 6)
-	AutoFitBtnC.Parent = AutoFitBtn
-	
-	CreateGlassEffect(AutoFitBtn)
-	
-	local ScaleBtn = Instance.new("ImageButton")
-	ScaleBtn.Name = "ScaleBtn"
-	ScaleBtn.Parent = Main
-	ScaleBtn.BackgroundColor3 = Colors.Secondary
-	ScaleBtn.BackgroundTransparency = Colors.Transparent
-	ScaleBtn.Position = UDim2.new(0, 160, 0, 10)
-	ScaleBtn.Size = UDim2.new(0, 25, 0, 25)
-	ScaleBtn.Image = "rbxassetid://3926305904"
-	ScaleBtn.ImageRectOffset = Vector2.new(324, 364)
-	ScaleBtn.ImageRectSize = Vector2.new(36, 36)
-	ScaleBtn.ImageColor3 = Colors.Text
-	ScaleBtn.ZIndex = 10
-	
-	local ScaleBtnC = Instance.new("UICorner")
-	ScaleBtnC.CornerRadius = UDim.new(0, 6)
-	ScaleBtnC.Parent = ScaleBtn
-	
-	CreateGlassEffect(ScaleBtn)
+	local CloseBtnC = Instance.new("UICorner")
+	CloseBtnC.CornerRadius = UDim.new(0, 6)
+	CloseBtnC.Parent = CloseBtn
 
 	local AnimationsBtn = Instance.new("ImageButton")
 	AnimationsBtn.Name = "AnimationsBtn"
 	AnimationsBtn.Parent = Main
 	AnimationsBtn.BackgroundColor3 = Colors.Secondary
 	AnimationsBtn.BackgroundTransparency = Colors.Transparent
-	AnimationsBtn.Position = UDim2.new(0, 190, 0, 10)
+	AnimationsBtn.Position = UDim2.new(1, -185, 0, 10)
 	AnimationsBtn.Size = UDim2.new(0, 25, 0, 25)
 	AnimationsBtn.Image = "rbxassetid://3926305904"
 	AnimationsBtn.ImageRectOffset = Vector2.new(724, 204)
@@ -481,22 +386,100 @@ function library.new(library, name, theme)
 	
 	CreateGlassEffect(AnimationsBtn)
 	
-	local CloseBtn = Instance.new("TextButton")
-	CloseBtn.Name = "CloseBtn"
-	CloseBtn.Parent = Main
-	CloseBtn.BackgroundColor3 = Colors.Secondary
-	CloseBtn.BackgroundTransparency = Colors.Transparent
-	CloseBtn.Position = UDim2.new(1, -35, 0, 10)
-	CloseBtn.Size = UDim2.new(0, 25, 0, 25)
-	CloseBtn.Font = Enum.Font.GothamBold
-	CloseBtn.Text = "×"
-	CloseBtn.TextColor3 = Colors.Text
-	CloseBtn.TextSize = 20
-	CloseBtn.ZIndex = 10
+	local AIPanelBtn = Instance.new("ImageButton")
+	AIPanelBtn.Name = "AIPanelBtn"
+	AIPanelBtn.Parent = Main
+	AIPanelBtn.BackgroundColor3 = Colors.Secondary
+	AIPanelBtn.BackgroundTransparency = Colors.Transparent
+	AIPanelBtn.Position = UDim2.new(1, -155, 0, 10)
+	AIPanelBtn.Size = UDim2.new(0, 25, 0, 25)
+	AIPanelBtn.Image = "rbxassetid://3926305904"
+	AIPanelBtn.ImageRectOffset = Vector2.new(484, 444)
+	AIPanelBtn.ImageRectSize = Vector2.new(36, 36)
+	AIPanelBtn.ImageColor3 = Colors.Text
+	AIPanelBtn.ZIndex = 10
+
+	local AIPanelBtnC = Instance.new("UICorner")
+	AIPanelBtnC.CornerRadius = UDim.new(0, 6)
+	AIPanelBtnC.Parent = AIPanelBtn
+
+	CreateGlassEffect(AIPanelBtn)
+
+	local DragModeBtn = Instance.new("ImageButton")
+	DragModeBtn.Name = "DragModeBtn"
+	DragModeBtn.Parent = Main
+	DragModeBtn.BackgroundColor3 = Colors.Secondary
+	DragModeBtn.BackgroundTransparency = Colors.Transparent
+	DragModeBtn.Position = UDim2.new(1, -125, 0, 10)
+	DragModeBtn.Size = UDim2.new(0, 25, 0, 25)
+	DragModeBtn.Image = "rbxassetid://3926305904"
+	DragModeBtn.ImageRectOffset = Vector2.new(564, 444)
+	DragModeBtn.ImageRectSize = Vector2.new(36, 36)
+	DragModeBtn.ImageColor3 = Colors.Text
+	DragModeBtn.ZIndex = 10
+
+	local DragModeBtnC = Instance.new("UICorner")
+	DragModeBtnC.CornerRadius = UDim.new(0, 6)
+	DragModeBtnC.Parent = DragModeBtn
+
+	CreateGlassEffect(DragModeBtn)
+
+	local FaceBtn = Instance.new("ImageButton")
+	FaceBtn.Name = "FaceBtn"
+	FaceBtn.Parent = Main
+	FaceBtn.BackgroundColor3 = Colors.Secondary
+	FaceBtn.BackgroundTransparency = Colors.Transparent
+	FaceBtn.Position = UDim2.new(1, -95, 0, 10)
+	FaceBtn.Size = UDim2.new(0, 25, 0, 25)
+	FaceBtn.Image = "rbxassetid://3926305904"
+	FaceBtn.ImageRectOffset = Vector2.new(644, 124)
+	FaceBtn.ImageRectSize = Vector2.new(36, 36)
+	FaceBtn.ImageColor3 = Colors.Text
+	FaceBtn.ZIndex = 10
+
+	local FaceBtnC = Instance.new("UICorner")
+	FaceBtnC.CornerRadius = UDim.new(0, 6)
+	FaceBtnC.Parent = FaceBtn
+
+	CreateGlassEffect(FaceBtn)
 	
-	local CloseBtnC = Instance.new("UICorner")
-	CloseBtnC.CornerRadius = UDim.new(0, 6)
-	CloseBtnC.Parent = CloseBtn
+	local ScaleBtn = Instance.new("ImageButton")
+	ScaleBtn.Name = "ScaleBtn"
+	ScaleBtn.Parent = Main
+	ScaleBtn.BackgroundColor3 = Colors.Secondary
+	ScaleBtn.BackgroundTransparency = Colors.Transparent
+	ScaleBtn.Position = UDim2.new(1, -65, 0, 10)
+	ScaleBtn.Size = UDim2.new(0, 25, 0, 25)
+	ScaleBtn.Image = "rbxassetid://3926305904"
+	ScaleBtn.ImageRectOffset = Vector2.new(324, 364)
+	ScaleBtn.ImageRectSize = Vector2.new(36, 36)
+	ScaleBtn.ImageColor3 = Colors.Text
+	ScaleBtn.ZIndex = 10
+	
+	local ScaleBtnC = Instance.new("UICorner")
+	ScaleBtnC.CornerRadius = UDim.new(0, 6)
+	ScaleBtnC.Parent = ScaleBtn
+	
+	CreateGlassEffect(ScaleBtn)
+	
+	local AutoFitBtn = Instance.new("ImageButton")
+	AutoFitBtn.Name = "AutoFitBtn"
+	AutoFitBtn.Parent = Main
+	AutoFitBtn.BackgroundColor3 = Colors.Secondary
+	AutoFitBtn.BackgroundTransparency = Colors.Transparent
+	AutoFitBtn.Position = UDim2.new(1, -35, 0, 10)
+	AutoFitBtn.Size = UDim2.new(0, 25, 0, 25)
+	AutoFitBtn.Image = "rbxassetid://3926305904"
+	AutoFitBtn.ImageRectOffset = Vector2.new(244, 164)
+	AutoFitBtn.ImageRectSize = Vector2.new(36, 36)
+	AutoFitBtn.ImageColor3 = Colors.Text
+	AutoFitBtn.ZIndex = 10
+	
+	local AutoFitBtnC = Instance.new("UICorner")
+	AutoFitBtnC.CornerRadius = UDim.new(0, 6)
+	AutoFitBtnC.Parent = AutoFitBtn
+	
+	CreateGlassEffect(AutoFitBtn)
 
 	local AIPanelFrame = Instance.new("Frame")
 	AIPanelFrame.Name = "AIPanelFrame"
@@ -1335,25 +1318,7 @@ function library.new(library, name, theme)
 			Ripple(CloseBtn)
 		end)
 		Main.Visible = false
-	end)
-	
-	DeleteBtn.MouseButton1Click:Connect(function()
-		spawn(function()
-			Ripple(DeleteBtn)
-		end)
-        
-        if canvasPart then
-            canvasPart:Destroy()
-        end
-        if switchGui then
-            switchGui:Destroy()
-        end
-        if renderConnection then
-            renderConnection:Disconnect()
-        end
-        
-        addChatMessage("🗑️ UI系统已完全删除！", false)
-        wait(0.5)
+		switchGui.Enabled = false
 	end)
 	
 	local TitleBar = Instance.new("Frame")
@@ -1543,36 +1508,24 @@ function library.new(library, name, theme)
 	GridLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
 	GridLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
-	local defaultAnimations = {
-		{ id = "507771019", name = "躺平" },
-		{ id = "507771019", name = "仰卧起坐" },
-		{ id = "3333368534", name = "战斗姿势" },
-		{ id = "3338025566", name = "冲刺" },
-		{ id = "3338168198", name = "攻击1" },
-		{ id = "3338172552", name = "攻击2" },
-		{ id = "3338238416", name = "攻击3" },
-		{ id = "3338268596", name = "跳跃" },
-		{ id = "3338298453", name = "落地" },
-		{ id = "3338332751", name = "步行" },
-		{ id = "3338338942", name = "奔跑" },
-		{ id = "3338342917", name = "闲置" },
-		{ id = "7846516419", name = "坐下" },
-		{ id = "8429801611", name = "舞蹈" },
-		{ id = "7825680595", name = "挥手" }
-	}
-
 	local function fetchCatalogItems(itemType, cursor)
 		local HttpService = game:GetService("HttpService")
+		local PROXY_URL = "https://rproxy.kirbs.net"
+		
+		local endpoint = string.format(
+			"%s/v1/search/items?category=Animations&limit=100&cursor=%s",
+			PROXY_URL,
+			cursor or ""
+		)
 		
 		local success, data = pcall(function()
-			local proxyUrl = "https://catalog.roproxy.com/v1/search/items?category=Animations&limit=50&cursor=" .. (cursor or "")
-			local response = game:HttpGet(proxyUrl)
+			local response = game:HttpGet(endpoint)
 			return HttpService:JSONDecode(response)
 		end)
 		
-		if success and data and data.data then
+		if success then
 			return {
-				items = data.data,
+				items = data.data or {},
 				nextCursor = data.nextPageCursor or ""
 			}
 		else
@@ -1582,15 +1535,49 @@ function library.new(library, name, theme)
 
 	local function fetchAssetDetails(assetIds)
 		local HttpService = game:GetService("HttpService")
+		local PROXY_URL = "https://rproxy.kirbs.net"
+		
+		local endpoint = string.format(
+			"%s/v1/assets?assetIds=%s",
+			PROXY_URL,
+			table.concat(assetIds, ",")
+		)
 		
 		local success, data = pcall(function()
-			local proxyUrl = "https://catalog.roproxy.com/v1/assets?assetIds=" .. table.concat(assetIds, ",")
-			local response = game:HttpGet(proxyUrl)
+			local response = game:HttpGet(endpoint)
 			return HttpService:JSONDecode(response)
 		end)
 		
-		if success and data and data.data then
-			return data.data
+		if success then
+			return data.data or {}
+		else
+			return {}
+		end
+	end
+
+	local function fetchBundleItems(bundleId)
+		local HttpService = game:GetService("HttpService")
+		local PROXY_URL = "https://rproxy.kirbs.net"
+		
+		local endpoint = string.format(
+			"%s/v1/bundles/%s/bundleItems",
+			PROXY_URL,
+			bundleId
+		)
+		
+		local success, data = pcall(function()
+			local response = game:HttpGet(endpoint)
+			return HttpService:JSONDecode(response)
+		end)
+		
+		if success then
+			local bundledItems = {}
+			for _, item in pairs(data.data or {}) do
+				if item.type == "Asset" then
+					table.insert(bundledItems, item.id)
+				end
+			end
+			return bundledItems
 		else
 			return {}
 		end
@@ -1608,17 +1595,26 @@ function library.new(library, name, theme)
 			local animations = animationsData.items
 			
 			if #animations == 0 then
-				animations = defaultAnimations
+				local errorLabel = Instance.new("TextLabel")
+				errorLabel.Name = "ErrorLabel"
+				errorLabel.Parent = AnimationsGrid
+				errorLabel.BackgroundTransparency = 1
+				errorLabel.Size = UDim2.new(1, 0, 0, 50)
+				errorLabel.Font = Enum.Font.Gotham
+				errorLabel.TextSize = 14
+				errorLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+				errorLabel.Text = "无法加载动画，请检查网络连接"
+				errorLabel.ZIndex = 17
+				return
 			end
 			
 			for i, anim in ipairs(animations) do
 				if i <= 100 then
 					local animName = anim.name or "动画"
-					local animId = anim.id or anim.assetId or "507771019"
 					
 					if searchTerm == "" or animName:lower():find(searchTerm:lower(), 1, true) then
 						local animButton = Instance.new("ImageButton")
-						animButton.Name = "Anim_" .. animId
+						animButton.Name = "Anim_" .. anim.id
 						animButton.Parent = AnimationsGrid
 						animButton.BackgroundColor3 = Colors.Primary
 						animButton.BackgroundTransparency = 0.3
@@ -1653,7 +1649,7 @@ function library.new(library, name, theme)
 							local character = services.Players.LocalPlayer.Character
 							if character and character:FindFirstChild("Humanoid") then
 								local animation = Instance.new("Animation")
-								animation.AnimationId = "rbxassetid://" .. animId
+								animation.AnimationId = "rbxassetid://" .. anim.id
 								
 								local animator = character.Humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator")
 								animator.Parent = character.Humanoid
@@ -2950,7 +2946,7 @@ function library.new(library, name, theme)
         saveConfig(config)
 	end)
 
-	AIPanelBtn.MouseButton1Click:Connect(function()
+		AIPanelBtn.MouseButton1Click:Connect(function()
 		spawn(function()
 			Ripple(AIPanelBtn)
 		end)
@@ -3030,6 +3026,9 @@ function library.new(library, name, theme)
 		end
 		if renderConnection then
 			renderConnection:Disconnect()
+		end
+		if switchGui then
+			switchGui:Destroy()
 		end
 	end
 
