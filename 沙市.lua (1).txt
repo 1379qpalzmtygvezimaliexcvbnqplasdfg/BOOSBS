@@ -493,6 +493,22 @@ function library.new(library, name, theme)
 	
 	CreateGlassEffect(AnimationsBtn)
 	
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Name = "CloseBtn"
+CloseBtn.Parent = TitleBar  -- 改为放在标题栏
+CloseBtn.BackgroundColor3 = Colors.Secondary
+CloseBtn.BackgroundTransparency = 0.5
+CloseBtn.Position = UDim2.new(1, -45, 0, 8)  -- 右上角位置
+CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.Text = "×"
+CloseBtn.TextColor3 = Colors.Text
+CloseBtn.TextSize = 20
+CloseBtn.ZIndex = 10
+
+local CloseBtnC = Instance.new("UICorner")
+CloseBtnC.CornerRadius = UDim.new(0, 6)
+CloseBtnC.Parent = CloseBtn
 
 CreateGlassEffect(CloseBtn)
 
