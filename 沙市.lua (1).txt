@@ -8,6 +8,7 @@ library.currentTab = nil
 library.flags = {}
 
 local configPath = "BS脚本/UI配置.txt"
+local colorConfigPath = "BS脚本/颜色配置.txt"
 
 local function saveConfig(config)
 	local success, encoded = pcall(function()
@@ -41,6 +42,30 @@ local function loadConfig()
 	}
 end
 
+local function saveColorConfig(colorConfig)
+	local success, encoded = pcall(function()
+		return game:GetService("HttpService"):JSONEncode(colorConfig)
+	end)
+	if success then
+		if not isfolder("BS脚本") then
+			makefolder("BS脚本")
+		end
+		writefile(colorConfigPath, encoded)
+	end
+end
+
+local function loadColorConfig()
+	if isfile(colorConfigPath) then
+		local success, colorConfig = pcall(function()
+			return game:GetService("HttpService"):JSONDecode(readfile(colorConfigPath))
+		end)
+		if success and colorConfig.accentColor then
+			return Color3.fromRGB(unpack(colorConfig.accentColor))
+		end
+	end
+	return Color3.fromRGB(52, 152, 219)
+end
+
 local services = setmetatable({}, {
 	__index = function(t, k)
 		return game.GetService(game, k)
@@ -56,6 +81,7 @@ local Colors = {
 	Placeholder = Color3.fromRGB(150, 150, 150),
 	White = Color3.fromRGB(255, 255, 255),
 	Transparent = 0.5,
+	DefaultAccent = Color3.fromRGB(52, 152, 219)
 }
 
 local API_KEY = "sk-nfuceahepqtmwnqxhmermrnrjiipmnntpqljryhfzolhmjqd"
@@ -244,6 +270,8 @@ function library.new(library, name, theme)
 
 	local isComputer = not services.UserInputService.TouchEnabled
 	local scaleFactor = isComputer and 1.3 or 1
+
+	Colors.Accent = loadColorConfig()
 
 	local Main = Instance.new("Frame")
 	Main.Name = "Main"
@@ -539,36 +567,69 @@ function library.new(library, name, theme)
 
 	local function parseAIResponse(response)
 		local commands = {}
+		local lower = response:lower()
 		
-		if response:lower():find("颜色") or response:lower():find("color") then
-			local hex = response:match("#%x%x%x%x%x%x")
-			if hex then
-				table.insert(commands, {type = "color", value = hex})
-			elseif response:lower():find("红") then
-				table.insert(commands, {type = "color", value = "#FF0000"})
-			elseif response:lower():find("蓝") then
-				table.insert(commands, {type = "color", value = "#0000FF"})
-			elseif response:lower():find("绿") then
-				table.insert(commands, {type = "color", value = "#00FF00"})
-			elseif response:lower():find("黄") then
-				table.insert(commands, {type = "color", value = "#FFFF00"})
-			elseif response:lower():find("紫") then
-				table.insert(commands, {type = "color", value = "#FF00FF"})
-			elseif response:lower():find("黑") then
-				table.insert(commands, {type = "color", value = "#000000"})
-			elseif response:lower():find("白") then
-				table.insert(commands, {type = "color", value = "#FFFFFF"})
+		local colorMap = {
+			["红"] = "#FF0000", ["red"] = "#FF0000",
+			["蓝"] = "#0000FF", ["blue"] = "#0000FF",
+			["绿"] = "#00FF00", ["green"] = "#00FF00",
+			["黄"] = "#FFFF00", ["yellow"] = "#FFFF00",
+			["紫"] = "#FF00FF", ["purple"] = "#FF00FF",
+			["青"] = "#00FFFF", ["cyan"] = "#00FFFF",
+			["黑"] = "#000000", ["black"] = "#000000",
+			["白"] = "#FFFFFF", ["white"] = "#FFFFFF",
+			["橙"] = "#FFA500", ["orange"] = "#FFA500",
+			["粉"] = "#FFC0CB", ["pink"] = "#FFC0CB",
+			["灰"] = "#808080", ["gray"] = "#808080",
+			["银"] = "#C0C0C0", ["silver"] = "#C0C0C0",
+			["金"] = "#FFD700", ["gold"] = "#FFD700",
+			["默认"] = "#3498DB", ["default"] = "#3498DB"
+		}
+		
+		local hex = response:match("#%x%x%x%x%x%x")
+		if hex then
+			table.insert(commands, {type = "color", value = hex})
+		else
+			for name, hexCode in pairs(colorMap) do
+				if lower:match(name) then
+					table.insert(commands, {type = "color", value = hexCode})
+					break
+				end
 			end
 		end
 		
-		if response:lower():find("布局") or response:lower():find("layout") then
-			if response:lower():find("网格") or response:lower():find("grid") then
-				table.insert(commands, {type = "layout", value = "grid"})
-			elseif response:lower():find("列表") or response:lower():find("list") then
-				table.insert(commands, {type = "layout", value = "list"})
-			elseif response:lower():find("紧凑") or response:lower():find("compact") then
-				table.insert(commands, {type = "layout", value = "compact"})
+		if lower:match("布局") or lower:match("layout") then
+			if lower:match("紧凑") or lower:match("compact") then
+				table.insert(commands, {type = "spacing", value = "compact"})
+			elseif lower:match("宽松") or lower:match("spacious") then
+				table.insert(commands, {type = "spacing", value = "spacious"})
+			elseif lower:match("默认") or lower:match("default") then
+				table.insert(commands, {type = "spacing", value = "default"})
 			end
+		end
+		
+		if lower:match("透明") or lower:match("transparent") or lower:match("透明度") then
+			if lower:match("高") or lower:match("high") then
+				table.insert(commands, {type = "transparency", value = 0.7})
+			elseif lower:match("低") or lower:match("low") then
+				table.insert(commands, {type = "transparency", value = 0.2})
+			elseif lower:match("默认") or lower:match("default") then
+				table.insert(commands, {type = "transparency", value = 0.5})
+			end
+		end
+		
+		if lower:match("大小") or lower:match("size") or lower:match("尺寸") then
+			if lower:match("大") or lower:match("big") or lower:match("large") then
+				table.insert(commands, {type = "size", value = "large"})
+			elseif lower:match("小") or lower:match("small") or lower:match("mini") then
+				table.insert(commands, {type = "size", value = "small"})
+			elseif lower:match("默认") or lower:match("default") then
+				table.insert(commands, {type = "size", value = "default"})
+			end
+		end
+		
+		if lower:match("重置") or lower:match("reset") then
+			table.insert(commands, {type = "reset", value = true})
 		end
 		
 		return commands
@@ -584,6 +645,8 @@ function library.new(library, name, theme)
 				local newColor = Color3.fromRGB(r, g, b)
 				
 				Colors.Accent = newColor
+				saveColorConfig({accentColor = {r, g, b}})
+				
 				for _, obj in pairs(Main:GetDescendants()) do
 					if obj:IsA("Frame") and obj.BackgroundColor3 == Colors.Accent then
 						Tween(obj, 0.3, "Sine", "Out", { BackgroundColor3 = newColor })
@@ -593,6 +656,69 @@ function library.new(library, name, theme)
 						Tween(obj, 0.3, "Sine", "Out", { Color = newColor })
 					end
 				end
+				
+				addChatMessage("主题颜色已修改为 " .. hex, false)
+			elseif cmd.type == "spacing" then
+				local spacingValue = cmd.value == "compact" and UDim.new(0, 4) or 
+									cmd.value == "spacious" and UDim.new(0, 15) or 
+									UDim.new(0, 8)
+				
+				local modified = 0
+				for _, layout in pairs(Main:GetDescendants()) do
+					if layout:IsA("UIListLayout") then
+						layout.Padding = spacingValue
+						modified = modified + 1
+					elseif layout:IsA("UIGridLayout") then
+						layout.CellPadding = UDim2.new(0, 10, 0, 10)
+						modified = modified + 1
+					end
+				end
+				
+				addChatMessage("布局间距已修改为 " .. cmd.value .. " (影响" .. modified .. "个元素)", false)
+			elseif cmd.type == "transparency" then
+				local transparency = cmd.value
+				Colors.Transparent = transparency
+				
+				local modified = 0
+				for _, obj in pairs(Main:GetDescendants()) do
+					if obj.Name == "GlassEffect" then
+						obj.ImageTransparency = 1 - transparency + 0.5
+						modified = modified + 1
+					end
+				end
+				
+				addChatMessage("透明度已调整为 " .. string.format("%.1f", transparency) .. " (影响" .. modified .. "个元素)", false)
+			elseif cmd.type == "size" then
+				local currentScale = scaleFactor
+				local newScale = cmd.value == "large" and 1.5 or cmd.value == "small" and 0.7 or 1.3
+				
+				Main.Size = UDim2.new(0, 650 * newScale, 0, 400 * newScale)
+				Main.Position = UDim2.new(0.5, 0, 0.5, 0)
+				
+				addChatMessage("UI尺寸已修改为 " .. cmd.value .. " (缩放: " .. string.format("%.1f", newScale/currentScale) .. "倍)", false)
+			elseif cmd.type == "reset" then
+				Colors.Accent = Colors.DefaultAccent
+				Colors.Transparent = 0.5
+				saveColorConfig({accentColor = {52, 152, 219}})
+				
+				local modified = 0
+				for _, obj in pairs(Main:GetDescendants()) do
+					if obj:IsA("Frame") and obj.BackgroundColor3 == Colors.Accent then
+						Tween(obj, 0.3, "Sine", "Out", { BackgroundColor3 = Colors.DefaultAccent })
+						modified = modified + 1
+					elseif obj:IsA("TextLabel") and obj.TextColor3 == Colors.Accent then
+						Tween(obj, 0.3, "Sine", "Out", { TextColor3 = Colors.DefaultAccent })
+						modified = modified + 1
+					elseif obj:IsA("UIStroke") and obj.Color == Colors.Accent then
+						Tween(obj, 0.3, "Sine", "Out", { Color = Colors.DefaultAccent })
+						modified = modified + 1
+					elseif obj.Name == "GlassEffect" then
+						obj.ImageTransparency = 0.5
+						modified = modified + 1
+					end
+				end
+				
+				addChatMessage("UI已重置为默认设置 (恢复" .. modified .. "个元素)", false)
 			end
 		end
 	end
@@ -615,7 +741,7 @@ function library.new(library, name, theme)
 					messages = {
 						{
 							role = "system",
-							content = "你是一个UI助手，请根据用户指令返回简洁的修改建议。对于颜色：只返回颜色名称或十六进制代码。对于布局：只返回布局类型。例如用户说'改成红色'，你就只回复'颜色: #FF0000'。用户说'用网格布局'，你就只回复'布局: grid'。"
+							content = "你是一个UI助手，请根据用户指令返回简洁的修改建议。对于颜色：只返回颜色名称或十六进制代码。对于布局：只返回布局类型。对于透明度：只返回透明度级别。对于尺寸：只返回尺寸类型。例如：用户说'改成红色'，回复'颜色: #FF0000'；用户说'用紧凑布局'，回复'布局: compact'；用户说'提高透明度'，回复'透明度: high'；用户说'UI变大'，回复'尺寸: large'；用户说'重置'，回复'重置: true'。"
 						},
 						{
 							role = "user",
@@ -639,7 +765,7 @@ function library.new(library, name, theme)
 					local data = HttpService:JSONDecode(response.Body)
 					return data.choices[1].message.content
 				else
-					return "错误: API请求失败"
+					return "错误: API请求失败 (状态码: " .. response.StatusCode .. ")"
 				end
 			end)
 			
@@ -649,7 +775,11 @@ function library.new(library, name, theme)
 			if success then
 				addChatMessage(result, false)
 				local commands = parseAIResponse(result)
-				applyCommands(commands)
+				if #commands > 0 then
+					applyCommands(commands)
+				else
+					addChatMessage("未识别到可执行指令，请尝试更明确的描述", false)
+				end
 			else
 				addChatMessage("发生错误: " .. tostring(result), false)
 			end
@@ -2012,6 +2142,7 @@ function library.new(library, name, theme)
 			Tween(FaceBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
 			Tween(DragModeBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
 			Tween(DragModeBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
+			TitleBar.Active = false
 		else
 			uiFollowEnabled = true
 			Tween(FaceBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
