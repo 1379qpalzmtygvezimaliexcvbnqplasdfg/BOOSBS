@@ -24,8 +24,6 @@ local function getCurrentConfig()
         dragModeEnabled = false,
         faceCharacterEnabled = false,
         aiPanelEnabled = false,
-        aiCustomMode = true,
-        animPanelEnabled = false,
         fontSize = "default",
         buttonStyle = "default",
         animationSpeed = "normal",
@@ -352,44 +350,6 @@ function library.new(library, name, theme)
 	DropShadow.ScaleType = Enum.ScaleType.Slice
 	DropShadow.SliceCenter = Rect.new(49, 49, 450, 450)
 	
-	local AutoFitBtn = Instance.new("ImageButton")
-	AutoFitBtn.Name = "AutoFitBtn"
-	AutoFitBtn.Parent = Main
-	AutoFitBtn.BackgroundColor3 = Colors.Secondary
-	AutoFitBtn.BackgroundTransparency = Colors.Transparent
-	AutoFitBtn.Position = UDim2.new(1, -155, 0, 10)
-	AutoFitBtn.Size = UDim2.new(0, 25, 0, 25)
-	AutoFitBtn.Image = "rbxassetid://3926305904"
-	AutoFitBtn.ImageRectOffset = Vector2.new(244, 164)
-	AutoFitBtn.ImageRectSize = Vector2.new(36, 36)
-	AutoFitBtn.ImageColor3 = Colors.Text
-	AutoFitBtn.ZIndex = 10
-	
-	local AutoFitBtnC = Instance.new("UICorner")
-	AutoFitBtnC.CornerRadius = UDim.new(0, 6)
-	AutoFitBtnC.Parent = AutoFitBtn
-	
-	CreateGlassEffect(AutoFitBtn)
-	
-	local ScaleBtn = Instance.new("ImageButton")
-	ScaleBtn.Name = "ScaleBtn"
-	ScaleBtn.Parent = Main
-	ScaleBtn.BackgroundColor3 = Colors.Secondary
-	ScaleBtn.BackgroundTransparency = Colors.Transparent
-	ScaleBtn.Position = UDim2.new(1, -185, 0, 10)
-	ScaleBtn.Size = UDim2.new(0, 25, 0, 25)
-	ScaleBtn.Image = "rbxassetid://3926305904"
-	ScaleBtn.ImageRectOffset = Vector2.new(324, 364)
-	ScaleBtn.ImageRectSize = Vector2.new(36, 36)
-	ScaleBtn.ImageColor3 = Colors.Text
-	ScaleBtn.ZIndex = 10
-	
-	local ScaleBtnC = Instance.new("UICorner")
-	ScaleBtnC.CornerRadius = UDim.new(0, 6)
-	ScaleBtnC.Parent = ScaleBtn
-	
-	CreateGlassEffect(ScaleBtn)
-	
 	local FaceBtn = Instance.new("ImageButton")
 	FaceBtn.Name = "FaceBtn"
 	FaceBtn.Parent = Main
@@ -447,31 +407,69 @@ function library.new(library, name, theme)
 
 	CreateGlassEffect(AIPanelBtn)
 
-	local AnimPanelBtn = Instance.new("ImageButton")
-	AnimPanelBtn.Name = "AnimPanelBtn"
-	AnimPanelBtn.Parent = Main
-	AnimPanelBtn.BackgroundColor3 = Colors.Secondary
-	AnimPanelBtn.BackgroundTransparency = Colors.Transparent
-	AnimPanelBtn.Position = UDim2.new(1, -35, 0, 10)
-	AnimPanelBtn.Size = UDim2.new(0, 25, 0, 25)
-	AnimPanelBtn.Image = "rbxassetid://3926305904"
-	AnimPanelBtn.ImageRectOffset = Vector2.new(804, 284)
-	AnimPanelBtn.ImageRectSize = Vector2.new(36, 36)
-	AnimPanelBtn.ImageColor3 = Colors.Text
-	AnimPanelBtn.ZIndex = 10
+	local AutoFitBtn = Instance.new("ImageButton")
+	AutoFitBtn.Name = "AutoFitBtn"
+	AutoFitBtn.Parent = Main
+	AutoFitBtn.BackgroundColor3 = Colors.Secondary
+	AutoFitBtn.BackgroundTransparency = Colors.Transparent
+	AutoFitBtn.Position = UDim2.new(1, -155, 0, 10)
+	AutoFitBtn.Size = UDim2.new(0, 25, 0, 25)
+	AutoFitBtn.Image = "rbxassetid://3926305904"
+	AutoFitBtn.ImageRectOffset = Vector2.new(244, 164)
+	AutoFitBtn.ImageRectSize = Vector2.new(36, 36)
+	AutoFitBtn.ImageColor3 = Colors.Text
+	AutoFitBtn.ZIndex = 10
+	
+	local AutoFitBtnC = Instance.new("UICorner")
+	AutoFitBtnC.CornerRadius = UDim.new(0, 6)
+	AutoFitBtnC.Parent = AutoFitBtn
+	
+	CreateGlassEffect(AutoFitBtn)
+	
+	local ScaleBtn = Instance.new("ImageButton")
+	ScaleBtn.Name = "ScaleBtn"
+	ScaleBtn.Parent = Main
+	ScaleBtn.BackgroundColor3 = Colors.Secondary
+	ScaleBtn.BackgroundTransparency = Colors.Transparent
+	ScaleBtn.Position = UDim2.new(1, -185, 0, 10)
+	ScaleBtn.Size = UDim2.new(0, 25, 0, 25)
+	ScaleBtn.Image = "rbxassetid://3926305904"
+	ScaleBtn.ImageRectOffset = Vector2.new(324, 364)
+	ScaleBtn.ImageRectSize = Vector2.new(36, 36)
+	ScaleBtn.ImageColor3 = Colors.Text
+	ScaleBtn.ZIndex = 10
+	
+	local ScaleBtnC = Instance.new("UICorner")
+	ScaleBtnC.CornerRadius = UDim.new(0, 6)
+	ScaleBtnC.Parent = ScaleBtn
+	
+	CreateGlassEffect(ScaleBtn)
 
-	local AnimPanelBtnC = Instance.new("UICorner")
-	AnimPanelBtnC.CornerRadius = UDim.new(0, 6)
-	AnimPanelBtnC.Parent = AnimPanelBtn
-
-	CreateGlassEffect(AnimPanelBtn)
-
+	local AnimationsBtn = Instance.new("ImageButton")
+	AnimationsBtn.Name = "AnimationsBtn"
+	AnimationsBtn.Parent = Main
+	AnimationsBtn.BackgroundColor3 = Colors.Secondary
+	AnimationsBtn.BackgroundTransparency = Colors.Transparent
+	AnimationsBtn.Position = UDim2.new(1, -35, 0, 10)
+	AnimationsBtn.Size = UDim2.new(0, 25, 0, 25)
+	AnimationsBtn.Image = "rbxassetid://3926305904"
+	AnimationsBtn.ImageRectOffset = Vector2.new(724, 204)
+	AnimationsBtn.ImageRectSize = Vector2.new(36, 36)
+	AnimationsBtn.ImageColor3 = Colors.Text
+	AnimationsBtn.ZIndex = 10
+	
+	local AnimationsBtnC = Instance.new("UICorner")
+	AnimationsBtnC.CornerRadius = UDim.new(0, 6)
+	AnimationsBtnC.Parent = AnimationsBtn
+	
+	CreateGlassEffect(AnimationsBtn)
+	
 	local CloseBtn = Instance.new("TextButton")
 	CloseBtn.Name = "CloseBtn"
 	CloseBtn.Parent = Main
 	CloseBtn.BackgroundColor3 = Colors.Secondary
 	CloseBtn.BackgroundTransparency = Colors.Transparent
-	CloseBtn.Position = UDim2.new(1, -35, 0, 10)
+	CloseBtn.Position = UDim2.new(1, -35, 0, 40)
 	CloseBtn.Size = UDim2.new(0, 25, 0, 25)
 	CloseBtn.Font = Enum.Font.GothamBold
 	CloseBtn.Text = "×"
@@ -512,18 +510,25 @@ function library.new(library, name, theme)
 	AIPanelTitle.TextXAlignment = Enum.TextXAlignment.Left
 	AIPanelTitle.ZIndex = 16
 
+	local AIPanelTopBar = Instance.new("Frame")
+	AIPanelTopBar.Name = "AIPanelTopBar"
+	AIPanelTopBar.Parent = AIPanelFrame
+	AIPanelTopBar.BackgroundTransparency = 1
+	AIPanelTopBar.Position = UDim2.new(0, 15, 0, 55)
+	AIPanelTopBar.Size = UDim2.new(1, -30, 0, 30)
+	AIPanelTopBar.ZIndex = 16
+
 	local ModeToggleBtn = Instance.new("TextButton")
 	ModeToggleBtn.Name = "ModeToggleBtn"
-	ModeToggleBtn.Parent = AIPanelFrame
+	ModeToggleBtn.Parent = AIPanelTopBar
 	ModeToggleBtn.BackgroundColor3 = Colors.Accent
 	ModeToggleBtn.BackgroundTransparency = 0.2
-	ModeToggleBtn.Position = UDim2.new(1, -160, 1, -45)
-	ModeToggleBtn.Size = UDim2.new(0, 70, 0, 35)
-	ModeToggleBtn.Font = Enum.Font.GothamBold
-	ModeToggleBtn.Text = "自定义模式"
+	ModeToggleBtn.Size = UDim2.new(0, 120, 1, 0)
+	ModeToggleBtn.Font = Enum.Font.GothamSemibold
+	ModeToggleBtn.Text = "自定义指令模式"
 	ModeToggleBtn.TextColor3 = Colors.Text
-	ModeToggleBtn.TextSize = 12
-	ModeToggleBtn.ZIndex = 16
+	ModeToggleBtn.TextSize = 14
+	ModeToggleBtn.ZIndex = 17
 
 	local ModeToggleBtnC = Instance.new("UICorner")
 	ModeToggleBtnC.CornerRadius = UDim.new(0, 6)
@@ -533,8 +538,8 @@ function library.new(library, name, theme)
 	ChatHistory.Name = "ChatHistory"
 	ChatHistory.Parent = AIPanelFrame
 	ChatHistory.BackgroundTransparency = 1
-	ChatHistory.Position = UDim2.new(0, 15, 0, 55)
-	ChatHistory.Size = UDim2.new(1, -30, 1, -110)
+	ChatHistory.Position = UDim2.new(0, 15, 0, 90)
+	ChatHistory.Size = UDim2.new(1, -30, 1, -140)
 	ChatHistory.CanvasSize = UDim2.new(0, 0, 0, 0)
 	ChatHistory.ScrollBarThickness = 2
 	ChatHistory.ZIndex = 16
@@ -602,6 +607,7 @@ function library.new(library, name, theme)
 	LoadingLabel.ZIndex = 18
 
     local isFirstTimeAI = true
+	local aiMode = "custom"
 
 	local function addChatMessage(text, isUser)
 		local messageFrame = Instance.new("Frame")
@@ -609,36 +615,45 @@ function library.new(library, name, theme)
 		messageFrame.BackgroundTransparency = 1
 		messageFrame.Size = UDim2.new(1, 0, 0, 0)
 		messageFrame.ZIndex = 17
-
-		local messageBackground = Instance.new("Frame")
-		messageBackground.Parent = messageFrame
-		messageBackground.BackgroundColor3 = isUser and Color3.fromRGB(52, 152, 219) or Color3.fromRGB(50, 50, 50)
-		messageBackground.BackgroundTransparency = 0.5
-		messageBackground.BorderSizePixel = 0
-		messageBackground.Position = isUser and UDim2.new(1, -10, 0, 5) or UDim2.new(0, 10, 0, 5)
-		messageBackground.Size = UDim2.new(0, 200, 0, 0)
-		messageBackground.AnchorPoint = isUser and Vector2.new(1, 0) or Vector2.new(0, 0)
-
+		
+		if isUser then
+			messageFrame.AnchorPoint = Vector2.new(1, 0)
+			messageFrame.Position = UDim2.new(1, -10, 0, 0)
+			messageFrame.Size = UDim2.new(0.8, 0, 0, 0)
+		else
+			messageFrame.AnchorPoint = Vector2.new(0, 0)
+			messageFrame.Position = UDim2.new(0, 10, 0, 0)
+			messageFrame.Size = UDim2.new(0.8, 0, 0, 0)
+		end
+		
 		local messageLabel = Instance.new("TextLabel")
-		messageLabel.Parent = messageBackground
-		messageLabel.BackgroundTransparency = 1
-		messageLabel.Size = UDim2.new(1, -10, 1, 0)
-		messageLabel.Position = UDim2.new(0, 5, 0, 0)
+		messageLabel.Parent = messageFrame
+		messageLabel.BackgroundColor3 = isUser and Colors.Accent or Colors.Secondary
+		messageLabel.BackgroundTransparency = 0.3
+		messageLabel.Size = UDim2.new(1, 0, 0, 0)
 		messageLabel.Font = Enum.Font.Gotham
 		messageLabel.TextSize = 14
 		messageLabel.TextWrapped = true
 		messageLabel.RichText = true
-		messageLabel.TextXAlignment = isUser and Enum.TextXAlignment.Right or Enum.TextXAlignment.Left
+		messageLabel.TextXAlignment = Enum.TextXAlignment.Left
 		messageLabel.TextColor3 = Colors.Text
-		messageLabel.Text = text
+		messageLabel.Text = isUser and ("你: " .. text) or ("AI: " .. text)
+		messageLabel.ZIndex = 17
+		
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0, 8)
+		corner.Parent = messageLabel
+		
+		if isUser then
+			messageLabel.AnchorPoint = Vector2.new(1, 0)
+			messageLabel.Position = UDim2.new(1, 0, 0, 0)
+		end
 		
 		messageLabel:GetPropertyChangedSignal("TextBounds"):Connect(function()
-			local textWidth = messageLabel.TextBounds.X + 20
-			local textHeight = messageLabel.TextBounds.Y + 10
-			messageBackground.Size = UDim2.new(0, math.min(textWidth, 250), 0, textHeight)
-			messageFrame.Size = UDim2.new(1, 0, 0, textHeight + 10)
+			local textHeight = messageLabel.TextBounds.Y + 20
+			messageFrame.Size = UDim2.new(0.8, 0, 0, textHeight)
+			messageLabel.Size = UDim2.new(1, 0, 0, textHeight - 10)
 			ChatHistory.CanvasSize = UDim2.new(0, 0, 0, ChatHistoryL.AbsoluteContentSize.Y + 20)
-			ChatHistory.CanvasPosition = Vector2.new(0, ChatHistory.CanvasSize.Y.Offset)
 		end)
 	end
 
@@ -774,13 +789,6 @@ function library.new(library, name, theme)
         if config.faceCharacterEnabled ~= nil then
             faceCharacterEnabled = config.faceCharacterEnabled
         end
-        if config.aiCustomMode ~= nil then
-            isCustomMode = config.aiCustomMode
-        end
-        if config.animPanelEnabled ~= nil then
-            AnimPanelFrame.Visible = config.animPanelEnabled
-            Content.Visible = not config.animPanelEnabled
-        end
         
         return true
     end
@@ -809,10 +817,6 @@ function library.new(library, name, theme)
         addChatMessage("🔄 重置UI：发送\"重置\"或\"恢复默认\"", false)
         wait(0.05)
         addChatMessage("📱 应用JSON：直接粘贴配置JSON即可", false)
-        wait(0.05)
-        addChatMessage("🔧 开启自定义指令：切换到自定义模式，AI将根据指令修改UI", false)
-        wait(0.05)
-        addChatMessage("💬 开启聊天模式：切换到聊天模式，AI将进行正常对话", false)
         wait(0.05)
         addChatMessage("💡 提示：你可以组合使用指令，如\"改成红色，紧凑布局，透明度低\"", false)
     end
@@ -933,31 +937,19 @@ function library.new(library, name, theme)
 			table.insert(commands, {type = "help", value = true})
 		end
 		
-		if lower:match("开启自定义") or lower:match("切换到自定义") or 
-		   lower:match("自定义模式") or lower:match("custom.*mode") or
-		   lower:match("enable custom") or lower:find("自定义") == 1 then
-			table.insert(commands, {type = "switch_mode", value = "custom"})
-		end
-		
-		if lower:match("开启聊天") or lower:match("切换到聊天") or 
-		   lower:match("聊天模式") or lower:match("chat.*mode") or
-		   lower:match("enable chat") or lower:find("聊天") == 1 then
-			table.insert(commands, {type = "switch_mode", value = "chat"})
-		end
-		
 		return commands
 	end
 
     local function applyColorToAllUI(newColor)
         for _, obj in pairs(Main:GetDescendants()) do
             if obj:IsA("Frame") or obj:IsA("TextButton") or obj:IsA("ImageButton") then
-                if obj.BackgroundColor3 and obj.BackgroundColor3 == Colors.Accent then
+                if obj.BackgroundColor3 == Colors.Accent then
                     Tween(obj, 0.3, "Sine", "Out", { BackgroundColor3 = newColor })
                 end
             end
             
             if obj:IsA("TextLabel") or obj:IsA("TextBox") or obj:IsA("TextButton") then
-                if obj.TextColor3 and obj.TextColor3 == Colors.Accent then
+                if obj.TextColor3 == Colors.Accent then
                     Tween(obj, 0.3, "Sine", "Out", { TextColor3 = newColor })
                 end
             end
@@ -969,7 +961,7 @@ function library.new(library, name, theme)
             end
             
             if obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
-                if obj.ImageColor3 and obj.ImageColor3 == Colors.Accent then
+                if obj.ImageColor3 == Colors.Accent then
                     Tween(obj, 0.3, "Sine", "Out", { ImageColor3 = newColor })
                 end
             end
@@ -991,36 +983,8 @@ function library.new(library, name, theme)
     end
 
 	local function applyCommands(commands)
-		if not commands or #commands == 0 then return end
-		
 		for _, cmd in ipairs(commands) do
-			if cmd.type == "switch_mode" then
-				if cmd.value == "custom" then
-					isCustomMode = true
-					ModeToggleBtn.Text = "自定义模式"
-					Tween(ModeToggleBtn, 0.2, "Sine", "Out", { BackgroundColor3 = Colors.Accent })
-					addChatMessage("🔧 已切换到自定义指令模式，AI将根据您的指令修改UI", false)
-				elseif cmd.value == "chat" then
-					isCustomMode = false
-					ModeToggleBtn.Text = "聊天模式"
-					Tween(ModeToggleBtn, 0.2, "Sine", "Out", { BackgroundColor3 = Colors.Secondary })
-					addChatMessage("💬 已切换到聊天模式，AI将进行正常对话", false)
-				end
-				local config = getCurrentConfig()
-				config.aiCustomMode = isCustomMode
-				saveConfig(config)
-			end
-		end
-		
-		if not isCustomMode then
-			addChatMessage("💡 当前处于聊天模式，无法执行UI修改命令。请发送\"开启自定义指令\"切换到自定义指令模式。", false)
-			return
-		end
-		
-		for _, cmd in ipairs(commands) do
-			if cmd.type == "switch_mode" then
-				-- 已处理
-			elseif cmd.type == "color" then
+			if cmd.type == "color" then
 				local hex = cmd.value
                 local newColor
 				
@@ -1035,7 +999,6 @@ function library.new(library, name, theme)
                 end
                 
                 applyColorToAllUI(newColor)
-                
                 addChatMessage("主题颜色已修改为 " .. (hex == "random" and "随机颜色" or hex), false)
 			elseif cmd.type == "spacing" then
 				local spacingValue = cmd.value == "compact" and UDim.new(0, 4) or 
@@ -1072,7 +1035,6 @@ function library.new(library, name, theme)
 				local newScale = cmd.value == "large" and 1.5 or cmd.value == "small" and 0.7 or 1.3
                 
                 scaleFactor = newScale
-                
 				Main.Size = UDim2.new(0, 650 * newScale, 0, 400 * newScale)
 				Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 				
@@ -1119,10 +1081,10 @@ function library.new(library, name, theme)
 				applyColorToAllUI(Colors.DefaultAccent)
 				Colors.Transparent = 0.5
 				saveColorConfig({accentColor = {52, 152, 219}})
-				
+                
                 scaleFactor = isComputer and 1.3 or 1
                 Main.Size = UDim2.new(0, 650 * scaleFactor, 0, 400 * scaleFactor)
-				
+                
                 for _, obj in pairs(Main:GetDescendants()) do
                     if obj:IsA("TextLabel") or obj:IsA("TextBox") or obj:IsA("TextButton") then
                         if obj.TextSize and obj.TextSize >= 12 and obj.TextSize <= 18 then
@@ -1176,28 +1138,13 @@ function library.new(library, name, theme)
 		end
 	end
 
-    local isCustomMode = true
-
-	ModeToggleBtn.MouseButton1Click:Connect(function()
-		spawn(function()
-			Ripple(ModeToggleBtn)
-		end)
-		
-		isCustomMode = not isCustomMode
-		ModeToggleBtn.Text = isCustomMode and "自定义模式" or "聊天模式"
-		
-		if isCustomMode then
-			Tween(ModeToggleBtn, 0.2, "Sine", "Out", { BackgroundColor3 = Colors.Accent })
-			addChatMessage("🔧 已切换到自定义指令模式，AI将根据您的指令修改UI", false)
-		else
-			Tween(ModeToggleBtn, 0.2, "Sine", "Out", { BackgroundColor3 = Colors.Secondary })
-			addChatMessage("💬 已切换到聊天模式，AI将进行正常对话", false)
-		end
-		
-		local config = getCurrentConfig()
-		config.aiCustomMode = isCustomMode
-		saveConfig(config)
-	end)
+	local function getSystemPrompt()
+        if aiMode == "custom" then
+            return "你是一个UI助手，可以修改UI的各种属性。用户可以用自然语言描述想要的修改，比如'把主题改成红色'、'把按钮变成圆角'等。请分析用户请求，返回可执行的修改指令。"
+        else
+            return "你是一个聊天助手，请回答用户的各种问题，进行自然对话。"
+        end
+    end
 
 	local function sendAIRequest()
 		if AIInput.Text == "" then return end
@@ -1206,26 +1153,34 @@ function library.new(library, name, theme)
 		addChatMessage(userMessage, true)
 		AIInput.Text = ""
 		
+		local lowerMsg = userMessage:lower()
+        if lowerMsg:match("开启自定义指令") or lowerMsg:match("切换到自定义模式") then
+            aiMode = "custom"
+            ModeToggleBtn.Text = "自定义指令模式"
+            addChatMessage("已切换到自定义指令模式，现在可以修改UI了！", false)
+            return
+        elseif lowerMsg:match("开启聊天模式") or lowerMsg:match("切换到聊天模式") then
+            aiMode = "chat"
+            ModeToggleBtn.Text = "聊天模式"
+            addChatMessage("已切换到聊天模式，现在可以进行自然对话了！", false)
+            return
+        end
+		
 		LoadingLabel.Visible = true
 		AISendBtn.Active = false
 		
 		spawn(function()
 			local success, result = pcall(function()
 				local HttpService = game:GetService("HttpService")
-				
-				local systemPrompt = isCustomMode and 
-					"你是一位专业的UI设计助手，能够完全理解用户的UI修改意图并返回相应的配置命令。当前系统已启用自定义指令模式。用户的指令可能涉及：颜色更改、布局调整、透明度设置、尺寸调整、字体修改、按钮样式、动画效果、配置操作等。你需要理解用户的意图并返回简洁明确的命令，可以是单个命令或多个命令的组合。命令格式包括：颜色（十六进制或颜色名称）、布局间距（紧凑/宽松/默认）、透明度（高/低/默认）、尺寸（大/小/默认）、字体（字体大/字体小/字体默认）、按钮样式（圆角/方形/默认）、动画速度（动画快/动画慢/动画关闭/动画默认）、保存/复制配置、重置、帮助等。请确保返回的命令准确反映用户的意图。不要询问用户，直接根据理解返回命令。如果用户发送的是JSON格式配置，直接返回该配置内容。" or
-					"你是一位友好的AI助手，专注于与用户进行自然对话。当前系统已启用聊天模式。你可以讨论任何话题，分享有趣的见解，回答用户的问题，或者只是闲聊。保持友好、有帮助和有趣的对话风格。不要尝试执行任何命令或修改UI。如果用户要求你修改UI，请礼貌地提醒他们切换到自定义指令模式。"
-				
 				local payload = {
 					model = MODEL,
 					messages = {
 						{
 							role = "system",
-							content = systemPrompt
+							content = getSystemPrompt()
 						},
 						{
-							role = "user", 
+							role = "user",
 							content = userMessage
 						}
 					},
@@ -1256,15 +1211,12 @@ function library.new(library, name, theme)
 			if success then
 				addChatMessage(result, false)
 				
-				local commands = parseAIResponse(result)
-				if #commands > 0 then
-					applyCommands(commands)
-				else
-					if isCustomMode then
-						local lowerResult = result:lower()
-						if not lowerResult:match("帮助") and not lowerResult:match("？") then
-							addChatMessage("💡 提示：在自定义模式下，你可以发送\"帮助\"查看所有支持的指令。", false)
-						end
+				if aiMode == "custom" then
+					local commands = parseAIResponse(result)
+					if #commands > 0 then
+						applyCommands(commands)
+					else
+						addChatMessage("未识别到可执行指令，请尝试更明确的描述。发送\"帮助\"查看所有指令。", false)
 					end
 				end
 			else
@@ -1272,6 +1224,13 @@ function library.new(library, name, theme)
 			end
 		end)
 	end
+
+	ModeToggleBtn.MouseButton1Click:Connect(function()
+		aiMode = aiMode == "custom" and "chat" or "custom"
+		ModeToggleBtn.Text = aiMode == "custom" and "自定义指令模式" or "聊天模式"
+		
+		addChatMessage("已切换到 " .. ModeToggleBtn.Text, false)
+	end)
 
 	AIInput.FocusLost:Connect(function(enterPressed)
 		if enterPressed then
@@ -1295,7 +1254,6 @@ function library.new(library, name, theme)
 			Main.Visible = not Main.Visible
 		end
 	end)
-	
 	local currentConfig = loadConfig()
 	local autoFitEnabled = currentConfig.autoFitScreen
 	
@@ -1459,6 +1417,273 @@ function library.new(library, name, theme)
 	Content.BackgroundTransparency = 1
 	Content.Position = UDim2.new(0, 0, 0, 100)
 	Content.Size = UDim2.new(1, 0, 1, -100)
+	
+	local AnimationsFrame = Instance.new("Frame")
+	AnimationsFrame.Name = "AnimationsFrame"
+	AnimationsFrame.Parent = Main
+	AnimationsFrame.BackgroundColor3 = Colors.Secondary
+	AnimationsFrame.BackgroundTransparency = Colors.Transparent
+	AnimationsFrame.Position = UDim2.new(0, 0, 0, 100)
+	AnimationsFrame.Size = UDim2.new(1, 0, 1, -100)
+	AnimationsFrame.Visible = false
+	AnimationsFrame.ZIndex = 15
+
+	local AnimationsC = Instance.new("UICorner")
+	AnimationsC.CornerRadius = UDim.new(0, 8)
+	AnimationsC.Parent = AnimationsFrame
+
+	CreateGlassEffect(AnimationsFrame)
+
+	local AnimationsTitle = Instance.new("TextLabel")
+	AnimationsTitle.Name = "AnimationsTitle"
+	AnimationsTitle.Parent = AnimationsFrame
+	AnimationsTitle.BackgroundTransparency = 1
+	AnimationsTitle.Position = UDim2.new(0, 15, 0, 15)
+	AnimationsTitle.Size = UDim2.new(1, -30, 0, 30)
+	AnimationsTitle.Font = Enum.Font.GothamBlack
+	AnimationsTitle.Text = "动画库 - 点击右上角按钮返回"
+	AnimationsTitle.TextColor3 = Colors.Text
+	AnimationsTitle.TextSize = 18
+	AnimationsTitle.TextXAlignment = Enum.TextXAlignment.Left
+	AnimationsTitle.ZIndex = 16
+
+	local AnimSearchBar = Instance.new("Frame")
+	AnimSearchBar.Name = "AnimSearchBar"
+	AnimSearchBar.Parent = AnimationsFrame
+	AnimSearchBar.BackgroundColor3 = Colors.Primary
+	AnimSearchBar.BackgroundTransparency = 0.5
+	AnimSearchBar.Position = UDim2.new(0, 15, 0, 55)
+	AnimSearchBar.Size = UDim2.new(1, -30, 0, 35)
+	AnimSearchBar.ZIndex = 16
+
+	local AnimSearchBarC = Instance.new("UICorner")
+	AnimSearchBarC.CornerRadius = UDim.new(0, 6)
+	AnimSearchBarC.Parent = AnimSearchBar
+
+	local AnimSearchIcon = Instance.new("ImageLabel")
+	AnimSearchIcon.Name = "AnimSearchIcon"
+	AnimSearchIcon.Parent = AnimSearchBar
+	AnimSearchIcon.BackgroundTransparency = 1
+	AnimSearchIcon.Position = UDim2.new(0, 10, 0.5, -10)
+	AnimSearchIcon.Size = UDim2.new(0, 20, 0, 20)
+	AnimSearchIcon.Image = "rbxassetid://3926305904"
+	AnimSearchIcon.ImageRectOffset = Vector2.new(964, 324)
+	AnimSearchIcon.ImageRectSize = Vector2.new(36, 36)
+	AnimSearchIcon.ImageColor3 = Colors.Placeholder
+	AnimSearchIcon.ZIndex = 17
+
+	local AnimSearchBox = Instance.new("TextBox")
+	AnimSearchBox.Name = "AnimSearchBox"
+	AnimSearchBox.Parent = AnimSearchBar
+	AnimSearchBox.BackgroundTransparency = 1
+	AnimSearchBox.Position = UDim2.new(0, 40, 0, 0)
+	AnimSearchBox.Size = UDim2.new(1, -50, 1, 0)
+	AnimSearchBox.Font = Enum.Font.Gotham
+	AnimSearchBox.PlaceholderText = "搜索动作或动画包..."
+	AnimSearchBox.Text = ""
+	AnimSearchBox.TextColor3 = Colors.Text
+	AnimSearchBox.PlaceholderColor3 = Colors.Placeholder
+	AnimSearchBox.TextSize = 14
+	AnimSearchBox.ClearTextOnFocus = false
+	AnimSearchBox.ZIndex = 17
+
+	local AnimationsGrid = Instance.new("ScrollingFrame")
+	AnimationsGrid.Name = "AnimationsGrid"
+	AnimationsGrid.Parent = AnimationsFrame
+	AnimationsGrid.BackgroundTransparency = 1
+	AnimationsGrid.Position = UDim2.new(0, 15, 0, 100)
+	AnimationsGrid.Size = UDim2.new(1, -30, 1, -115)
+	AnimationsGrid.CanvasSize = UDim2.new(0, 0, 0, 0)
+	AnimationsGrid.ScrollBarThickness = 2
+	AnimationsGrid.ZIndex = 16
+
+	local GridLayout = Instance.new("UIGridLayout")
+	GridLayout.Name = "GridLayout"
+	GridLayout.Parent = AnimationsGrid
+	GridLayout.CellSize = UDim2.new(0, 80, 0, 100)
+	GridLayout.CellPadding = UDim2.new(0, 5, 0, 5)
+	GridLayout.StartCorner = Enum.StartCorner.TopLeft
+	GridLayout.FillDirection = Enum.FillDirection.Horizontal
+	GridLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+	GridLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+	local function fetchCatalogItems(itemType, cursor)
+		local HttpService = game:GetService("HttpService")
+		local PROXY_URL = "https://rproxy.kirbs.net"
+		
+		local endpoint = string.format(
+			"%s/v1/search/items?category=Animations&limit=100&cursor=%s",
+			PROXY_URL,
+			cursor or ""
+		)
+		
+		local success, data = pcall(function()
+			local response = game:HttpGet(endpoint)
+			return HttpService:JSONDecode(response)
+		end)
+		
+		if success then
+			return {
+				items = data.data or {},
+				nextCursor = data.nextPageCursor or ""
+			}
+		else
+			return {items = {}, nextCursor = ""}
+		end
+	end
+
+	local function fetchAssetDetails(assetIds)
+		local HttpService = game:GetService("HttpService")
+		local PROXY_URL = "https://rproxy.kirbs.net"
+		
+		local endpoint = string.format(
+			"%s/v1/assets?assetIds=%s",
+			PROXY_URL,
+			table.concat(assetIds, ",")
+		)
+		
+		local success, data = pcall(function()
+			local response = game:HttpGet(endpoint)
+			return HttpService:JSONDecode(response)
+		end)
+		
+		if success then
+			return data.data or {}
+		else
+			return {}
+		end
+	end
+
+	local function fetchBundleItems(bundleId)
+		local HttpService = game:GetService("HttpService")
+		local PROXY_URL = "https://rproxy.kirbs.net"
+		
+		local endpoint = string.format(
+			"%s/v1/bundles/%s/bundleItems",
+			PROXY_URL,
+			bundleId
+		)
+		
+		local success, data = pcall(function()
+			local response = game:HttpGet(endpoint)
+			return HttpService:JSONDecode(response)
+		end)
+		
+		if success then
+			local bundledItems = {}
+			for _, item in pairs(data.data or {}) do
+				if item.type == "Asset" then
+					table.insert(bundledItems, item.id)
+				end
+			end
+			return bundledItems
+		else
+			return {}
+		end
+	end
+
+	local function loadAnimations(searchTerm)
+		for _, child in pairs(AnimationsGrid:GetChildren()) do
+			if child:IsA("ImageButton") or child:IsA("TextLabel") then
+				child:Destroy()
+			end
+		end
+		
+		spawn(function()
+			local animationsData = fetchCatalogItems("Animations")
+			local animations = animationsData.items
+			
+			for i, anim in ipairs(animations) do
+				if i <= 100 then
+					local animName = anim.name or "动画"
+					
+					if searchTerm == "" or animName:lower():find(searchTerm:lower(), 1, true) then
+						local animButton = Instance.new("ImageButton")
+						animButton.Name = "Anim_" .. anim.id
+						animButton.Parent = AnimationsGrid
+						animButton.BackgroundColor3 = Colors.Primary
+						animButton.BackgroundTransparency = 0.3
+						animButton.Size = UDim2.new(0, 80, 0, 100)
+						animButton.AutoButtonColor = false
+						animButton.ZIndex = 17
+						
+						animButton.Image = "rbxassetid://10734982320"
+						
+						local animCorner = Instance.new("UICorner")
+						animCorner.CornerRadius = UDim.new(0, 6)
+						animCorner.Parent = animButton
+						
+						local animTitle = Instance.new("TextLabel")
+						animTitle.Parent = animButton
+						animTitle.BackgroundColor3 = Colors.Secondary
+						animTitle.BackgroundTransparency = 0.5
+						animTitle.Position = UDim2.new(0, 0, 0, 80)
+						animTitle.Size = UDim2.new(1, 0, 0, 20)
+						animTitle.Font = Enum.Font.GothamSemibold
+						animTitle.Text = animName
+						animTitle.TextColor3 = Colors.Text
+						animTitle.TextSize = 10
+						animTitle.TextWrapped = true
+						animTitle.ZIndex = 18
+						
+						local titleCorner = Instance.new("UICorner")
+						titleCorner.CornerRadius = UDim.new(0, 6)
+						titleCorner.Parent = animTitle
+						
+						animButton.MouseButton1Click:Connect(function()
+							local character = services.Players.LocalPlayer.Character
+							if character and character:FindFirstChild("Humanoid") then
+								local animation = Instance.new("Animation")
+								animation.AnimationId = "rbxassetid://" .. anim.id
+								
+								local animator = character.Humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator")
+								animator.Parent = character.Humanoid
+								
+								local animationTrack = animator:LoadAnimation(animation)
+								animationTrack:Play()
+								
+								addChatMessage("正在播放动画: " .. animName, false)
+							end
+						end)
+						
+						animButton.MouseEnter:Connect(function()
+							Tween(animButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
+						end)
+						
+						animButton.MouseLeave:Connect(function()
+							Tween(animButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
+						end)
+					end
+				end
+			end
+		end)
+	end
+
+	AnimSearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+		loadAnimations(AnimSearchBox.Text)
+	end)
+
+	AnimationsBtn.MouseButton1Click:Connect(function()
+		spawn(function()
+			Ripple(AnimationsBtn)
+		end)
+		
+		local showAnimations = not AnimationsFrame.Visible
+		
+		if showAnimations then
+			Content.Visible = false
+			AIPanelFrame.Visible = false
+			AnimationsFrame.Visible = true
+			Tween(AnimationsBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
+			Tween(AnimationsBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
+			loadAnimations("")
+		else
+			AnimationsFrame.Visible = false
+			Content.Visible = true
+			Tween(AnimationsBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
+			Tween(AnimationsBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
+		end
+	end)
 	
 	local SideBar = Instance.new("Frame")
 	SideBar.Name = "SideBar"
@@ -2482,8 +2707,8 @@ function library.new(library, name, theme)
 				DropdownModule.BackgroundTransparency = 1
 				DropdownModule.ClipsDescendants = true
 				DropdownModule.Size = UDim2.new(1, 0, 0, 40)
-                
-                local DropdownTop = Instance.new("TextButton")
+				
+				local DropdownTop = Instance.new("TextButton")
 				DropdownTop.Name = "DropdownTop"
 				DropdownTop.Parent = DropdownModule
 				DropdownTop.BackgroundColor3 = Colors.Secondary
@@ -2706,382 +2931,6 @@ function library.new(library, name, theme)
         saveConfig(config)
 	end)
 
-	local AnimPanelFrame = Instance.new("Frame")
-	AnimPanelFrame.Name = "AnimPanelFrame"
-	AnimPanelFrame.Parent = Main
-	AnimPanelFrame.BackgroundColor3 = Colors.Secondary
-	AnimPanelFrame.BackgroundTransparency = Colors.Transparent
-	AnimPanelFrame.Position = UDim2.new(0, 0, 0, 100)
-	AnimPanelFrame.Size = UDim2.new(1, 0, 1, -100)
-	AnimPanelFrame.Visible = false
-	AnimPanelFrame.ZIndex = 20
-
-	local AnimPanelC = Instance.new("UICorner")
-	AnimPanelC.CornerRadius = UDim.new(0, 8)
-	AnimPanelC.Parent = AnimPanelFrame
-
-	CreateGlassEffect(AnimPanelFrame)
-
-	local AnimSearchBar = Instance.new("Frame")
-	AnimSearchBar.Name = "AnimSearchBar"
-	AnimSearchBar.Parent = AnimPanelFrame
-	AnimSearchBar.BackgroundColor3 = Colors.Primary
-	AnimSearchBar.BackgroundTransparency = 0.5
-	AnimSearchBar.Position = UDim2.new(0, 15, 0, 15)
-	AnimSearchBar.Size = UDim2.new(1, -30, 0, 40)
-
-	local AnimSearchBarC = Instance.new("UICorner")
-	AnimSearchBarC.CornerRadius = UDim.new(0, 6)
-	AnimSearchBarC.Parent = AnimSearchBar
-
-	local AnimSearchBox = Instance.new("TextBox")
-	AnimSearchBox.Name = "AnimSearchBox"
-	AnimSearchBox.Parent = AnimSearchBar
-	AnimSearchBox.BackgroundTransparency = 1
-	AnimSearchBox.Position = UDim2.new(0, 15, 0, 0)
-	AnimSearchBox.Size = UDim2.new(1, -30, 1, 0)
-	AnimSearchBox.Font = Enum.Font.Gotham
-	AnimSearchBox.PlaceholderText = "搜索动画名称或动画包..."
-	AnimSearchBox.Text = ""
-	AnimSearchBox.TextColor3 = Colors.Text
-	AnimSearchBox.PlaceholderColor3 = Colors.Placeholder
-	AnimSearchBox.TextSize = 14
-	AnimSearchBox.ClearTextOnFocus = false
-	AnimSearchBox.ZIndex = 21
-
-	local AnimSearchIcon = Instance.new("ImageLabel")
-	AnimSearchIcon.Name = "AnimSearchIcon"
-	AnimSearchIcon.Parent = AnimSearchBar
-	AnimSearchIcon.BackgroundTransparency = 1
-	AnimSearchIcon.Position = UDim2.new(1, -30, 0.5, -12)
-	AnimSearchIcon.Size = UDim2.new(0, 24, 0, 24)
-	AnimSearchIcon.Image = "rbxassetid://3926305904"
-	AnimSearchIcon.ImageRectOffset = Vector2.new(964, 324)
-	AnimSearchIcon.ImageRectSize = Vector2.new(36, 36)
-	AnimSearchIcon.ImageColor3 = Colors.Placeholder
-	AnimSearchIcon.ZIndex = 21
-
-	local AnimScroll = Instance.new("ScrollingFrame")
-	AnimScroll.Name = "AnimScroll"
-	AnimScroll.Parent = AnimPanelFrame
-	AnimScroll.BackgroundTransparency = 1
-	AnimScroll.Position = UDim2.new(0, 15, 0, 65)
-	AnimScroll.Size = UDim2.new(1, -30, 1, -80)
-	AnimScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-	AnimScroll.ScrollBarThickness = 3
-	AnimScroll.ScrollBarImageColor3 = Colors.Secondary
-	AnimScroll.ZIndex = 20
-
-	local AnimGrid = Instance.new("UIGridLayout")
-	AnimGrid.Name = "AnimGrid"
-	AnimGrid.Parent = AnimScroll
-	AnimGrid.CellSize = UDim2.new(0, 60, 0, 85)
-	AnimGrid.CellPadding = UDim2.new(0, 5, 0, 5)
-	AnimGrid.SortOrder = Enum.SortOrder.Name
-	AnimGrid.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
-	local AnimPadding = Instance.new("UIPadding")
-	AnimPadding.Parent = AnimScroll
-	AnimPadding.PaddingTop = UDim.new(0, 5)
-	AnimPadding.PaddingBottom = UDim.new(0, 5)
-	AnimPadding.PaddingLeft = UDim.new(0, 5)
-	AnimPadding.PaddingRight = UDim.new(0, 5)
-
-	local LoadingAnimLabel = Instance.new("TextLabel")
-	LoadingAnimLabel.Name = "LoadingAnimLabel"
-	LoadingAnimLabel.Parent = AnimPanelFrame
-	LoadingAnimLabel.BackgroundTransparency = 1
-	LoadingAnimLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
-	LoadingAnimLabel.Size = UDim2.new(0, 200, 0, 30)
-	LoadingAnimLabel.Font = Enum.Font.GothamSemibold
-	LoadingAnimLabel.Text = "正在加载动画..."
-	LoadingAnimLabel.TextColor3 = Colors.Text
-	LoadingAnimLabel.TextSize = 16
-	LoadingAnimLabel.Visible = false
-	LoadingAnimLabel.ZIndex = 22
-
-	local animationData = {
-		items = {},
-		bundles = {},
-		loaded = false,
-		nextCursor = ""
-	}
-
-	local HttpService = game:GetService("HttpService")
-	local PROXY_URL = "https://rproxy.kirbs.net"
-
-	local function fetchCatalogItems(itemType, cursor)
-		local endpoint = string.format(
-			"%s/v1/search/items?category=Animations&limit=100&cursor=%s",
-			PROXY_URL,
-			cursor or ""
-		)
-		
-		local success, result = pcall(function()
-			local response = game:HttpGet(endpoint)
-			return HttpService:JSONDecode(response)
-		end)
-		
-		if success and result then
-			return {
-				items = result.data or {},
-				nextCursor = result.nextPageCursor or ""
-			}
-		else
-			return {items = {}, nextCursor = ""}
-		end
-	end
-
-	local function fetchAssetDetails(assetIds)
-		if #assetIds == 0 then return {} end
-		local endpoint = string.format(
-			"%s/v1/assets?assetIds=%s",
-			PROXY_URL,
-			table.concat(assetIds, ",")
-		)
-		
-		local success, result = pcall(function()
-			local response = game:HttpGet(endpoint)
-			local data = HttpService:JSONDecode(response)
-			return data.data or {}
-		end)
-		
-		return success and result or {}
-	end
-
-	local function fetchBundleItems(bundleId)
-		local endpoint = string.format(
-			"%s/v1/bundles/%s/bundleItems",
-			PROXY_URL,
-			bundleId
-		)
-		
-		local success, result = pcall(function()
-			local response = game:HttpGet(endpoint)
-			local data = HttpService:JSONDecode(response)
-			
-			local bundledItems = {}
-			for _, item in pairs(data.data or {}) do
-				if item.type == "Asset" then
-					table.insert(bundledItems, item.id)
-				end
-			end
-			return bundledItems
-		end)
-		
-		return success and result or {}
-	end
-
-	local function loadAllAnimations()
-		if animationData.loaded then return end
-		
-		LoadingAnimLabel.Visible = true
-		AnimSearchBox.PlaceholderText = "正在加载动画数据..."
-		
-		spawn(function()
-			local cursor = ""
-			local allItems = {}
-			
-			repeat
-				local batch = fetchCatalogItems("Animations", cursor)
-				for _, item in ipairs(batch.items) do
-					table.insert(allItems, item)
-				end
-				cursor = batch.nextCursor
-				wait(0.1)
-			until cursor == "" or #allItems >= 500
-			
-			local assetIds = {}
-			local bundleIds = {}
-			
-			for _, item in ipairs(allItems) do
-				if item.type == "Asset" then
-					table.insert(assetIds, item.id)
-				elseif item.type == "Bundle" then
-					table.insert(bundleIds, item.id)
-				end
-			end
-			
-			local assetDetails = fetchAssetDetails(assetIds)
-			
-			for _, asset in ipairs(assetDetails) do
-				table.insert(animationData.items, {
-					id = asset.id,
-					name = asset.name,
-					type = "Animation",
-					imageUrl = string.format("https://assetdelivery.roblox.com/v1/asset?id=%d", asset.id)
-				})
-			end
-						
-			for _, bundleId in ipairs(bundleIds) do
-				local bundleItems = fetchBundleItems(bundleId)
-				if #bundleItems > 0 then
-					local bundleDetails = fetchAssetDetails(bundleItems)
-					if #bundleDetails > 0 then
-						table.insert(animationData.bundles, {
-							id = bundleId,
-							name = "动画包 " .. bundleId,
-							type = "Bundle",
-							animations = bundleDetails,
-							imageUrl = string.format("https://assetdelivery.roblox.com/v1/asset?id=%d", bundleDetails[1].id)
-						})
-					end
-				end
-			end
-			
-			animationData.loaded = true
-			LoadingAnimLabel.Visible = false
-			AnimSearchBox.PlaceholderText = "搜索动画名称或动画包..."
-			
-			displayAnimations("")
-		end)
-	end
-
-	local function displayAnimations(searchTerm)
-		for _, child in pairs(AnimScroll:GetChildren()) do
-			if child:IsA("TextButton") then
-				child:Destroy()
-			end
-		end
-		
-		local filteredItems = {}
-		local searchLower = searchTerm and searchTerm:lower() or ""
-		
-		for _, anim in ipairs(animationData.items) do
-			if searchLower == "" or anim.name:lower():find(searchLower, 1, true) then
-				table.insert(filteredItems, anim)
-			end
-		end
-		
-		for _, bundle in ipairs(animationData.bundles) do
-			if searchLower == "" or bundle.name:lower():find(searchLower, 1, true) then
-				table.insert(filteredItems, bundle)
-			end
-		end
-		
-		for _, item in ipairs(filteredItems) do
-			local AnimBtn = Instance.new("TextButton")
-			AnimBtn.Name = "Anim_" .. item.id
-			AnimBtn.Parent = AnimScroll
-			AnimBtn.BackgroundColor3 = Colors.Secondary
-			AnimBtn.BackgroundTransparency = 0.3
-			AnimBtn.Size = UDim2.new(0, 60, 0, 85)
-			AnimBtn.AutoButtonColor = false
-			AnimBtn.Text = ""
-			AnimBtn.ZIndex = 21
-			
-			local AnimBtnC = Instance.new("UICorner")
-			AnimBtnC.CornerRadius = UDim.new(0, 6)
-			AnimBtnC.Parent = AnimBtn
-			
-			local AnimImage = Instance.new("ImageLabel")
-			AnimImage.Name = "AnimImage"
-			AnimImage.Parent = AnimBtn
-			AnimImage.BackgroundTransparency = 1
-			AnimImage.Size = UDim2.new(1, 0, 0, 60)
-			AnimImage.Position = UDim2.new(0, 0, 0, 0)
-			AnimImage.Image = item.imageUrl
-			AnimImage.ScaleType = Enum.ScaleType.Crop
-			AnimImage.ZIndex = 22
-			
-			local AnimName = Instance.new("TextLabel")
-			AnimName.Name = "AnimName"
-			AnimName.Parent = AnimBtn
-			AnimName.BackgroundTransparency = 1
-			AnimName.Position = UDim2.new(0, 0, 1, -25)
-			AnimName.Size = UDim2.new(1, 0, 0, 20)
-			AnimName.Font = Enum.Font.Gotham
-			AnimName.Text = item.name:sub(1, 8) .. (item.name:len() > 8 and "..." or "")
-			AnimName.TextColor3 = Colors.Text
-			AnimName.TextSize = 10
-			AnimName.TextWrapped = true
-			AnimName.ZIndex = 22
-			
-			local TypeLabel = Instance.new("TextLabel")
-			TypeLabel.Name = "TypeLabel"
-			TypeLabel.Parent = AnimBtn
-			TypeLabel.BackgroundColor3 = item.type == "Bundle" and Colors.Accent or Colors.Primary
-			TypeLabel.BackgroundTransparency = 0.5
-			TypeLabel.Position = UDim2.new(0, 2, 0, 2)
-			TypeLabel.Size = UDim2.new(0, 25, 0, 12)
-			TypeLabel.Font = Enum.Font.GothamBold
-			TypeLabel.Text = item.type == "Bundle" and "包" or "动画"
-			TypeLabel.TextColor3 = Colors.White
-			TypeLabel.TextSize = 8
-			TypeLabel.ZIndex = 23
-			
-			CreateGlassEffect(AnimBtn)
-			
-			AnimBtn.MouseButton1Click:Connect(function()
-				spawn(function()
-					Ripple(AnimBtn)
-				end)
-				
-				if item.type == "Animation" then
-					local humanoid = services.Players.LocalPlayer.Character and services.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
-					if humanoid then
-						local anim = Instance.new("Animation")
-						anim.AnimationId = "rbxassetid://" .. item.id
-						local animTrack = humanoid:LoadAnimation(anim)
-						animTrack:Play()
-						addChatMessage("播放动画: " .. item.name, false)
-					end
-				elseif item.type == "Bundle" and #item.animations > 0 then
-					addChatMessage("动画包包含 " .. #item.animations .. " 个动画:", false)
-					for i, anim in ipairs(item.animations) do
-						if i <= 3 then
-							addChatMessage("  - " .. anim.name, false)
-						end
-					end
-					if #item.animations > 3 then
-						addChatMessage("  ... 还有 " .. (#item.animations - 3) .. " 个", false)
-					end
-				end
-			end)
-		end
-		
-		wait()
-		AnimScroll.CanvasSize = UDim2.new(0, AnimGrid.AbsoluteContentSize.X, 0, AnimGrid.AbsoluteContentSize.Y + 20)
-	end
-
-	AnimSearchBox:GetPropertyChangedSignal("Text"):Connect(function()
-		local searchText = AnimSearchBox.Text
-		displayAnimations(searchText)
-	end)
-
-	AnimPanelBtn.MouseButton1Click:Connect(function()
-		spawn(function()
-			Ripple(AnimPanelBtn)
-		end)
-		
-		local isVisible = not AnimPanelFrame.Visible
-		AnimPanelFrame.Visible = isVisible
-		
-		if isVisible then
-			Content.Visible = false
-			AIPanelFrame.Visible = false
-			
-			if not animationData.loaded then
-				loadAllAnimations()
-			else
-				displayAnimations("")
-			end
-			
-			Tween(AnimPanelBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
-			Tween(AnimPanelBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
-		else
-			Content.Visible = true
-			AIPanelFrame.Visible = false
-			
-			Tween(AnimPanelBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
-			Tween(AnimPanelBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
-		end
-		
-		local config = getCurrentConfig()
-		config.animPanelEnabled = isVisible
-		saveConfig(config)
-	end)
-
 	AIPanelBtn.MouseButton1Click:Connect(function()
 		spawn(function()
 			Ripple(AIPanelBtn)
@@ -3145,7 +2994,6 @@ function library.new(library, name, theme)
 	Tween(FaceBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
 	Tween(DragModeBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
 	Tween(AIPanelBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
-	Tween(AnimPanelBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
 
 	drag(Main, TitleBar)
 
