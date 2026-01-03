@@ -466,23 +466,6 @@ function library.new(library, name, theme)
 
 	CreateGlassEffect(AnimPanelBtn)
 
-	local CloseBtn = Instance.new("TextButton")
-	CloseBtn.Name = "CloseBtn"
-	CloseBtn.Parent = Main
-	CloseBtn.BackgroundColor3 = Colors.Secondary
-	CloseBtn.BackgroundTransparency = Colors.Transparent
-	CloseBtn.Position = UDim2.new(1, -35, 0, 10)
-	CloseBtn.Size = UDim2.new(0, 25, 0, 25)
-	CloseBtn.Font = Enum.Font.GothamBold
-	CloseBtn.Text = "×"
-	CloseBtn.TextColor3 = Colors.Text
-	CloseBtn.TextSize = 20
-	CloseBtn.ZIndex = 10
-	
-	local CloseBtnC = Instance.new("UICorner")
-	CloseBtnC.CornerRadius = UDim.new(0, 6)
-	CloseBtnC.Parent = CloseBtn
-
 	local AIPanelFrame = Instance.new("Frame")
 	AIPanelFrame.Name = "AIPanelFrame"
 	AIPanelFrame.Parent = Main
@@ -550,7 +533,7 @@ function library.new(library, name, theme)
 	InputFrame.BackgroundColor3 = Colors.Primary
 	InputFrame.BackgroundTransparency = 0.5
 	InputFrame.Position = UDim2.new(0, 15, 1, -45)
-	InputFrame.Size = UDim2.new(1, -110, 0, 35)
+	InputFrame.Size = UDim2.new(1, -165, 0, 35)
 	InputFrame.ZIndex = 16
 
 	local InputFrameC = Instance.new("UICorner")
