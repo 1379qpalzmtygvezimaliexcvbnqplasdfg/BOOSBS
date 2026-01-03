@@ -265,16 +265,15 @@ function library.new(library, name, theme)
 		syn.protect_gui(switchGui)
 	end
 
-	-- ========== 修改外部开关按钮为圆角正方形图标 ==========
 	local Open = Instance.new("TextButton")
 	Open.Name = "Open"
 	Open.Parent = switchGui
 	Open.BackgroundColor3 = Colors.Primary
 	Open.BackgroundTransparency = Colors.Transparent
 	Open.Position = UDim2.new(0.01, 0, 0.3, 0)
-	Open.Size = UDim2.new(0, 40, 0, 40)  -- 改为正方形
+	Open.Size = UDim2.new(0, 70, 0, 35)
 	Open.Font = Enum.Font.GothamBold
-	Open.Text = ""  -- 清空文字
+	Open.Text = "BS"
 	Open.TextColor3 = Colors.Text
 	Open.TextSize = 14
 	Open.Active = true
@@ -292,29 +291,6 @@ function library.new(library, name, theme)
 	OpenStroke.Thickness = 1
 	OpenStroke.Transparency = 0.5
 	OpenStroke.Parent = Open
-
-	-- 添加图标
-	local OpenIcon = Instance.new("ImageLabel")
-	OpenIcon.Name = "OpenIcon"
-	OpenIcon.Parent = Open
-	OpenIcon.BackgroundTransparency = 1
-	OpenIcon.Size = UDim2.new(0.7, 0, 0.7, 0)  -- 图标占按钮70%
-	OpenIcon.Position = UDim2.new(0.15, 0, 0.15, 0)  -- 居中
-	OpenIcon.Image = "rbxassetid://3926307971"  -- 图标库
-	OpenIcon.ImageRectOffset = Vector2.new(4, 836)  -- 三横线菜单图标
-	OpenIcon.ImageRectSize = Vector2.new(48, 48)
-	OpenIcon.ImageColor3 = Colors.Text
-
-	-- 鼠标悬停效果
-	Open.MouseEnter:Connect(function()
-		Tween(OpenIcon, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
-		Tween(Open, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
-	end)
-
-	Open.MouseLeave:Connect(function()
-		Tween(OpenIcon, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
-		Tween(Open, 0.2, "Sine", "Out", { BackgroundTransparency = Colors.Transparent })
-	end)
 
 	local isComputer = not services.UserInputService.TouchEnabled
 	local scaleFactor = isComputer and 1.3 or 1
@@ -339,7 +315,7 @@ function library.new(library, name, theme)
 	MainBG.Size = UDim2.new(1, 0, 1, 0)
 	MainBG.Image = "rbxassetid://102621341311637"
 	MainBG.ZIndex = 0
-	MainBG.ImageTransparency = 0
+	MainBG.ImageTransparency = 0.2
 	
 	local MainC = Instance.new("UICorner")
 	MainC.CornerRadius = UDim.new(0, 8)
@@ -426,107 +402,20 @@ function library.new(library, name, theme)
 	local CloseBtnC = Instance.new("UICorner")
 	CloseBtnC.CornerRadius = UDim.new(0, 6)
 	CloseBtnC.Parent = CloseBtn
+
+	local uiFollowEnabled = true
+	local dragModeEnabled = false
 	
-	-- ========== 添加平滑的显示/隐藏动画 ==========
-	local UIAnimation = {
-		isAnimating = false,
-		
-		show = function()
-			if UIAnimation.isAnimating then return end
-			UIAnimation.isAnimating = true
-			
-			Main.Visible = true
-			Main.Size = UDim2.new(0, 0, 0, 0)
-			Main.Position = UDim2.new(0.5, 0, 0.5, 0)
-			Main.BackgroundTransparency = 1
-			
-			local targetWidth, targetHeight
-			if autoFitEnabled then
-				local viewportSize = services.Workspace.CurrentCamera.ViewportSize
-				if viewportSize.X < 800 then
-					targetWidth = viewportSize.X - 100
-					targetHeight = viewportSize.Y - 100
-				elseif viewportSize.Y < 600 then
-					targetWidth = 550
-					targetHeight = viewportSize.Y - 100
-				else
-					targetWidth = 650
-					targetHeight = 400
-				end
-			elseif scaleEnabled then
-				targetWidth = 325 * scaleFactor
-				targetHeight = 200 * scaleFactor
-			else
-				targetWidth = 650 * scaleFactor
-				targetHeight = 400 * scaleFactor
-			end
-			
-			-- 从中心点向外扩大
-			Tween(Main, 0.3, "Back", "Out", { 
-				Size = UDim2.new(0, targetWidth, 0, targetHeight),
-				Position = UDim2.new(0.5, 0, 0.5, 0),
-				BackgroundTransparency = 0
-			})
-			
-			-- 内部元素的延迟显示效果
-			for _, child in pairs(Main:GetChildren()) do
-				if child:IsA("GuiObject") and child.Name ~= "GlassEffect" and child.Name ~= "MainBG" then
-					child.BackgroundTransparency = 1
-					spawn(function()
-						wait(0.15)
-						Tween(child, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
-					end)
-				end
-			end
-			
-			wait(0.3)
-			UIAnimation.isAnimating = false
-		end,
-		
-		hide = function()
-			if UIAnimation.isAnimating then return end
-			UIAnimation.isAnimating = true
-			
-			-- 先隐藏内部元素
-			for _, child in pairs(Main:GetChildren()) do
-				if child:IsA("GuiObject") and child.Name ~= "GlassEffect" and child.Name ~= "MainBG" then
-					Tween(child, 0.15, "Sine", "Out", { BackgroundTransparency = 1 })
-				end
-			end
-			
-			wait(0.15)
-			
-			-- 向中心点缩小
-			Tween(Main, 0.25, "Back", "In", { 
-				Size = UDim2.new(0, 0, 0, 0),
-				Position = UDim2.new(0.5, 0, 0.5, 0),
-				BackgroundTransparency = 1
-			})
-			
-			wait(0.25)
-			Main.Visible = false
-			Main.BackgroundTransparency = 0  -- 恢复透明度
-			
-			UIAnimation.isAnimating = false
-		end,
-		
-		toggle = function()
-			if Main.Visible then
-				UIAnimation.hide()
-			else
-				UIAnimation.show()
-			end
-		end
-	}
-	
-	-- 使用新的动画系统
 	Open.MouseButton1Click:Connect(function()
-		spawn(UIAnimation.toggle)
+		Main.Visible = not Main.Visible
+		if Main.Visible then
+			Tween(Main, 0.2, "Sine", "Out", { Size = UDim2.new(0, 650 * scaleFactor, 0, 400 * scaleFactor) })
+		end
 	end)
 	
 	services.UserInputService.InputEnded:Connect(function(input)
 		if input.KeyCode == Enum.KeyCode.LeftControl then
-			spawn(UIAnimation.toggle)
+			Main.Visible = not Main.Visible
 		end
 	end)
 	
@@ -539,46 +428,6 @@ function library.new(library, name, theme)
 	
 	local scaleEnabled = false
 	
-	-- 更新UI大小的函数（带动画）
-	local function updateUISize()
-		if not Main.Visible then return end
-		
-		local targetWidth, targetHeight
-		if autoFitEnabled then
-			local viewportSize = services.Workspace.CurrentCamera.ViewportSize
-			if viewportSize.X < 800 then
-				targetWidth = viewportSize.X - 100
-				targetHeight = viewportSize.Y - 100
-			elseif viewportSize.Y < 600 then
-				targetWidth = 550
-				targetHeight = viewportSize.Y - 100
-			else
-				targetWidth = 650
-				targetHeight = 400
-			end
-		elseif scaleEnabled then
-			targetWidth = 325 * scaleFactor
-			targetHeight = 200 * scaleFactor
-		else
-			targetWidth = 650 * scaleFactor
-			targetHeight = 400 * scaleFactor
-		end
-		
-		-- 从当前大小平滑过渡到新大小
-		-- 先稍微缩小再放大，创造"呼吸"效果
-		Tween(Main, 0.15, "Sine", "Out", { 
-			Size = UDim2.new(0, targetWidth * 0.9, 0, targetHeight * 0.9),
-			Position = UDim2.new(0.5, 0, 0.5, 0)
-		})
-		
-		wait(0.15)
-		
-		Tween(Main, 0.2, "Back", "Out", { 
-			Size = UDim2.new(0, targetWidth, 0, targetHeight),
-			Position = UDim2.new(0.5, 0, 0.5, 0)
-		})
-	end
-	
 	AutoFitBtn.MouseButton1Click:Connect(function()
 		spawn(function()
 			Ripple(AutoFitBtn)
@@ -587,20 +436,18 @@ function library.new(library, name, theme)
 		autoFitEnabled = not autoFitEnabled
 		
 		if autoFitEnabled then
+			autoFitUIScreen(Main)
 			Tween(AutoFitBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
 			Tween(AutoFitBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
-			scaleEnabled = false  -- 关闭缩放模式
-			Tween(ScaleBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
-			Tween(ScaleBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
 		else
+			Main.Size = UDim2.new(0, 650 * scaleFactor, 0, 400 * scaleFactor)
+			Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 			Tween(AutoFitBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
 			Tween(AutoFitBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
 		end
 		
 		currentConfig.autoFitScreen = autoFitEnabled
 		saveConfig(currentConfig)
-		
-		updateUISize()  -- 添加动画
 	end)
 	
 	ScaleBtn.MouseButton1Click:Connect(function()
@@ -611,19 +458,16 @@ function library.new(library, name, theme)
 		scaleEnabled = not scaleEnabled
 		
 		if scaleEnabled then
+			Main.Size = UDim2.new(0, 325 * scaleFactor, 0, 200 * scaleFactor)
+			Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 			Tween(ScaleBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
 			Tween(ScaleBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
-			autoFitEnabled = false  -- 关闭自适应模式
-			Tween(AutoFitBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
-			Tween(AutoFitBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
-			currentConfig.autoFitScreen = false
-			saveConfig(currentConfig)
 		else
+			Main.Size = UDim2.new(0, 650 * scaleFactor, 0, 400 * scaleFactor)
+			Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 			Tween(ScaleBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
 			Tween(ScaleBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
 		end
-		
-		updateUISize()  -- 添加动画
 	end)
 	
 	if autoFitEnabled then
@@ -2281,42 +2125,96 @@ function library.new(library, name, theme)
 	local dragging3D = false
 	local dragStart3D = Vector2.new(0, 0)
 
-	TitleBar.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			dragging3D = true
-			dragStart3D = Vector2.new(input.Position.X, input.Position.Y)
-			dragOffset3D = Vector2.new(LookView.X, LookView.Y)
-		end
-	end)
+	local dragConnection1
+	local dragConnection2
+	local dragConnection3
+	
+	local function setupDrag()
+		dragConnection1 = TitleBar.InputBegan:Connect(function(input)
+			if dragModeEnabled and input.UserInputType == Enum.UserInputType.MouseButton1 then
+				dragging3D = true
+				dragStart3D = Vector2.new(input.Position.X, input.Position.Y)
+				dragOffset3D = Vector2.new(LookView.X, LookView.Y)
+			end
+		end)
 
-	TitleBar.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			dragging3D = false
-		end
-	end)
+		dragConnection2 = TitleBar.InputEnded:Connect(function(input)
+			if dragModeEnabled and input.UserInputType == Enum.UserInputType.MouseButton1 then
+				dragging3D = false
+			end
+		end)
 
-	services.UserInputService.InputChanged:Connect(function(input)
-		if dragging3D and input.UserInputType == Enum.UserInputType.MouseMovement then
-			local delta = Vector2.new(input.Position.X - dragStart3D.X, input.Position.Y - dragStart3D.Y) * 0.01
-			LookView = Vector3.new(dragOffset3D.X + delta.X, dragOffset3D.Y - delta.Y, LookView.Z)
-		end
-	end)
-
+		dragConnection3 = services.UserInputService.InputChanged:Connect(function(input)
+			if dragging3D and dragModeEnabled and input.UserInputType == Enum.UserInputType.MouseMovement then
+				local delta = Vector2.new(input.Position.X - dragStart3D.X, input.Position.Y - dragStart3D.Y) * 0.01
+				LookView = Vector3.new(dragOffset3D.X + delta.X, dragOffset3D.Y - delta.Y, LookView.Z)
+			end
+		end)
+	end
+	
+	local function removeDrag()
+		if dragConnection1 then dragConnection1:Disconnect() end
+		if dragConnection2 then dragConnection2:Disconnect() end
+		if dragConnection3 then dragConnection3:Disconnect() end
+		dragConnection1 = nil
+		dragConnection2 = nil
+		dragConnection3 = nil
+	end
+	
 	game:GetService("RunService").RenderStepped:Connect(function(dt)
 		if not canvasPart or not canvasPart.Parent then return end
 		
-		local offsetX = (mouse.X - mouse.ViewSizeX/2) * SCALE
-		local offsetY = (mouse.Y - mouse.ViewSizeY/2) * SCALE
-		
-		local goalCFrame = camera.CFrame 
-			* CFrame.new(LookView.X, LookView.Y, LookView.Z)
-			* CFrame.Angles(0, math.rad(offsetX), 0)
-			* CFrame.Angles(math.rad(offsetY), 0, 0)
-		
-		services.TweenService:Create(canvasPart, TweenInfo.new(dt * 2), {
-			CFrame = goalCFrame
-		}):Play()
+		if dragModeEnabled then
+			updateDrag()
+		elseif uiFollowEnabled then
+			local offsetX = (mouse.X - mouse.ViewSizeX/2) * SCALE
+			local offsetY = (mouse.Y - mouse.ViewSizeY/2) * SCALE
+			
+			local goalCFrame = camera.CFrame 
+				* CFrame.new(LookView.X, LookView.Y, LookView.Z)
+				* CFrame.Angles(0, math.rad(offsetX), 0)
+				* CFrame.Angles(math.rad(offsetY), 0, 0)
+			
+			services.TweenService:Create(canvasPart, TweenInfo.new(dt * 2), {
+				CFrame = goalCFrame
+			}):Play()
+		else
+			local character = player.Character
+			if character and character:FindFirstChild("HumanoidRootPart") then
+				local rootPart = character.HumanoidRootPart
+				local fixedPosition = rootPart.CFrame * CFrame.new(0, 2, -5)
+				canvasPart.CFrame = fixedPosition
+			end
+		end
 	end)
+	
+	function updateDrag()
+		if not canvasPart or not canvasPart.Parent then return end
+		canvasPart.CFrame = camera.CFrame * CFrame.new(LookView.X, LookView.Y, LookView.Z)
+	end
+	
+	local function addControlToggles()
+		local ControlTab = window:Tab("控制设置", 4370341699)
+		local ControlSection = ControlTab:Section("UI控制", true)
+		
+		local followToggle = ControlSection:Toggle("UI跟随视角", "ui_follow", true, function(value)
+			uiFollowEnabled = value
+		end)
+		
+		local dragToggle = ControlSection:Toggle("拖动模式", "drag_mode", false, function(value)
+			dragModeEnabled = value
+			if value then
+				setupDrag()
+				TitleBar.Active = true
+			else
+				removeDrag()
+				TitleBar.Active = false
+				dragging3D = false
+			end
+		end)
+	end
+	
+	addControlToggles()
 	
 	function window:Set3DOffset(offsetVector)
 		LookView = offsetVector
@@ -2330,6 +2228,7 @@ function library.new(library, name, theme)
 		if canvasPart then
 			canvasPart:Destroy()
 		end
+		removeDrag()
 	end
 
 	return window
