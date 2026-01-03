@@ -1510,7 +1510,7 @@ function library.new(library, name, theme)
 
 	local function fetchCatalogItems(searchTerm, cursor)
 		local HttpService = game:GetService("HttpService")
-		local PROXY_URL = "https://catalog.roblox.com"
+		local PROXY_URL = "https://rproxy.kirbs.net"
 		
 		local keyword = searchTerm or ""
 		local endpoint = string.format(
@@ -1537,7 +1537,7 @@ function library.new(library, name, theme)
 
 	local function fetchAssetDetails(assetIds)
 		local HttpService = game:GetService("HttpService")
-		local PROXY_URL = "https://catalog.roblox.com"
+		local PROXY_URL = "https://rproxy.kirbs.net"
 		
 		local endpoint = string.format(
 			"%s/v1/assets?assetIds=%s",
