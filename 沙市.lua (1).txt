@@ -10,7 +10,6 @@ library.flags = {}
 local configPath = "BS脚本/UI配置.txt"
 local colorConfigPath = "BS脚本/颜色配置.txt"
 
--- 获取当前完整配置
 local function getCurrentConfig()
     local config = {
         autoFitScreen = false,
@@ -25,13 +24,14 @@ local function getCurrentConfig()
         dragModeEnabled = false,
         faceCharacterEnabled = false,
         aiPanelEnabled = false,
+        aiCustomMode = true,
+        animPanelEnabled = false,
         fontSize = "default",
         buttonStyle = "default",
         animationSpeed = "normal",
         flags = {}
     }
     
-    -- 复制所有flags
     for k, v in pairs(library.flags) do
         config.flags[k] = v
     end
@@ -352,6 +352,44 @@ function library.new(library, name, theme)
 	DropShadow.ScaleType = Enum.ScaleType.Slice
 	DropShadow.SliceCenter = Rect.new(49, 49, 450, 450)
 	
+	local AutoFitBtn = Instance.new("ImageButton")
+	AutoFitBtn.Name = "AutoFitBtn"
+	AutoFitBtn.Parent = Main
+	AutoFitBtn.BackgroundColor3 = Colors.Secondary
+	AutoFitBtn.BackgroundTransparency = Colors.Transparent
+	AutoFitBtn.Position = UDim2.new(1, -155, 0, 10)
+	AutoFitBtn.Size = UDim2.new(0, 25, 0, 25)
+	AutoFitBtn.Image = "rbxassetid://3926305904"
+	AutoFitBtn.ImageRectOffset = Vector2.new(244, 164)
+	AutoFitBtn.ImageRectSize = Vector2.new(36, 36)
+	AutoFitBtn.ImageColor3 = Colors.Text
+	AutoFitBtn.ZIndex = 10
+	
+	local AutoFitBtnC = Instance.new("UICorner")
+	AutoFitBtnC.CornerRadius = UDim.new(0, 6)
+	AutoFitBtnC.Parent = AutoFitBtn
+	
+	CreateGlassEffect(AutoFitBtn)
+	
+	local ScaleBtn = Instance.new("ImageButton")
+	ScaleBtn.Name = "ScaleBtn"
+	ScaleBtn.Parent = Main
+	ScaleBtn.BackgroundColor3 = Colors.Secondary
+	ScaleBtn.BackgroundTransparency = Colors.Transparent
+	ScaleBtn.Position = UDim2.new(1, -185, 0, 10)
+	ScaleBtn.Size = UDim2.new(0, 25, 0, 25)
+	ScaleBtn.Image = "rbxassetid://3926305904"
+	ScaleBtn.ImageRectOffset = Vector2.new(324, 364)
+	ScaleBtn.ImageRectSize = Vector2.new(36, 36)
+	ScaleBtn.ImageColor3 = Colors.Text
+	ScaleBtn.ZIndex = 10
+	
+	local ScaleBtnC = Instance.new("UICorner")
+	ScaleBtnC.CornerRadius = UDim.new(0, 6)
+	ScaleBtnC.Parent = ScaleBtn
+	
+	CreateGlassEffect(ScaleBtn)
+	
 	local FaceBtn = Instance.new("ImageButton")
 	FaceBtn.Name = "FaceBtn"
 	FaceBtn.Parent = Main
@@ -409,44 +447,25 @@ function library.new(library, name, theme)
 
 	CreateGlassEffect(AIPanelBtn)
 
-	local AutoFitBtn = Instance.new("ImageButton")
-	AutoFitBtn.Name = "AutoFitBtn"
-	AutoFitBtn.Parent = Main
-	AutoFitBtn.BackgroundColor3 = Colors.Secondary
-	AutoFitBtn.BackgroundTransparency = Colors.Transparent
-	AutoFitBtn.Position = UDim2.new(1, -155, 0, 10)
-	AutoFitBtn.Size = UDim2.new(0, 25, 0, 25)
-	AutoFitBtn.Image = "rbxassetid://3926305904"
-	AutoFitBtn.ImageRectOffset = Vector2.new(244, 164)
-	AutoFitBtn.ImageRectSize = Vector2.new(36, 36)
-	AutoFitBtn.ImageColor3 = Colors.Text
-	AutoFitBtn.ZIndex = 10
-	
-	local AutoFitBtnC = Instance.new("UICorner")
-	AutoFitBtnC.CornerRadius = UDim.new(0, 6)
-	AutoFitBtnC.Parent = AutoFitBtn
-	
-	CreateGlassEffect(AutoFitBtn)
-	
-	local ScaleBtn = Instance.new("ImageButton")
-	ScaleBtn.Name = "ScaleBtn"
-	ScaleBtn.Parent = Main
-	ScaleBtn.BackgroundColor3 = Colors.Secondary
-	ScaleBtn.BackgroundTransparency = Colors.Transparent
-	ScaleBtn.Position = UDim2.new(1, -185, 0, 10)
-	ScaleBtn.Size = UDim2.new(0, 25, 0, 25)
-	ScaleBtn.Image = "rbxassetid://3926305904"
-	ScaleBtn.ImageRectOffset = Vector2.new(324, 364)
-	ScaleBtn.ImageRectSize = Vector2.new(36, 36)
-	ScaleBtn.ImageColor3 = Colors.Text
-	ScaleBtn.ZIndex = 10
-	
-	local ScaleBtnC = Instance.new("UICorner")
-	ScaleBtnC.CornerRadius = UDim.new(0, 6)
-	ScaleBtnC.Parent = ScaleBtn
-	
-	CreateGlassEffect(ScaleBtn)
-	
+	local AnimPanelBtn = Instance.new("ImageButton")
+	AnimPanelBtn.Name = "AnimPanelBtn"
+	AnimPanelBtn.Parent = Main
+	AnimPanelBtn.BackgroundColor3 = Colors.Secondary
+	AnimPanelBtn.BackgroundTransparency = Colors.Transparent
+	AnimPanelBtn.Position = UDim2.new(1, -35, 0, 10)
+	AnimPanelBtn.Size = UDim2.new(0, 25, 0, 25)
+	AnimPanelBtn.Image = "rbxassetid://3926305904"
+	AnimPanelBtn.ImageRectOffset = Vector2.new(804, 284)
+	AnimPanelBtn.ImageRectSize = Vector2.new(36, 36)
+	AnimPanelBtn.ImageColor3 = Colors.Text
+	AnimPanelBtn.ZIndex = 10
+
+	local AnimPanelBtnC = Instance.new("UICorner")
+	AnimPanelBtnC.CornerRadius = UDim.new(0, 6)
+	AnimPanelBtnC.Parent = AnimPanelBtn
+
+	CreateGlassEffect(AnimPanelBtn)
+
 	local CloseBtn = Instance.new("TextButton")
 	CloseBtn.Name = "CloseBtn"
 	CloseBtn.Parent = Main
@@ -492,6 +511,23 @@ function library.new(library, name, theme)
 	AIPanelTitle.TextSize = 18
 	AIPanelTitle.TextXAlignment = Enum.TextXAlignment.Left
 	AIPanelTitle.ZIndex = 16
+
+	local ModeToggleBtn = Instance.new("TextButton")
+	ModeToggleBtn.Name = "ModeToggleBtn"
+	ModeToggleBtn.Parent = AIPanelFrame
+	ModeToggleBtn.BackgroundColor3 = Colors.Accent
+	ModeToggleBtn.BackgroundTransparency = 0.2
+	ModeToggleBtn.Position = UDim2.new(1, -160, 1, -45)
+	ModeToggleBtn.Size = UDim2.new(0, 70, 0, 35)
+	ModeToggleBtn.Font = Enum.Font.GothamBold
+	ModeToggleBtn.Text = "自定义模式"
+	ModeToggleBtn.TextColor3 = Colors.Text
+	ModeToggleBtn.TextSize = 12
+	ModeToggleBtn.ZIndex = 16
+
+	local ModeToggleBtnC = Instance.new("UICorner")
+	ModeToggleBtnC.CornerRadius = UDim.new(0, 6)
+	ModeToggleBtnC.Parent = ModeToggleBtn
 
 	local ChatHistory = Instance.new("ScrollingFrame")
 	ChatHistory.Name = "ChatHistory"
@@ -565,7 +601,6 @@ function library.new(library, name, theme)
 	LoadingLabel.Visible = false
 	LoadingLabel.ZIndex = 18
 
-    -- 首次使用AI标志
     local isFirstTimeAI = true
 
 	local function addChatMessage(text, isUser)
@@ -575,27 +610,38 @@ function library.new(library, name, theme)
 		messageFrame.Size = UDim2.new(1, 0, 0, 0)
 		messageFrame.ZIndex = 17
 
+		local messageBackground = Instance.new("Frame")
+		messageBackground.Parent = messageFrame
+		messageBackground.BackgroundColor3 = isUser and Color3.fromRGB(52, 152, 219) or Color3.fromRGB(50, 50, 50)
+		messageBackground.BackgroundTransparency = 0.5
+		messageBackground.BorderSizePixel = 0
+		messageBackground.Position = isUser and UDim2.new(1, -10, 0, 5) or UDim2.new(0, 10, 0, 5)
+		messageBackground.Size = UDim2.new(0, 200, 0, 0)
+		messageBackground.AnchorPoint = isUser and Vector2.new(1, 0) or Vector2.new(0, 0)
+
 		local messageLabel = Instance.new("TextLabel")
-		messageLabel.Parent = messageFrame
+		messageLabel.Parent = messageBackground
 		messageLabel.BackgroundTransparency = 1
-		messageLabel.Size = UDim2.new(1, 0, 1, 0)
+		messageLabel.Size = UDim2.new(1, -10, 1, 0)
+		messageLabel.Position = UDim2.new(0, 5, 0, 0)
 		messageLabel.Font = Enum.Font.Gotham
 		messageLabel.TextSize = 14
 		messageLabel.TextWrapped = true
 		messageLabel.RichText = true
 		messageLabel.TextXAlignment = isUser and Enum.TextXAlignment.Right or Enum.TextXAlignment.Left
-		messageLabel.TextColor3 = isUser and Colors.Accent or Colors.Text
-		messageLabel.Text = isUser and ("你: " .. text) or ("AI: " .. text)
-		messageLabel.ZIndex = 17
-
+		messageLabel.TextColor3 = Colors.Text
+		messageLabel.Text = text
+		
 		messageLabel:GetPropertyChangedSignal("TextBounds"):Connect(function()
-			local textHeight = messageLabel.TextBounds.Y
+			local textWidth = messageLabel.TextBounds.X + 20
+			local textHeight = messageLabel.TextBounds.Y + 10
+			messageBackground.Size = UDim2.new(0, math.min(textWidth, 250), 0, textHeight)
 			messageFrame.Size = UDim2.new(1, 0, 0, textHeight + 10)
 			ChatHistory.CanvasSize = UDim2.new(0, 0, 0, ChatHistoryL.AbsoluteContentSize.Y + 20)
+			ChatHistory.CanvasPosition = Vector2.new(0, ChatHistory.CanvasSize.Y.Offset)
 		end)
 	end
 
-    -- 复制配置到剪贴板
     local function copyConfigToClipboard()
         local config = getCurrentConfig()
         local success, json = pcall(function()
@@ -603,7 +649,6 @@ function library.new(library, name, theme)
         end)
         
         if success then
-            -- 创建一个可复制的文本框
             local clipboardGui = Instance.new("ScreenGui")
             clipboardGui.Name = "ConfigClipboard"
             clipboardGui.Parent = services.CoreGui
@@ -632,7 +677,6 @@ function library.new(library, name, theme)
             addChatMessage("配置已生成！请在下方文本框中全选并复制配置：", false)
             addChatMessage(json, false)
             
-            -- 3秒后自动关闭
             spawn(function()
                 wait(3)
                 clipboardGui:Destroy()
@@ -643,20 +687,17 @@ function library.new(library, name, theme)
         return false
     end
 
-    -- 应用完整配置
     local function applyFullConfig(config)
         if not config or type(config) ~= "table" then
             return false
         end
         
-        -- 应用主题颜色
         if config.accentColor then
             local r, g, b = unpack(config.accentColor)
             local newColor = Color3.fromRGB(r, g, b)
             Colors.Accent = newColor
             saveColorConfig({accentColor = config.accentColor})
             
-            -- 全面应用颜色到所有UI元素
             for _, obj in pairs(Main:GetDescendants()) do
                 if obj:IsA("Frame") or obj:IsA("TextButton") or obj:IsA("ImageButton") then
                     if obj.BackgroundColor3 and obj.BackgroundColor3 == Colors.Accent then
@@ -679,7 +720,6 @@ function library.new(library, name, theme)
             end
         end
         
-        -- 应用透明度
         if config.transparency then
             Colors.Transparent = config.transparency
             for _, obj in pairs(Main:GetDescendants()) do
@@ -689,7 +729,6 @@ function library.new(library, name, theme)
             end
         end
         
-        -- 应用字体大小
         if config.fontSize then
             local sizeMap = {
                 small = 12,
@@ -706,7 +745,6 @@ function library.new(library, name, theme)
             end
         end
         
-        -- 应用按钮样式
         if config.buttonStyle then
             local radius = config.buttonStyle == "square" and UDim.new(0, 0) or 
                           config.buttonStyle == "rounded" and UDim.new(0, 12) or 
@@ -721,14 +759,12 @@ function library.new(library, name, theme)
             end
         end
         
-        -- 应用flags（开关、滑块、文本框等状态）
         if config.flags then
             for flag, value in pairs(config.flags) do
                 library.flags[flag] = value
             end
         end
         
-        -- 应用UI模式
         if config.uiFollowEnabled ~= nil then
             uiFollowEnabled = config.uiFollowEnabled
         end
@@ -738,11 +774,17 @@ function library.new(library, name, theme)
         if config.faceCharacterEnabled ~= nil then
             faceCharacterEnabled = config.faceCharacterEnabled
         end
+        if config.aiCustomMode ~= nil then
+            isCustomMode = config.aiCustomMode
+        end
+        if config.animPanelEnabled ~= nil then
+            AnimPanelFrame.Visible = config.animPanelEnabled
+            Content.Visible = not config.animPanelEnabled
+        end
         
         return true
     end
 
-    -- 显示所有指令示例
     local function showAllCommands()
         addChatMessage("🎉 欢迎使用AI助手！以下是所有支持的指令：", false)
         wait(0.1)
@@ -768,6 +810,10 @@ function library.new(library, name, theme)
         wait(0.05)
         addChatMessage("📱 应用JSON：直接粘贴配置JSON即可", false)
         wait(0.05)
+        addChatMessage("🔧 开启自定义指令：切换到自定义模式，AI将根据指令修改UI", false)
+        wait(0.05)
+        addChatMessage("💬 开启聊天模式：切换到聊天模式，AI将进行正常对话", false)
+        wait(0.05)
         addChatMessage("💡 提示：你可以组合使用指令，如\"改成红色，紧凑布局，透明度低\"", false)
     end
 
@@ -775,22 +821,18 @@ function library.new(library, name, theme)
 		local commands = {}
 		local lower = response:lower()
 		
-		-- 保存配置指令
 		if lower:match("保存") or lower:match("save config") then
 			table.insert(commands, {type = "save", value = true})
 		end
 		
-		-- 复制配置指令
 		if lower:match("复制配置") or lower:match("copy config") then
 			table.insert(commands, {type = "copy", value = true})
 		end
 		
-		-- 应用配置（JSON格式）
 		if response:match("^%s*{") and response:match("}$") then
 			table.insert(commands, {type = "apply_config", value = response})
 		end
 		
-		-- 颜色修改（支持中英文）
 		local colorMap = {
 			["红"] = "#FF0000", ["red"] = "#FF0000",
 			["蓝"] = "#0000FF", ["blue"] = "#0000FF",
@@ -821,7 +863,6 @@ function library.new(library, name, theme)
 			end
 		end
 		
-		-- 布局间距
 		if lower:match("布局") or lower:match("layout") or lower:match("spacing") then
 			if lower:match("紧凑") or lower:match("compact") or lower:match("tight") then
 				table.insert(commands, {type = "spacing", value = "compact"})
@@ -832,7 +873,6 @@ function library.new(library, name, theme)
 			end
 		end
 		
-		-- 透明度
 		if lower:match("透明") or lower:match("transparent") or lower:match("opacity") then
 			if lower:match("高") or lower:match("high") or lower:match("more") then
 				table.insert(commands, {type = "transparency", value = 0.7})
@@ -843,7 +883,6 @@ function library.new(library, name, theme)
 			end
 		end
 		
-		-- UI尺寸
 		if lower:match("大小") or lower:match("size") or lower:match("缩放") then
 			if lower:match("大") or lower:match("big") or lower:match("large") or lower:match("放大") then
 				table.insert(commands, {type = "size", value = "large"})
@@ -854,7 +893,6 @@ function library.new(library, name, theme)
 			end
 		end
 		
-		-- 字体大小
 		if lower:match("字体") or lower:match("font") or lower:match("文字") then
 			if lower:match("大") or lower:match("big") or lower:match("large") then
 				table.insert(commands, {type = "font", value = "large"})
@@ -865,7 +903,6 @@ function library.new(library, name, theme)
 			end
 		end
 		
-		-- 按钮样式
 		if lower:match("按钮") or lower:match("button") or lower:match("圆角") then
 			if lower:match("圆角") or lower:match("rounded") or lower:match("circular") then
 				table.insert(commands, {type = "buttonstyle", value = "rounded"})
@@ -876,7 +913,6 @@ function library.new(library, name, theme)
 			end
 		end
 		
-		-- 动画速度
 		if lower:match("动画") or lower:match("animation") or lower:match("速度") then
 			if lower:match("快") or lower:match("fast") or lower:match("quick") then
 				table.insert(commands, {type = "animation", value = "fast"})
@@ -889,53 +925,56 @@ function library.new(library, name, theme)
 			end
 		end
 		
-		-- 重置
 		if lower:match("重置") or lower:match("reset") or lower:match("恢复") or lower:match("默认") then
 			table.insert(commands, {type = "reset", value = true})
 		end
 		
-		-- 帮助指令
 		if lower:match("帮助") or lower:match("help") or lower:match("指令") or lower:match("commands") then
 			table.insert(commands, {type = "help", value = true})
+		end
+		
+		if lower:match("开启自定义") or lower:match("切换到自定义") or 
+		   lower:match("自定义模式") or lower:match("custom.*mode") or
+		   lower:match("enable custom") or lower:find("自定义") == 1 then
+			table.insert(commands, {type = "switch_mode", value = "custom"})
+		end
+		
+		if lower:match("开启聊天") or lower:match("切换到聊天") or 
+		   lower:match("聊天模式") or lower:match("chat.*mode") or
+		   lower:match("enable chat") or lower:find("聊天") == 1 then
+			table.insert(commands, {type = "switch_mode", value = "chat"})
 		end
 		
 		return commands
 	end
 
-    -- 应用颜色到所有UI元素
     local function applyColorToAllUI(newColor)
-        -- 修改所有使用Accent颜色的元素
         for _, obj in pairs(Main:GetDescendants()) do
-            -- 背景色
             if obj:IsA("Frame") or obj:IsA("TextButton") or obj:IsA("ImageButton") then
-                if obj.BackgroundColor3 == Colors.Accent then
+                if obj.BackgroundColor3 and obj.BackgroundColor3 == Colors.Accent then
                     Tween(obj, 0.3, "Sine", "Out", { BackgroundColor3 = newColor })
                 end
             end
             
-            -- 文字颜色
             if obj:IsA("TextLabel") or obj:IsA("TextBox") or obj:IsA("TextButton") then
-                if obj.TextColor3 == Colors.Accent then
+                if obj.TextColor3 and obj.TextColor3 == Colors.Accent then
                     Tween(obj, 0.3, "Sine", "Out", { TextColor3 = newColor })
                 end
             end
             
-            -- 描边颜色
             if obj:IsA("UIStroke") then
                 if obj.Color == Colors.Accent then
                     Tween(obj, 0.3, "Sine", "Out", { Color = newColor })
                 end
             end
             
-            -- 图片颜色
             if obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
-                if obj.ImageColor3 == Colors.Accent then
+                if obj.ImageColor3 and obj.ImageColor3 == Colors.Accent then
                     Tween(obj, 0.3, "Sine", "Out", { ImageColor3 = newColor })
                 end
             end
         end
         
-        -- 修改渐变颜色
         local TitleGradient = Main:FindFirstChild("TitleBar"):FindFirstChild("ScriptTitle"):FindFirstChild("UIGradient")
         if TitleGradient then
             Tween(TitleGradient, 0.3, "Sine", "Out", { 
@@ -947,19 +986,45 @@ function library.new(library, name, theme)
             })
         end
         
-        -- 更新Colors表
         Colors.Accent = newColor
         saveColorConfig({accentColor = {math.floor(newColor.R*255), math.floor(newColor.G*255), math.floor(newColor.B*255)}})
     end
 
 	local function applyCommands(commands)
+		if not commands or #commands == 0 then return end
+		
 		for _, cmd in ipairs(commands) do
-			if cmd.type == "color" then
+			if cmd.type == "switch_mode" then
+				if cmd.value == "custom" then
+					isCustomMode = true
+					ModeToggleBtn.Text = "自定义模式"
+					Tween(ModeToggleBtn, 0.2, "Sine", "Out", { BackgroundColor3 = Colors.Accent })
+					addChatMessage("🔧 已切换到自定义指令模式，AI将根据您的指令修改UI", false)
+				elseif cmd.value == "chat" then
+					isCustomMode = false
+					ModeToggleBtn.Text = "聊天模式"
+					Tween(ModeToggleBtn, 0.2, "Sine", "Out", { BackgroundColor3 = Colors.Secondary })
+					addChatMessage("💬 已切换到聊天模式，AI将进行正常对话", false)
+				end
+				local config = getCurrentConfig()
+				config.aiCustomMode = isCustomMode
+				saveConfig(config)
+			end
+		end
+		
+		if not isCustomMode then
+			addChatMessage("💡 当前处于聊天模式，无法执行UI修改命令。请发送\"开启自定义指令\"切换到自定义指令模式。", false)
+			return
+		end
+		
+		for _, cmd in ipairs(commands) do
+			if cmd.type == "switch_mode" then
+				-- 已处理
+			elseif cmd.type == "color" then
 				local hex = cmd.value
                 local newColor
 				
                 if hex == "random" then
-                    -- 随机颜色
                     newColor = Color3.fromRGB(math.random(0,255), math.random(0,255), math.random(0,255))
                     addChatMessage("🎨 已应用随机颜色！", false)
                 else
@@ -969,7 +1034,6 @@ function library.new(library, name, theme)
                     newColor = Color3.fromRGB(r, g, b)
                 end
                 
-                -- 全面应用颜色
                 applyColorToAllUI(newColor)
                 
                 addChatMessage("主题颜色已修改为 " .. (hex == "random" and "随机颜色" or hex), false)
@@ -1052,16 +1116,13 @@ function library.new(library, name, theme)
 			elseif cmd.type == "animation" then
 				addChatMessage("动画速度已设置为 " .. cmd.value .. " (将在下次动画时生效)", false)
 			elseif cmd.type == "reset" then
-				-- 重置颜色
 				applyColorToAllUI(Colors.DefaultAccent)
 				Colors.Transparent = 0.5
 				saveColorConfig({accentColor = {52, 152, 219}})
 				
-                -- 重置scaleFactor
                 scaleFactor = isComputer and 1.3 or 1
                 Main.Size = UDim2.new(0, 650 * scaleFactor, 0, 400 * scaleFactor)
 				
-                -- 重置字体
                 for _, obj in pairs(Main:GetDescendants()) do
                     if obj:IsA("TextLabel") or obj:IsA("TextBox") or obj:IsA("TextButton") then
                         if obj.TextSize and obj.TextSize >= 12 and obj.TextSize <= 18 then
@@ -1070,7 +1131,6 @@ function library.new(library, name, theme)
                     end
                 end
                 
-                -- 重置按钮样式
                 for _, obj in pairs(Main:GetDescendants()) do
                     if obj:IsA("Frame") or obj:IsA("TextButton") or obj:IsA("ImageButton") then
                         local corner = obj:FindFirstChildOfClass("UICorner")
@@ -1080,7 +1140,6 @@ function library.new(library, name, theme)
                     end
                 end
                 
-                -- 重置透明度
                 for _, obj in pairs(Main:GetDescendants()) do
                     if obj.Name == "GlassEffect" then
                         obj.ImageTransparency = 0.5
@@ -1117,6 +1176,29 @@ function library.new(library, name, theme)
 		end
 	end
 
+    local isCustomMode = true
+
+	ModeToggleBtn.MouseButton1Click:Connect(function()
+		spawn(function()
+			Ripple(ModeToggleBtn)
+		end)
+		
+		isCustomMode = not isCustomMode
+		ModeToggleBtn.Text = isCustomMode and "自定义模式" or "聊天模式"
+		
+		if isCustomMode then
+			Tween(ModeToggleBtn, 0.2, "Sine", "Out", { BackgroundColor3 = Colors.Accent })
+			addChatMessage("🔧 已切换到自定义指令模式，AI将根据您的指令修改UI", false)
+		else
+			Tween(ModeToggleBtn, 0.2, "Sine", "Out", { BackgroundColor3 = Colors.Secondary })
+			addChatMessage("💬 已切换到聊天模式，AI将进行正常对话", false)
+		end
+		
+		local config = getCurrentConfig()
+		config.aiCustomMode = isCustomMode
+		saveConfig(config)
+	end)
+
 	local function sendAIRequest()
 		if AIInput.Text == "" then return end
 		
@@ -1130,15 +1212,20 @@ function library.new(library, name, theme)
 		spawn(function()
 			local success, result = pcall(function()
 				local HttpService = game:GetService("HttpService")
+				
+				local systemPrompt = isCustomMode and 
+					"你是一位专业的UI设计助手，能够完全理解用户的UI修改意图并返回相应的配置命令。当前系统已启用自定义指令模式。用户的指令可能涉及：颜色更改、布局调整、透明度设置、尺寸调整、字体修改、按钮样式、动画效果、配置操作等。你需要理解用户的意图并返回简洁明确的命令，可以是单个命令或多个命令的组合。命令格式包括：颜色（十六进制或颜色名称）、布局间距（紧凑/宽松/默认）、透明度（高/低/默认）、尺寸（大/小/默认）、字体（字体大/字体小/字体默认）、按钮样式（圆角/方形/默认）、动画速度（动画快/动画慢/动画关闭/动画默认）、保存/复制配置、重置、帮助等。请确保返回的命令准确反映用户的意图。不要询问用户，直接根据理解返回命令。如果用户发送的是JSON格式配置，直接返回该配置内容。" or
+					"你是一位友好的AI助手，专注于与用户进行自然对话。当前系统已启用聊天模式。你可以讨论任何话题，分享有趣的见解，回答用户的问题，或者只是闲聊。保持友好、有帮助和有趣的对话风格。不要尝试执行任何命令或修改UI。如果用户要求你修改UI，请礼貌地提醒他们切换到自定义指令模式。"
+				
 				local payload = {
 					model = MODEL,
 					messages = {
 						{
 							role = "system",
-							content = "你是一个UI助手，请根据用户指令返回简洁的修改建议。对于颜色：只返回颜色名称或十六进制代码。对于布局：只返回布局类型。对于透明度：只返回透明度级别。对于尺寸：只返回尺寸类型。对于字体：只返回字体大小。对于按钮：只返回按钮样式。对于动画：只返回动画速度。对于保存/复制：返回相应指令。对于JSON配置：直接返回配置内容。对于帮助：返回帮助指令。"
+							content = systemPrompt
 						},
 						{
-							role = "user",
+							role = "user", 
 							content = userMessage
 						}
 					},
@@ -1168,11 +1255,17 @@ function library.new(library, name, theme)
 			
 			if success then
 				addChatMessage(result, false)
+				
 				local commands = parseAIResponse(result)
 				if #commands > 0 then
 					applyCommands(commands)
 				else
-					addChatMessage("未识别到可执行指令，请尝试更明确的描述。发送\"帮助\"查看所有指令。", false)
+					if isCustomMode then
+						local lowerResult = result:lower()
+						if not lowerResult:match("帮助") and not lowerResult:match("？") then
+							addChatMessage("💡 提示：在自定义模式下，你可以发送\"帮助\"查看所有支持的指令。", false)
+						end
+					end
 				end
 			else
 				addChatMessage("发生错误: " .. tostring(result), false)
@@ -1910,7 +2003,6 @@ function library.new(library, name, theme)
 						library.flags[flag] = state
 						callback(state)
                         
-                        -- 保存配置
                         local config = getCurrentConfig()
                         saveConfig(config)
 					end,
@@ -2115,7 +2207,6 @@ function library.new(library, name, theme)
 				TB.TextSize = 14
 				TB.ClearTextOnFocus = true
                 
-                -- 从加载的配置中恢复值
                 if currentConfig.flags and currentConfig.flags[flag] ~= nil then
                     TB.Text = tostring(currentConfig.flags[flag])
                     library.flags[flag] = currentConfig.flags[flag]
@@ -2138,7 +2229,6 @@ function library.new(library, name, theme)
 					library.flags[flag] = TB.Text
 					callback(TB.Text)
                     
-                    -- 保存配置
                     local config = getCurrentConfig()
                     saveConfig(config)
 				end)
@@ -2156,7 +2246,6 @@ function library.new(library, name, theme)
 						library.flags[flag] = value
 						callback(value)
                         
-                        -- 保存配置
                         local config = getCurrentConfig()
                         saveConfig(config)
 					end,
@@ -2304,13 +2393,11 @@ function library.new(library, name, theme)
 						Tween(SliderPart, 0.1, "Linear", "Out", { Size = UDim2.new(percent, 0, 1, 0) })
 						callback(tonumber(value))
                         
-                        -- 保存配置
                         local config = getCurrentConfig()
                         saveConfig(config)
 					end,
 				}
                 
-                -- 从加载的配置中恢复值
                 if currentConfig.flags and currentConfig.flags[flag] ~= nil then
                     funcs:SetValue(currentConfig.flags[flag])
                 end
@@ -2395,8 +2482,8 @@ function library.new(library, name, theme)
 				DropdownModule.BackgroundTransparency = 1
 				DropdownModule.ClipsDescendants = true
 				DropdownModule.Size = UDim2.new(1, 0, 0, 40)
-				
-				local DropdownTop = Instance.new("TextButton")
+                
+                local DropdownTop = Instance.new("TextButton")
 				DropdownTop.Name = "DropdownTop"
 				DropdownTop.Parent = DropdownModule
 				DropdownTop.BackgroundColor3 = Colors.Secondary
@@ -2486,7 +2573,6 @@ function library.new(library, name, theme)
 							DropdownText.Text = Option.Text
 							library.flags[flag] = Option.Text
                             
-                            -- 保存配置
                             local config = getCurrentConfig()
                             saveConfig(config)
 						end)
@@ -2534,7 +2620,6 @@ function library.new(library, name, theme)
 				return funcs
 			end
             
-            -- 从加载的配置中恢复下拉菜单选择
             if currentConfig.flags and currentConfig.flags[flag] then
                 local selectedValue = currentConfig.flags[flag]
                 for _, option in ipairs(options) do
@@ -2566,7 +2651,6 @@ function library.new(library, name, theme)
 	local faceCharacterEnabled = false
 	local aiPanelEnabled = false
 
-    -- 从配置恢复UI模式
     if currentConfig.uiFollowEnabled ~= nil then uiFollowEnabled = currentConfig.uiFollowEnabled end
     if currentConfig.dragModeEnabled ~= nil then dragModeEnabled = currentConfig.dragModeEnabled end
     if currentConfig.faceCharacterEnabled ~= nil then faceCharacterEnabled = currentConfig.faceCharacterEnabled end
@@ -2592,7 +2676,6 @@ function library.new(library, name, theme)
 			Tween(FaceBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
 		end
         
-        -- 保存配置
         local config = getCurrentConfig()
         saveConfig(config)
 	end)
@@ -2619,9 +2702,384 @@ function library.new(library, name, theme)
 			TitleBar.Active = false
 		end
         
-        -- 保存配置
         local config = getCurrentConfig()
         saveConfig(config)
+	end)
+
+	local AnimPanelFrame = Instance.new("Frame")
+	AnimPanelFrame.Name = "AnimPanelFrame"
+	AnimPanelFrame.Parent = Main
+	AnimPanelFrame.BackgroundColor3 = Colors.Secondary
+	AnimPanelFrame.BackgroundTransparency = Colors.Transparent
+	AnimPanelFrame.Position = UDim2.new(0, 0, 0, 100)
+	AnimPanelFrame.Size = UDim2.new(1, 0, 1, -100)
+	AnimPanelFrame.Visible = false
+	AnimPanelFrame.ZIndex = 20
+
+	local AnimPanelC = Instance.new("UICorner")
+	AnimPanelC.CornerRadius = UDim.new(0, 8)
+	AnimPanelC.Parent = AnimPanelFrame
+
+	CreateGlassEffect(AnimPanelFrame)
+
+	local AnimSearchBar = Instance.new("Frame")
+	AnimSearchBar.Name = "AnimSearchBar"
+	AnimSearchBar.Parent = AnimPanelFrame
+	AnimSearchBar.BackgroundColor3 = Colors.Primary
+	AnimSearchBar.BackgroundTransparency = 0.5
+	AnimSearchBar.Position = UDim2.new(0, 15, 0, 15)
+	AnimSearchBar.Size = UDim2.new(1, -30, 0, 40)
+
+	local AnimSearchBarC = Instance.new("UICorner")
+	AnimSearchBarC.CornerRadius = UDim.new(0, 6)
+	AnimSearchBarC.Parent = AnimSearchBar
+
+	local AnimSearchBox = Instance.new("TextBox")
+	AnimSearchBox.Name = "AnimSearchBox"
+	AnimSearchBox.Parent = AnimSearchBar
+	AnimSearchBox.BackgroundTransparency = 1
+	AnimSearchBox.Position = UDim2.new(0, 15, 0, 0)
+	AnimSearchBox.Size = UDim2.new(1, -30, 1, 0)
+	AnimSearchBox.Font = Enum.Font.Gotham
+	AnimSearchBox.PlaceholderText = "搜索动画名称或动画包..."
+	AnimSearchBox.Text = ""
+	AnimSearchBox.TextColor3 = Colors.Text
+	AnimSearchBox.PlaceholderColor3 = Colors.Placeholder
+	AnimSearchBox.TextSize = 14
+	AnimSearchBox.ClearTextOnFocus = false
+	AnimSearchBox.ZIndex = 21
+
+	local AnimSearchIcon = Instance.new("ImageLabel")
+	AnimSearchIcon.Name = "AnimSearchIcon"
+	AnimSearchIcon.Parent = AnimSearchBar
+	AnimSearchIcon.BackgroundTransparency = 1
+	AnimSearchIcon.Position = UDim2.new(1, -30, 0.5, -12)
+	AnimSearchIcon.Size = UDim2.new(0, 24, 0, 24)
+	AnimSearchIcon.Image = "rbxassetid://3926305904"
+	AnimSearchIcon.ImageRectOffset = Vector2.new(964, 324)
+	AnimSearchIcon.ImageRectSize = Vector2.new(36, 36)
+	AnimSearchIcon.ImageColor3 = Colors.Placeholder
+	AnimSearchIcon.ZIndex = 21
+
+	local AnimScroll = Instance.new("ScrollingFrame")
+	AnimScroll.Name = "AnimScroll"
+	AnimScroll.Parent = AnimPanelFrame
+	AnimScroll.BackgroundTransparency = 1
+	AnimScroll.Position = UDim2.new(0, 15, 0, 65)
+	AnimScroll.Size = UDim2.new(1, -30, 1, -80)
+	AnimScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+	AnimScroll.ScrollBarThickness = 3
+	AnimScroll.ScrollBarImageColor3 = Colors.Secondary
+	AnimScroll.ZIndex = 20
+
+	local AnimGrid = Instance.new("UIGridLayout")
+	AnimGrid.Name = "AnimGrid"
+	AnimGrid.Parent = AnimScroll
+	AnimGrid.CellSize = UDim2.new(0, 60, 0, 85)
+	AnimGrid.CellPadding = UDim2.new(0, 5, 0, 5)
+	AnimGrid.SortOrder = Enum.SortOrder.Name
+	AnimGrid.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+	local AnimPadding = Instance.new("UIPadding")
+	AnimPadding.Parent = AnimScroll
+	AnimPadding.PaddingTop = UDim.new(0, 5)
+	AnimPadding.PaddingBottom = UDim.new(0, 5)
+	AnimPadding.PaddingLeft = UDim.new(0, 5)
+	AnimPadding.PaddingRight = UDim.new(0, 5)
+
+	local LoadingAnimLabel = Instance.new("TextLabel")
+	LoadingAnimLabel.Name = "LoadingAnimLabel"
+	LoadingAnimLabel.Parent = AnimPanelFrame
+	LoadingAnimLabel.BackgroundTransparency = 1
+	LoadingAnimLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
+	LoadingAnimLabel.Size = UDim2.new(0, 200, 0, 30)
+	LoadingAnimLabel.Font = Enum.Font.GothamSemibold
+	LoadingAnimLabel.Text = "正在加载动画..."
+	LoadingAnimLabel.TextColor3 = Colors.Text
+	LoadingAnimLabel.TextSize = 16
+	LoadingAnimLabel.Visible = false
+	LoadingAnimLabel.ZIndex = 22
+
+	local animationData = {
+		items = {},
+		bundles = {},
+		loaded = false,
+		nextCursor = ""
+	}
+
+	local HttpService = game:GetService("HttpService")
+	local PROXY_URL = "https://rproxy.kirbs.net"
+
+	local function fetchCatalogItems(itemType, cursor)
+		local endpoint = string.format(
+			"%s/v1/search/items?category=Animations&limit=100&cursor=%s",
+			PROXY_URL,
+			cursor or ""
+		)
+		
+		local success, result = pcall(function()
+			local response = game:HttpGet(endpoint)
+			return HttpService:JSONDecode(response)
+		end)
+		
+		if success and result then
+			return {
+				items = result.data or {},
+				nextCursor = result.nextPageCursor or ""
+			}
+		else
+			return {items = {}, nextCursor = ""}
+		end
+	end
+
+	local function fetchAssetDetails(assetIds)
+		if #assetIds == 0 then return {} end
+		local endpoint = string.format(
+			"%s/v1/assets?assetIds=%s",
+			PROXY_URL,
+			table.concat(assetIds, ",")
+		)
+		
+		local success, result = pcall(function()
+			local response = game:HttpGet(endpoint)
+			local data = HttpService:JSONDecode(response)
+			return data.data or {}
+		end)
+		
+		return success and result or {}
+	end
+
+	local function fetchBundleItems(bundleId)
+		local endpoint = string.format(
+			"%s/v1/bundles/%s/bundleItems",
+			PROXY_URL,
+			bundleId
+		)
+		
+		local success, result = pcall(function()
+			local response = game:HttpGet(endpoint)
+			local data = HttpService:JSONDecode(response)
+			
+			local bundledItems = {}
+			for _, item in pairs(data.data or {}) do
+				if item.type == "Asset" then
+					table.insert(bundledItems, item.id)
+				end
+			end
+			return bundledItems
+		end)
+		
+		return success and result or {}
+	end
+
+	local function loadAllAnimations()
+		if animationData.loaded then return end
+		
+		LoadingAnimLabel.Visible = true
+		AnimSearchBox.PlaceholderText = "正在加载动画数据..."
+		
+		spawn(function()
+			local cursor = ""
+			local allItems = {}
+			
+			repeat
+				local batch = fetchCatalogItems("Animations", cursor)
+				for _, item in ipairs(batch.items) do
+					table.insert(allItems, item)
+				end
+				cursor = batch.nextCursor
+				wait(0.1)
+			until cursor == "" or #allItems >= 500
+			
+			local assetIds = {}
+			local bundleIds = {}
+			
+			for _, item in ipairs(allItems) do
+				if item.type == "Asset" then
+					table.insert(assetIds, item.id)
+				elseif item.type == "Bundle" then
+					table.insert(bundleIds, item.id)
+				end
+			end
+			
+			local assetDetails = fetchAssetDetails(assetIds)
+			
+			for _, asset in ipairs(assetDetails) do
+				table.insert(animationData.items, {
+					id = asset.id,
+					name = asset.name,
+					type = "Animation",
+					imageUrl = string.format("https://assetdelivery.roblox.com/v1/asset?id=%d", asset.id)
+				})
+			end
+						
+			for _, bundleId in ipairs(bundleIds) do
+				local bundleItems = fetchBundleItems(bundleId)
+				if #bundleItems > 0 then
+					local bundleDetails = fetchAssetDetails(bundleItems)
+					if #bundleDetails > 0 then
+						table.insert(animationData.bundles, {
+							id = bundleId,
+							name = "动画包 " .. bundleId,
+							type = "Bundle",
+							animations = bundleDetails,
+							imageUrl = string.format("https://assetdelivery.roblox.com/v1/asset?id=%d", bundleDetails[1].id)
+						})
+					end
+				end
+			end
+			
+			animationData.loaded = true
+			LoadingAnimLabel.Visible = false
+			AnimSearchBox.PlaceholderText = "搜索动画名称或动画包..."
+			
+			displayAnimations("")
+		end)
+	end
+
+	local function displayAnimations(searchTerm)
+		for _, child in pairs(AnimScroll:GetChildren()) do
+			if child:IsA("TextButton") then
+				child:Destroy()
+			end
+		end
+		
+		local filteredItems = {}
+		local searchLower = searchTerm and searchTerm:lower() or ""
+		
+		for _, anim in ipairs(animationData.items) do
+			if searchLower == "" or anim.name:lower():find(searchLower, 1, true) then
+				table.insert(filteredItems, anim)
+			end
+		end
+		
+		for _, bundle in ipairs(animationData.bundles) do
+			if searchLower == "" or bundle.name:lower():find(searchLower, 1, true) then
+				table.insert(filteredItems, bundle)
+			end
+		end
+		
+		for _, item in ipairs(filteredItems) do
+			local AnimBtn = Instance.new("TextButton")
+			AnimBtn.Name = "Anim_" .. item.id
+			AnimBtn.Parent = AnimScroll
+			AnimBtn.BackgroundColor3 = Colors.Secondary
+			AnimBtn.BackgroundTransparency = 0.3
+			AnimBtn.Size = UDim2.new(0, 60, 0, 85)
+			AnimBtn.AutoButtonColor = false
+			AnimBtn.Text = ""
+			AnimBtn.ZIndex = 21
+			
+			local AnimBtnC = Instance.new("UICorner")
+			AnimBtnC.CornerRadius = UDim.new(0, 6)
+			AnimBtnC.Parent = AnimBtn
+			
+			local AnimImage = Instance.new("ImageLabel")
+			AnimImage.Name = "AnimImage"
+			AnimImage.Parent = AnimBtn
+			AnimImage.BackgroundTransparency = 1
+			AnimImage.Size = UDim2.new(1, 0, 0, 60)
+			AnimImage.Position = UDim2.new(0, 0, 0, 0)
+			AnimImage.Image = item.imageUrl
+			AnimImage.ScaleType = Enum.ScaleType.Crop
+			AnimImage.ZIndex = 22
+			
+			local AnimName = Instance.new("TextLabel")
+			AnimName.Name = "AnimName"
+			AnimName.Parent = AnimBtn
+			AnimName.BackgroundTransparency = 1
+			AnimName.Position = UDim2.new(0, 0, 1, -25)
+			AnimName.Size = UDim2.new(1, 0, 0, 20)
+			AnimName.Font = Enum.Font.Gotham
+			AnimName.Text = item.name:sub(1, 8) .. (item.name:len() > 8 and "..." or "")
+			AnimName.TextColor3 = Colors.Text
+			AnimName.TextSize = 10
+			AnimName.TextWrapped = true
+			AnimName.ZIndex = 22
+			
+			local TypeLabel = Instance.new("TextLabel")
+			TypeLabel.Name = "TypeLabel"
+			TypeLabel.Parent = AnimBtn
+			TypeLabel.BackgroundColor3 = item.type == "Bundle" and Colors.Accent or Colors.Primary
+			TypeLabel.BackgroundTransparency = 0.5
+			TypeLabel.Position = UDim2.new(0, 2, 0, 2)
+			TypeLabel.Size = UDim2.new(0, 25, 0, 12)
+			TypeLabel.Font = Enum.Font.GothamBold
+			TypeLabel.Text = item.type == "Bundle" and "包" or "动画"
+			TypeLabel.TextColor3 = Colors.White
+			TypeLabel.TextSize = 8
+			TypeLabel.ZIndex = 23
+			
+			CreateGlassEffect(AnimBtn)
+			
+			AnimBtn.MouseButton1Click:Connect(function()
+				spawn(function()
+					Ripple(AnimBtn)
+				end)
+				
+				if item.type == "Animation" then
+					local humanoid = services.Players.LocalPlayer.Character and services.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+					if humanoid then
+						local anim = Instance.new("Animation")
+						anim.AnimationId = "rbxassetid://" .. item.id
+						local animTrack = humanoid:LoadAnimation(anim)
+						animTrack:Play()
+						addChatMessage("播放动画: " .. item.name, false)
+					end
+				elseif item.type == "Bundle" and #item.animations > 0 then
+					addChatMessage("动画包包含 " .. #item.animations .. " 个动画:", false)
+					for i, anim in ipairs(item.animations) do
+						if i <= 3 then
+							addChatMessage("  - " .. anim.name, false)
+						end
+					end
+					if #item.animations > 3 then
+						addChatMessage("  ... 还有 " .. (#item.animations - 3) .. " 个", false)
+					end
+				end
+			end)
+		end
+		
+		wait()
+		AnimScroll.CanvasSize = UDim2.new(0, AnimGrid.AbsoluteContentSize.X, 0, AnimGrid.AbsoluteContentSize.Y + 20)
+	end
+
+	AnimSearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+		local searchText = AnimSearchBox.Text
+		displayAnimations(searchText)
+	end)
+
+	AnimPanelBtn.MouseButton1Click:Connect(function()
+		spawn(function()
+			Ripple(AnimPanelBtn)
+		end)
+		
+		local isVisible = not AnimPanelFrame.Visible
+		AnimPanelFrame.Visible = isVisible
+		
+		if isVisible then
+			Content.Visible = false
+			AIPanelFrame.Visible = false
+			
+			if not animationData.loaded then
+				loadAllAnimations()
+			else
+				displayAnimations("")
+			end
+			
+			Tween(AnimPanelBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
+			Tween(AnimPanelBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
+		else
+			Content.Visible = true
+			AIPanelFrame.Visible = false
+			
+			Tween(AnimPanelBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
+			Tween(AnimPanelBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
+		end
+		
+		local config = getCurrentConfig()
+		config.animPanelEnabled = isVisible
+		saveConfig(config)
 	end)
 
 	AIPanelBtn.MouseButton1Click:Connect(function()
@@ -2637,7 +3095,6 @@ function library.new(library, name, theme)
 			Tween(AIPanelBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
 			Tween(AIPanelBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
             
-            -- 首次使用时显示指令示例
             if isFirstTimeAI then
                 isFirstTimeAI = false
                 wait(0.3)
@@ -2650,7 +3107,6 @@ function library.new(library, name, theme)
 			Tween(AIPanelBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
 		end
         
-        -- 保存配置
         local config = getCurrentConfig()
         saveConfig(config)
 	end)
@@ -2684,12 +3140,12 @@ function library.new(library, name, theme)
 	
 	renderConnection = game:GetService("RunService").RenderStepped:Connect(update3DPosition)
     
-    -- 应用加载的配置
     applyFullConfig(currentConfig)
 	
 	Tween(FaceBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
 	Tween(DragModeBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
 	Tween(AIPanelBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
+	Tween(AnimPanelBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
 
 	drag(Main, TitleBar)
 
