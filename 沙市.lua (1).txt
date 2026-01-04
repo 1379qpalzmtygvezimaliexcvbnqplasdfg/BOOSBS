@@ -278,7 +278,7 @@ function library.new(library, name, theme, switchIconId)
 	Open.Image = ("rbxassetid://%s"):format(switchIconId)
 	Open.ImageColor3 = Colors.Text
 	Open.Active = true
-	Open.Draggable = true
+	Open.Draggable = false
 	Open.ZIndex = 100
 	Open.ScaleType = Enum.ScaleType.Fit
 	
@@ -2572,6 +2572,7 @@ function library.new(library, name, theme, switchIconId)
                 end
             end
 			
+			-- 修复：在section表创建后添加别名
 			section.TextBox = section.Textbox
 			section.textbox = section.Textbox
 			section.KeyBind = section.Keybind
@@ -2686,85 +2687,86 @@ function library.new(library, name, theme, switchIconId)
 				local fixedPosition = rootPart.CFrame * CFrame.new(0, 2, -5)
 				canvasPart.CFrame = fixedPosition
 			end
-	elseif dragModeEnabled or not uiFollowEnabled then
-		canvasPart.CFrame = camera.CFrame * CFrame.new(LookView.X, LookView.Y, LookView.Z)
-	else
-		local offsetX = (mouse.X - mouse.ViewSizeX/2) * SCALE
-		local offsetY = (mouse.Y - mouse.ViewSizeY/2) * SCALE
-		
-		local goalCFrame = camera.CFrame 
-			* CFrame.new(LookView.X, LookView.Y, LookView.Z)
-			* CFrame.Angles(0, math.rad(offsetX), 0)
-			* CFrame.Angles(math.rad(offsetY), 0, 0)
-		
-		services.TweenService:Create(canvasPart, TweenInfo.new(dt * 2), {
-			CFrame = goalCFrame
-		}):Play()
+		elseif dragModeEnabled or not uiFollowEnabled then
+			canvasPart.CFrame = camera.CFrame * CFrame.new(LookView.X, LookView.Y, LookView.Z)
+		else
+			local offsetX = (mouse.X - mouse.ViewSizeX/2) * SCALE
+			local offsetY = (mouse.Y - mouse.ViewSizeY/2) * SCALE
+			
+			local goalCFrame = camera.CFrame 
+				* CFrame.new(LookView.X, LookView.Y, LookView.Z)
+				* CFrame.Angles(0, math.rad(offsetX), 0)
+				* CFrame.Angles(math.rad(offsetY), 0, 0)
+			
+			services.TweenService:Create(canvasPart, TweenInfo.new(dt * 2), {
+				CFrame = goalCFrame
+			}):Play()
+		end
 	end
+	
+	renderConnection = game:GetService("RunService").RenderStepped:Connect(update3DPosition)
+    
+    applyFullConfig(currentConfig)
+	
+	Tween(FaceBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
+	Tween(DragModeBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
+	Tween(AIPanelBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
+
+	drag(Main, TitleBar)
+
+	function window:Set3DOffset(offsetVector)
+		LookView = offsetVector
+	end
+
+	function window:GetCanvasPart()
+		return canvasPart
+	end
+
+	function window:Destroy()
+		if canvasPart then
+			canvasPart:Destroy()
+		end
+		if renderConnection then
+			renderConnection:Disconnect()
+		end
+		if switchGui then
+			switchGui:Destroy()
+		end
+	end
+
+	-- 2D拖动功能实现
+	local dragging2D = false
+	local dragStartPos2D = nil
+	local startPos2D = nil
+
+	Open.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging2D = true
+			dragStartPos2D = input.Position
+			startPos2D = Open.Position
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging2D = false
+				end
+			end)
+		end
+	end)
+
+	Open.InputChanged:Connect(function(input)
+		if dragging2D and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			local delta = input.Position - dragStartPos2D
+			Open.Position = UDim2.new(startPos2D.X.Scale, startPos2D.X.Offset + delta.X,
+				startPos2D.Y.Scale, startPos2D.Y.Offset + delta.Y)
+		end
+	end)
+
+	Open.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging2D = false
+		end
+	end)
+
+	return window
 end
-
-renderConnection = game:GetService("RunService").RenderStepped:Connect(update3DPosition)
-
-applyFullConfig(currentConfig)
-
-Tween(FaceBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
-Tween(DragModeBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
-Tween(AIPanelBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
-
-drag(Main, TitleBar)
-
-function window:Set3DOffset(offsetVector)
-	LookView = offsetVector
-end
-
-function window:GetCanvasPart()
-	return canvasPart
-end
-
-function window:Destroy()
-	if canvasPart then
-		canvasPart:Destroy()
-	end
-	if renderConnection then
-		renderConnection:Disconnect()
-	end
-	if switchGui then
-		switchGui:Destroy()
-	end
-end
-
-return window
-end
-
-local dragging2D = false
-local dragStartPos2D = nil
-local startPos2D = nil
-
-Open.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		dragging2D = true
-		dragStartPos2D = input.Position
-		startPos2D = Open.Position
-		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then
-				dragging2D = false
-			end
-		end)
-	end
-end)
-
-Open.InputChanged:Connect(function(input)
-	if dragging2D and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-		local delta = input.Position - dragStartPos2D
-		Open.Position = UDim2.new(startPos2D.X.Scale, startPos2D.X.Offset + delta.X,
-			startPos2D.Y.Scale, startPos2D.Y.Offset + delta.Y)
-	end
-end)
-
-Open.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		dragging2D = false
-	end
-end)
 
 return library
