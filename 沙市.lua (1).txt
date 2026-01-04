@@ -9,6 +9,7 @@ library.flags = {}
 
 local configPath = "BS脚本/UI配置.txt"
 local colorConfigPath = "BS脚本/颜色配置.txt"
+local currentLayout = "sidebar"
 
 local function getCurrentConfig()
     local config = {
@@ -24,11 +25,11 @@ local function getCurrentConfig()
         dragModeEnabled = false,
         faceCharacterEnabled = false,
         aiPanelEnabled = false,
-        layoutMode = "vertical",
         fontSize = "default",
         buttonStyle = "default",
         animationSpeed = "normal",
-        flags = {}
+        flags = {},
+        layout = "sidebar"
     }
     
     for k, v in pairs(library.flags) do
@@ -273,8 +274,8 @@ function library.new(library, name, theme)
 	Open.BackgroundColor3 = Colors.Primary
 	Open.BackgroundTransparency = Colors.Transparent
 	Open.Position = UDim2.new(0.01, 0, 0.3, 0)
-	Open.Size = UDim2.new(0, 35, 0, 35)
-	Open.Image = "rbxassetid://10734982320"
+	Open.Size = UDim2.new(0, 45, 0, 45)
+	Open.Image = "rbxassetid://4370341699"
 	Open.ImageColor3 = Colors.Text
 	Open.Active = true
 	Open.Draggable = true
@@ -354,7 +355,7 @@ function library.new(library, name, theme)
 	CloseBtn.Parent = Main
 	CloseBtn.BackgroundColor3 = Colors.Secondary
 	CloseBtn.BackgroundTransparency = Colors.Transparent
-	CloseBtn.Position = UDim2.new(1, -215, 0, 10)
+	CloseBtn.Position = UDim2.new(1, -185, 0, 10)
 	CloseBtn.Size = UDim2.new(0, 25, 0, 25)
 	CloseBtn.Font = Enum.Font.GothamBold
 	CloseBtn.Text = "×"
@@ -371,20 +372,20 @@ function library.new(library, name, theme)
 	LayoutToggleBtn.Parent = Main
 	LayoutToggleBtn.BackgroundColor3 = Colors.Secondary
 	LayoutToggleBtn.BackgroundTransparency = Colors.Transparent
-	LayoutToggleBtn.Position = UDim2.new(1, -185, 0, 10)
+	LayoutToggleBtn.Position = UDim2.new(1, -215, 0, 10)
 	LayoutToggleBtn.Size = UDim2.new(0, 25, 0, 25)
 	LayoutToggleBtn.Image = "rbxassetid://3926305904"
-	LayoutToggleBtn.ImageRectOffset = Vector2.new(804, 804)
+	LayoutToggleBtn.ImageRectOffset = Vector2.new(324, 364)
 	LayoutToggleBtn.ImageRectSize = Vector2.new(36, 36)
 	LayoutToggleBtn.ImageColor3 = Colors.Text
 	LayoutToggleBtn.ZIndex = 10
-	
+
 	local LayoutToggleBtnC = Instance.new("UICorner")
 	LayoutToggleBtnC.CornerRadius = UDim.new(0, 6)
 	LayoutToggleBtnC.Parent = LayoutToggleBtn
 
 	CreateGlassEffect(LayoutToggleBtn)
-
+	
 	local AIPanelBtn = Instance.new("ImageButton")
 	AIPanelBtn.Name = "AIPanelBtn"
 	AIPanelBtn.Parent = Main
@@ -789,8 +790,13 @@ function library.new(library, name, theme)
             faceCharacterEnabled = config.faceCharacterEnabled
         end
         
-        if config.layoutMode ~= nil then
-            toggleLayout(config.layoutMode)
+        if config.layout then
+            currentLayout = config.layout
+            if currentLayout == "horizontal" then
+                switchToHorizontalLayout()
+             else
+                switchToSidebarLayout()
+            end
         end
         
         return true
@@ -800,6 +806,8 @@ function library.new(library, name, theme)
         addChatMessage("🎉 欢迎使用AI助手！以下是所有支持的指令：", false)
         wait(0.1)
         addChatMessage("🎨 颜色修改：红/蓝/绿/黄/紫/橙/粉/青/黑/白/灰/金/银/默认, 或 #FF0000", false)
+        wait(0.05)
+        addChatMessage("📐 布局切换：切换到横向布局/切换标签栏布局", false)
         wait(0.05)
         addChatMessage("📐 布局间距：紧凑/宽松/默认", false)
         wait(0.05)
@@ -834,6 +842,12 @@ function library.new(library, name, theme)
 		
 		if lower:match("复制配置") or lower:match("copy config") then
 			table.insert(commands, {type = "copy", value = true})
+		end
+		
+		if lower:match("切换到横向布局") or lower:match("切换标签栏布局") or lower:match("横向布局") then
+			table.insert(commands, {type = "layout", value = "horizontal"})
+		elseif lower:match("切换到侧边栏布局") or lower:match("侧边栏布局") or lower:match("默认布局") then
+			table.insert(commands, {type = "layout", value = "sidebar"})
 		end
 		
 		if response:match("^%s*{") and response:match("}$") then
@@ -1111,7 +1125,7 @@ function library.new(library, name, theme)
                     end
                 end
                 
-                toggleLayout("vertical")
+                switchToSidebarLayout()
                 
 				addChatMessage("🔄 UI已完全重置为默认设置！", false)
             elseif cmd.type == "save" then
@@ -1137,6 +1151,14 @@ function library.new(library, name, theme)
                 else
                     addChatMessage("❌ 配置格式错误，无法应用！请检查JSON格式是否正确。", false)
                 end
+            elseif cmd.type == "layout" then
+                if cmd.value == "horizontal" then
+                    switchToHorizontalLayout()
+                    addChatMessage("✅ 已切换到横向标签布局！", false)
+                elseif cmd.value == "sidebar" then
+                    switchToSidebarLayout()
+                    addChatMessage("✅ 已切换到侧边栏布局！", false)
+                end
             elseif cmd.type == "help" then
                 showAllCommands()
 			end
@@ -1145,7 +1167,7 @@ function library.new(library, name, theme)
 
     local function getSystemPrompt()
         if aiMode == "custom" then
-            return "你是一个UI助手，可以修改UI的各种属性。用户可以用自然语言描述想要的修改，比如'把主题改成红色'、'把按钮变成圆角'等。请分析用户请求，返回可执行的修改指令。"
+            return "你是一个UI助手，可以修改UI的各种属性。用户可以用自然语言描述想要的修改，比如'把主题改成红色'、'切换到横向布局'等。请分析用户请求，返回可执行的修改指令。"
         else
             return "你是一个聊天助手，请回答用户的各种问题，进行自然对话。"
         end
@@ -1259,6 +1281,7 @@ function library.new(library, name, theme)
 			Main.Visible = not Main.Visible
 		end
 	end)
+	
 	local currentConfig = loadConfig()
 	local autoFitEnabled = currentConfig.autoFitScreen
 	
@@ -1417,24 +1440,22 @@ function library.new(library, name, theme)
 		end
 	end)
 	
-	local HorizontalTabContainer = Instance.new("ScrollingFrame")
-	HorizontalTabContainer.Name = "HorizontalTabContainer"
-	HorizontalTabContainer.Parent = Main
-	HorizontalTabContainer.BackgroundTransparency = 1
-	HorizontalTabContainer.Position = UDim2.new(0, 15, 0, 95)
-	HorizontalTabContainer.Size = UDim2.new(1, -30, 0, 50)
-	HorizontalTabContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-	HorizontalTabContainer.ScrollBarThickness = 2
-	HorizontalTabContainer.ScrollDirection = Enum.ScrollingDirection.X
-	HorizontalTabContainer.Visible = false
-	HorizontalTabContainer.ZIndex = 15
-	
-	local HorizontalTabLayout = Instance.new("UIListLayout")
-	HorizontalTabLayout.Name = "HorizontalTabLayout"
-	HorizontalTabLayout.Parent = HorizontalTabContainer
-	HorizontalTabLayout.FillDirection = Enum.FillDirection.Horizontal
-	HorizontalTabLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	HorizontalTabLayout.Padding = UDim.new(0, 5)
+	local HorizontalTabBar = Instance.new("ScrollingFrame")
+	HorizontalTabBar.Name = "HorizontalTabBar"
+	HorizontalTabBar.Parent = Main
+	HorizontalTabBar.BackgroundTransparency = 1
+	HorizontalTabBar.Position = UDim2.new(0, 15, 0, 95)
+	HorizontalTabBar.Size = UDim2.new(1, -30, 0, 50)
+	HorizontalTabBar.CanvasSize = UDim2.new(0, 0, 0, 0)
+	HorizontalTabBar.ScrollBarThickness = 0
+	HorizontalTabBar.Visible = false
+	HorizontalTabBar.ZIndex = 10
+
+	local HorizontalTabBarL = Instance.new("UIListLayout")
+	HorizontalTabBarL.Parent = HorizontalTabBar
+	HorizontalTabBarL.SortOrder = Enum.SortOrder.LayoutOrder
+	HorizontalTabBarL.Padding = UDim.new(0, 10)
+	HorizontalTabBarL.FillDirection = Enum.FillDirection.Horizontal
 	
 	local Content = Instance.new("Frame")
 	Content.Name = "Content"
@@ -1483,103 +1504,11 @@ function library.new(library, name, theme)
 	TabMain.Parent = Content
 	TabMain.BackgroundTransparency = 1
 	TabMain.Position = UDim2.new(0, 145, 0, 0)
-	TabMain.Size = UDim2.new(1, -145, 1, 0)
+	TabMain.Size = UDim2.new(0, -145, 1, 0)
 	
 	local allTabs = {}
 	local tabInfos = {}
-	local currentLayout = "vertical"
-	
-	local function toggleLayout(layoutMode)
-		currentLayout = layoutMode or (currentLayout == "vertical" and "horizontal" or "vertical")
-		
-		local config = getCurrentConfig()
-		config.layoutMode = currentLayout
-		saveConfig(config)
-		
-		if currentLayout == "horizontal" then
-			SideBar.Visible = false
-			TabMain.Position = UDim2.new(0, 0, 0, 150)
-			TabMain.Size = UDim2.new(1, 0, 1, -150)
-			HorizontalTabContainer.Visible = true
-			Content.Position = UDim2.new(0, 0, 0, 100)
-			
-			for _, tabInfo in ipairs(allTabs) do
-				tabInfo.button.Parent = HorizontalTabContainer
-				tabInfo.button.Size = UDim2.new(0, 120, 0, 40)
-			end
-			
-			HorizontalTabLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-				HorizontalTabContainer.CanvasSize = UDim2.new(0, HorizontalTabLayout.AbsoluteContentSize.X + 10, 0, 0)
-			end)
-			
-			for _, tabInfo in ipairs(allTabs) do
-				for _, sectionInfo in ipairs(tabInfo.sections or {}) do
-					local gridLayout = sectionInfo.objsFrame:FindFirstChild("GridLayout")
-					if not gridLayout then
-						gridLayout = Instance.new("UIGridLayout")
-						gridLayout.Name = "GridLayout"
-						gridLayout.Parent = sectionInfo.objsFrame
-						gridLayout.CellSize = UDim2.new(0.48, 0, 0, 40)
-						gridLayout.CellPadding = UDim2.new(0, 8, 0, 8)
-						gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
-						
-						local listLayout = sectionInfo.objsFrame:FindFirstChild("ObjsL")
-						if listLayout then
-							listLayout:Destroy()
-						end
-					end
-				end
-			end
-			
-			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
-			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
-		else
-			SideBar.Visible = true
-			TabMain.Position = UDim2.new(0, 145, 0, 0)
-			TabMain.Size = UDim2.new(1, -145, 1, 0)
-			HorizontalTabContainer.Visible = false
-			Content.Position = UDim2.new(0, 0, 0, 100)
-			
-			for _, tabInfo in ipairs(allTabs) do
-				tabInfo.button.Parent = TabButtons
-				tabInfo.button.Size = UDim2.new(1, 0, 0, 40)
-			end
-			
-			for _, tabInfo in ipairs(allTabs) do
-				for _, sectionInfo in ipairs(tabInfo.sections or {}) do
-					local listLayout = sectionInfo.objsFrame:FindFirstChild("ObjsL")
-					if not listLayout then
-						listLayout = Instance.new("UIListLayout")
-						listLayout.Name = "ObjsL"
-						listLayout.Parent = sectionInfo.objsFrame
-						listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-						listLayout.Padding = UDim.new(0, 8)
-						
-						local gridLayout = sectionInfo.objsFrame:FindFirstChild("GridLayout")
-						if gridLayout then
-							gridLayout:Destroy()
-						end
-					end
-					
-					for _, component in ipairs(sectionInfo.objsFrame:GetChildren()) do
-						if component:IsA("Frame") then
-							component.Size = UDim2.new(1, 0, 0, 40)
-						end
-					end
-				end
-			end
-			
-			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
-			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
-		end
-	end
-	
-	LayoutToggleBtn.MouseButton1Click:Connect(function()
-		spawn(function()
-			Ripple(LayoutToggleBtn)
-		end)
-		toggleLayout()
-	end)
+	local horizontalTabs = {}
 	
 	SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
 		local searchText = SearchBox.Text:lower()
@@ -1596,12 +1525,10 @@ function library.new(library, name, theme)
 					sectionInfo.section.SectionText.Text = sectionInfo.name
 					sectionInfo.section.SectionText.RichText = false
 					
-					if currentLayout == "vertical" then
-						local ObjsL = sectionInfo.objsFrame:FindFirstChild("ObjsL")
-						if ObjsL then
-							local originalHeight = 42 + ObjsL.AbsoluteContentSize.Y + 10
-							sectionInfo.section.Size = UDim2.new(0.975, 0, 0, originalHeight)
-						end
+					local ObjsL = sectionInfo.objsFrame:FindFirstChild("ObjsL")
+					if ObjsL then
+						local originalHeight = 42 + ObjsL.AbsoluteContentSize.Y + 10
+						sectionInfo.section.Size = UDim2.new(0.975, 0, 0, originalHeight)
 					end
 					
 					for _, component in ipairs(sectionInfo.objsFrame:GetChildren()) do
@@ -1615,12 +1542,6 @@ function library.new(library, name, theme)
 									textElement.RichText = false
 								end
 							end
-							
-							if currentLayout == "vertical" then
-								component.Size = UDim2.new(1, 0, 0, 40)
-							elseif currentLayout == "horizontal" then
-								component.Size = UDim2.new(0.48, 0, 0, 40)
-							end
 						end
 					end
 				end
@@ -1632,7 +1553,7 @@ function library.new(library, name, theme)
 						switchTab({
 							button = tabInfo.button,
 							frame = tabInfo.frame
-						})
+                        })
 						break
 					end
 				end
@@ -1743,6 +1664,53 @@ function library.new(library, name, theme)
 		switchingTabs = false
 	end
 	
+	function switchToHorizontalLayout()
+		currentLayout = "horizontal"
+        SideBar.Visible = false
+        HorizontalTabBar.Visible = true
+        TabMain.Position = UDim2.new(0, 15, 0, 150)
+        TabMain.Size = UDim2.new(1, -30, 1, -155)
+        
+        for _, tabInfo in ipairs(allTabs) do
+            local horizontalBtn = horizontalTabs[tabInfo.name]
+            if horizontalBtn then
+                horizontalBtn.Visible = tabInfo.button.Visible
+            end
+        end
+        
+        local config = getCurrentConfig()
+        config.layout = "horizontal"
+        saveConfig(config)
+	end
+	
+	function switchToSidebarLayout()
+		currentLayout = "sidebar"
+        SideBar.Visible = true
+        HorizontalTabBar.Visible = false
+        TabMain.Position = UDim2.new(0, 145, 0, 0)
+        TabMain.Size = UDim2.new(1, -145, 1, 0)
+        
+        local config = getCurrentConfig()
+        config.layout = "sidebar"
+        saveConfig(config)
+	end
+	
+	LayoutToggleBtn.MouseButton1Click:Connect(function()
+		spawn(function()
+			Ripple(LayoutToggleBtn)
+		end)
+		
+		if currentLayout == "sidebar" then
+			switchToHorizontalLayout()
+			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
+			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
+		else
+			switchToSidebarLayout()
+			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
+			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
+		end
+	end)
+	
 	function window.Tab(window, name, icon)
 		local tabButton = Instance.new("Frame")
 		tabButton.Name = "TabButton"
@@ -1785,6 +1753,25 @@ function library.new(library, name, theme)
 		tabBtn.Size = UDim2.new(1, 0, 1, 0)
 		tabBtn.Text = ""
 		
+		local horizontalTabButton = Instance.new("TextButton")
+		horizontalTabButton.Name = "HorizontalTab_" .. name
+		horizontalTabButton.Parent = HorizontalTabBar
+		horizontalTabButton.BackgroundColor3 = Colors.Secondary
+		horizontalTabButton.BackgroundTransparency = 0.3
+		horizontalTabButton.Size = UDim2.new(0, 120, 1, 0)
+		horizontalTabButton.Font = Enum.Font.GothamSemibold
+		horizontalTabButton.Text = name
+		horizontalTabButton.TextColor3 = Colors.Text
+		horizontalTabButton.TextSize = 14
+		horizontalTabButton.Visible = false
+		horizontalTabButton.ZIndex = 11
+		
+		local horizontalTabButtonC = Instance.new("UICorner")
+		horizontalTabButtonC.CornerRadius = UDim.new(0, 6)
+		horizontalTabButtonC.Parent = horizontalTabButton
+		
+		CreateGlassEffect(horizontalTabButton)
+		
 		local tabFrame = Instance.new("ScrollingFrame")
 		tabFrame.Name = "Tab"
 		tabFrame.Parent = TabMain
@@ -1808,6 +1795,7 @@ function library.new(library, name, theme)
 			sections = {}
 		}
 		table.insert(allTabs, tabInfo)
+		horizontalTabs[name] = horizontalTabButton
 		
 		tabBtn.MouseButton1Click:Connect(function()
 			spawn(function()
@@ -1817,6 +1805,20 @@ function library.new(library, name, theme)
 				button = tabButton,
 				frame = tabFrame
 			})
+		end)
+		
+		horizontalTabButton.MouseButton1Click:Connect(function()
+			switchTab({
+				button = tabButton,
+				frame = tabFrame
+			})
+			
+			for _, otherTab in ipairs(allTabs) do
+				Tween(horizontalTabs[otherTab.name], 0.15, "Sine", "Out", { BackgroundTransparency = 0.3 })
+				Tween(horizontalTabs[otherTab.name], 0.15, "Sine", "Out", { TextTransparency = 0.3 })
+			end
+			Tween(horizontalTabButton, 0.15, "Sine", "Out", { BackgroundTransparency = 0 })
+			Tween(horizontalTabButton, 0.15, "Sine", "Out", { TextTransparency = 0 })
 		end)
 		
 		if library.currentTab == nil then
@@ -1841,13 +1843,12 @@ function library.new(library, name, theme)
 			Section.BackgroundTransparency = Colors.Transparent
 			Section.BorderSizePixel = 0
 			Section.ClipsDescendants = true
-			Section.Size = UDim2.new(0.975, 0, 0, 42)
-			
-			CreateGlassEffect(Section)
 			
 			local SectionC = Instance.new("UICorner")
 			SectionC.CornerRadius = UDim.new(0, 8)
 			SectionC.Parent = Section
+			
+			CreateGlassEffect(Section)
 			
 			local SectionStroke = Instance.new("UIStroke")
 			SectionStroke.Color = Colors.Primary
@@ -1902,22 +1903,54 @@ function library.new(library, name, theme)
 			Objs.Position = UDim2.new(0, 6, 0, 42)
 			Objs.Size = UDim2.new(1, -12, 0, 0)
 			
-			local ObjsL = Instance.new("UIListLayout")
-			ObjsL.Name = "ObjsL"
-			ObjsL.Parent = Objs
-			ObjsL.SortOrder = Enum.SortOrder.LayoutOrder
-			ObjsL.Padding = UDim.new(0, 8)
+			local useGridLayout = false
+      local ObjsL = Instance.new("UIListLayout")
+      ObjsL.Name = "ObjsL"
+      ObjsL.Parent = Objs
+      ObjsL.SortOrder = Enum.SortOrder.LayoutOrder
+      ObjsL.Padding = UDim.new(0, 8)
+
+			local ObjsG = Instance.new("UIGridLayout")
+			ObjsG.Name = "ObjsG"
+			ObjsG.Parent = Objs
+			ObjsG.SortOrder = Enum.SortOrder.LayoutOrder
+			ObjsG.Padding = UDim.new(0, 8)
+			ObjsG.CellSize = UDim2.new(0.47, 0, 0, 40)
+			ObjsG.CellPadding = UDim2.new(0, 8, 0, 8)
+			ObjsG.FillDirection = Enum.FillDirection.Horizontal
+			ObjsG.HorizontalAlignment = Enum.HorizontalAlignment.Left
+			ObjsG.VerticalAlignment = Enum.VerticalAlignment.Top
+      ObjsG.Visible = false
+			
+			local function updateLayout()
+				if useGridLayout then
+         ObjsL.Visible = false
+         ObjsG.Visible = true
+					ObjsG.Parent = Objs
+         else
+         ObjsL.Visible = true
+         ObjsG.Visible = false
+					ObjsL.Parent = Objs
+				end
+			end
+			
+			function setLayoutMode(isHorizontal)
+				useGridLayout = isHorizontal and currentLayout == "horizontal"
+        task.spawn(updateLayout)
+			end
 			
 			local open = TabVal
 			if TabVal ~= false then
-				Section.Size = UDim2.new(0.975, 0, 0, open and 42 + ObjsL.AbsoluteContentSize.Y + 10 or 42)
+				local size = open and 42 + ObjsL.AbsoluteContentSize.Y + 10 or 42
+				Section.Size = UDim2.new(0.975, 0, 0, size)
 				SectionOpened.ImageTransparency = (open and 0 or 1)
 				SectionOpen.ImageTransparency = (open and 1 or 0)
 			end
 			
 			SectionToggle.MouseButton1Click:Connect(function()
 				open = not open
-				Section.Size = UDim2.new(0.975, 0, 0, open and 42 + ObjsL.AbsoluteContentSize.Y + 10 or 42)
+				local size = open and 42 + ObjsL.AbsoluteContentSize.Y + 10 or 42
+				Section.Size = UDim2.new(0.975, 0, 0, size)
 				SectionOpened.ImageTransparency = (open and 0 or 1)
 				SectionOpen.ImageTransparency = (open and 1 or 0)
 				Tween(Section, 0.2, "Sine", "Out", { BackgroundTransparency = open and 0.25 or 0 })
@@ -1925,7 +1958,14 @@ function library.new(library, name, theme)
 			
 			ObjsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 				if not open then return end
-				Section.Size = UDim2.new(0.975, 0, 0, 42 + ObjsL.AbsoluteContentSize.Y + 10)
+				local size = 42 + ObjsL.AbsoluteContentSize.Y + 10
+				Section.Size = UDim2.new(0.975, 0, 0, size)
+			end)
+			
+			ObjsG:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+				if not open then return end
+				local size = 42 + ObjsG.AbsoluteContentSize.Y + 10
+				Section.Size = UDim2.new(0.975, 0, 0, size)
 			end)
 			
 			local sectionInfo = {
@@ -1954,7 +1994,7 @@ function library.new(library, name, theme)
 				Btn.Parent = BtnModule
 				Btn.BackgroundColor3 = Colors.Secondary
 				Btn.BackgroundTransparency = 0.3
-				Btn.Size = UDim2.new(1, 0, 1, 0)
+							Btn.Size = UDim2.new(1, 0, 1, 0)
 				Btn.AutoButtonColor = false
 				Btn.Font = Enum.Font.GothamSemibold
 				Btn.Text = "   " .. text
@@ -2377,7 +2417,7 @@ function library.new(library, name, theme)
 				
 				local SliderBackC = Instance.new("UICorner")
 				SliderBackC.CornerRadius = UDim.new(0, 6)
-				SliderBackC.Parent = SliderBack
+				SliderBackC.Parent = SliderBack)
 				
 				sectionInfo.originalTexts[SliderModule] = text
 				
@@ -2720,7 +2760,19 @@ function library.new(library, name, theme)
 			section.KeyBind = section.Keybind
 			section.keybind = section.Keybind
 			
+			function section:UpdateLayout()
+				setLayoutMode(currentLayout == "horizontal")
+			end
+			
 			return section
+		end
+		
+		function tab:UpdateAllSectionsLayout()
+			for _, sectionInfo in ipairs(tabInfo.sections) do
+				local section = {}
+				section.UpdateLayout = function() end
+				section.UpdateLayout()
+			end
 		end
 		
 		return tab
@@ -2761,6 +2813,9 @@ function library.new(library, name, theme)
 		end
         
         local config = getCurrentConfig()
+        config.faceCharacterEnabled = faceCharacterEnabled
+        config.dragModeEnabled = dragModeEnabled
+        config.uiFollowEnabled = uiFollowEnabled
         saveConfig(config)
 	end)
 
@@ -2787,10 +2842,13 @@ function library.new(library, name, theme)
 		end
         
         local config = getCurrentConfig()
+        config.dragModeEnabled = dragModeEnabled
+        config.faceCharacterEnabled = faceCharacterEnabled
+        config.uiFollowEnabled = uiFollowEnabled
         saveConfig(config)
 	end)
 
-		AIPanelBtn.MouseButton1Click:Connect(function()
+	AIPanelBtn.MouseButton1Click:Connect(function()
 		spawn(function()
 			Ripple(AIPanelBtn)
 		end)
@@ -2816,6 +2874,7 @@ function library.new(library, name, theme)
 		end
         
         local config = getCurrentConfig()
+        config.aiPanelEnabled = aiPanelEnabled
         saveConfig(config)
 	end)
 	
@@ -2853,7 +2912,6 @@ function library.new(library, name, theme)
 	Tween(FaceBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
 	Tween(DragModeBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
 	Tween(AIPanelBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
-	Tween(LayoutToggleBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
 
 	drag(Main, TitleBar)
 
@@ -2863,6 +2921,17 @@ function library.new(library, name, theme)
 
 	function window:GetCanvasPart()
 		return canvasPart
+	end
+
+	function window:UpdateAllSectionsLayout()
+		for _, tabInfo in ipairs(allTabs) do
+			for _, sectionInfo in ipairs(tabInfo.sections) do
+				if sectionInfo.objsFrame:FindFirstChild("ObjsL") and sectionInfo.objsFrame:FindFirstChild("ObjsG") then
+					sectionInfo.objsFrame.ObjsL.Visible = currentLayout ~= "horizontal"
+					sectionInfo.objsFrame.ObjsG.Visible = currentLayout == "horizontal"
+				end
+			end
+		end
 	end
 
 	function window:Destroy()
@@ -2876,6 +2945,8 @@ function library.new(library, name, theme)
 			switchGui:Destroy()
 		end
 	end
+	
+	window:UpdateAllSectionsLayout()
 
 	return window
 end
