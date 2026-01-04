@@ -1,171 +1,171 @@
 repeat
-task.wait()
+	task.wait()
 until game:IsLoaded()
 
 local library = {}
 local toggled = false
 library.currentTab = nil
 library.flags = {}
+local currentLayoutMode = "vertical"
 
 local configPath = "BS脚本/UI配置.txt"
 local colorConfigPath = "BS脚本/颜色配置.txt"
 
 local function getCurrentConfig()
-local config = {
-autoFitScreen = false,
-windowSize = {650, 400},
-windowPosition = {0.5, 0.5},
-accentColor = {Colors and Colors.Accent and math.floor(Colors.Accent.R * 255) or 52,
-Colors and Colors.Accent and math.floor(Colors.Accent.G * 255) or 152,
-Colors and Colors.Accent and math.floor(Colors.Accent.B * 255) or 219},
-transparency = Colors and Colors.Transparent or 0.5,
-scaleFactor = 1,
-uiFollowEnabled = true,
-dragModeEnabled = false,
-faceCharacterEnabled = false,
-aiPanelEnabled = false,
-fontSize = "default",
-buttonStyle = "default",
-animationSpeed = "normal",
-layoutMode = "vertical",
-flags = {}
-}
-
+    local config = {
+        autoFitScreen = false,
+        windowSize = {650, 400},
+        windowPosition = {0.5, 0.5},
+        accentColor = {Colors and Colors.Accent and math.floor(Colors.Accent.R * 255) or 52,
+                       Colors and Colors.Accent and math.floor(Colors.Accent.G * 255) or 152,
+                       Colors and Colors.Accent and math.floor(Colors.Accent.B * 255) or 219},
+        transparency = Colors and Colors.Transparent or 0.5,
+        scaleFactor = 1,
+        uiFollowEnabled = true,
+        dragModeEnabled = false,
+        faceCharacterEnabled = false,
+        aiPanelEnabled = false,
+        fontSize = "default",
+        buttonStyle = "default",
+        animationSpeed = "normal",
+        layoutMode = "vertical",
+        flags = {}
+    }
+    
     for k, v in pairs(library.flags) do
         config.flags[k] = v
     end
     
     return config
-
 end
 
 local function saveConfig(config)
-local success, encoded = pcall(function()
-return game:GetService("HttpService"):JSONEncode(config)
-end)
-if success then
-if isfolder("BS脚本") then
-if isfile(configPath) then
-delfile(configPath)
-end
-else
-makefolder("BS脚本")
-end
-writefile(configPath, encoded)
-return true
-end
-return false
+	local success, encoded = pcall(function()
+		return game:GetService("HttpService"):JSONEncode(config)
+	end)
+	if success then
+		if isfolder("BS脚本") then
+			if isfile(configPath) then
+				delfile(configPath)
+			end
+		else
+			makefolder("BS脚本")
+		end
+		writefile(configPath, encoded)
+		return true
+	end
+	return false
 end
 
 local function loadConfig()
-if isfile(configPath) then
-local success, config = pcall(function()
-return game:GetService("HttpService"):JSONDecode(readfile(configPath))
-end)
-if success then
-return config
-end
-end
-return getCurrentConfig()
+	if isfile(configPath) then
+		local success, config = pcall(function()
+			return game:GetService("HttpService"):JSONDecode(readfile(configPath))
+		end)
+		if success then
+			return config
+		end
+	end
+	return getCurrentConfig()
 end
 
 local function saveColorConfig(colorConfig)
-local success, encoded = pcall(function()
-return game:GetService("HttpService"):JSONEncode(colorConfig)
-end)
-if success then
-if not isfolder("BS脚本") then
-makefolder("BS脚本")
-end
-writefile(colorConfigPath, encoded)
-end
+	local success, encoded = pcall(function()
+		return game:GetService("HttpService"):JSONEncode(colorConfig)
+	end)
+	if success then
+		if not isfolder("BS脚本") then
+			makefolder("BS脚本")
+		end
+		writefile(colorConfigPath, encoded)
+	end
 end
 
 local function loadColorConfig()
-if isfile(colorConfigPath) then
-local success, colorConfig = pcall(function()
-return game:GetService("HttpService"):JSONDecode(readfile(colorConfigPath))
-end)
-if success and colorConfig.accentColor then
-return Color3.fromRGB(unpack(colorConfig.accentColor))
-end
-end
-return Color3.fromRGB(52, 152, 219)
+	if isfile(colorConfigPath) then
+		local success, colorConfig = pcall(function()
+			return game:GetService("HttpService"):JSONDecode(readfile(colorConfigPath))
+		end)
+		if success and colorConfig.accentColor then
+			return Color3.fromRGB(unpack(colorConfig.accentColor))
+		end
+	end
+	return Color3.fromRGB(52, 152, 219)
 end
 
 local services = setmetatable({}, {
-index = function(t, k)
-return game.GetService(game, k)
-end,
+	__index = function(t, k)
+		return game.GetService(game, k)
+	end,
 })
 local mouse = services.Players.LocalPlayer:GetMouse()
 
 local Colors = {
-Primary = Color3.fromRGB(15, 15, 15),
-Secondary = Color3.fromRGB(30, 30, 30),
-Accent = Color3.fromRGB(52, 152, 219),
-Text = Color3.fromRGB(240, 240, 240),
-Placeholder = Color3.fromRGB(150, 150, 150),
-White = Color3.fromRGB(255, 255, 255),
-Transparent = 0.5,
-DefaultAccent = Color3.fromRGB(52, 152, 219)
+	Primary = Color3.fromRGB(15, 15, 15),
+	Secondary = Color3.fromRGB(30, 30, 30),
+	Accent = Color3.fromRGB(52, 152, 219),
+	Text = Color3.fromRGB(240, 240, 240),
+	Placeholder = Color3.fromRGB(150, 150, 150),
+	White = Color3.fromRGB(255, 255, 255),
+	Transparent = 0.5,
+	DefaultAccent = Color3.fromRGB(52, 152, 219)
 }
 
 local API_KEY = "sk-nfuceahepqtmwnqxhmermrnrjiipmnntpqljryhfzolhmjqd"
 local MODEL = "deepseek-ai/DeepSeek-V3.2"
 
 local function CreateGlassEffect(instance, transparency)
-instance.BackgroundTransparency = transparency or Colors.Transparent
-if not instance:FindFirstChild("GlassEffect") then
-local blur = Instance.new("ImageLabel")
-blur.Name = "GlassEffect"
-blur.BackgroundTransparency = 1
-blur.Size = UDim2.new(1, 0, 1, 0)
-blur.Image = "rbxassetid://5554237735"
-blur.ImageTransparency = 0.95
-blur.Parent = instance
-end
+	instance.BackgroundTransparency = transparency or Colors.Transparent
+	if not instance:FindFirstChild("GlassEffect") then
+		local blur = Instance.new("ImageLabel")
+		blur.Name = "GlassEffect"
+		blur.BackgroundTransparency = 1
+		blur.Size = UDim2.new(1, 0, 1, 0)
+		blur.Image = "rbxassetid://5554237735"
+		blur.ImageTransparency = 0.95
+		blur.Parent = instance
+	end
 end
 
 function Tween(obj, duration, style, direction, data)
-services.TweenService
-:Create(obj, TweenInfo.new(duration, Enum.EasingStyle[style], Enum.EasingDirection[direction]), data)
-:Play()
-return true
+	services.TweenService
+		:Create(obj, TweenInfo.new(duration, Enum.EasingStyle[style], Enum.EasingDirection[direction]), data)
+		:Play()
+	return true
 end
 
 function Ripple(obj)
-spawn(function()
-if obj.ClipsDescendants = true then
-obj.ClipsDescendants = true
-end
-local Ripple = Instance.new("ImageLabel")
-Ripple.Name = "Ripple"
-Ripple.Parent = obj
-Ripple.BackgroundColor3 = Colors.White
-Ripple.BackgroundTransparency = 1.000
-Ripple.ZIndex = 8
-Ripple.Image = "rbxassetid://2708891598"
-Ripple.ImageTransparency = 0.800
-Ripple.ScaleType = Enum.ScaleType.Fit
-Ripple.ImageColor3 = Colors.White
-Ripple.Position = UDim2.new(
-(mouse.X - Ripple.AbsolutePosition.X) / obj.AbsoluteSize.X,
-0,
-(mouse.Y - Ripple.AbsolutePosition.Y) / obj.AbsoluteSize.Y,
-0
-)
-Tween(Ripple, 0.3, "Linear", "InOut", { Position = UDim2.new(-5.5, 0, -5.5, 0), Size = UDim2.new(12, 0, 12, 0) })
-wait(0.15)
-Tween(Ripple, 0.3, "Linear", "InOut", { ImageTransparency = 1 })
-wait(0.3)
-Ripple:Destroy()
-end)
+	spawn(function()
+		if obj.ClipsDescendants ~= true then
+			obj.ClipsDescendants = true
+		end
+		local Ripple = Instance.new("ImageLabel")
+		Ripple.Name = "Ripple"
+		Ripple.Parent = obj
+		Ripple.BackgroundColor3 = Colors.White
+		Ripple.BackgroundTransparency = 1.000
+		Ripple.ZIndex = 8
+		Ripple.Image = "rbxassetid://2708891598"
+		Ripple.ImageTransparency = 0.800
+		Ripple.ScaleType = Enum.ScaleType.Fit
+		Ripple.ImageColor3 = Colors.White
+		Ripple.Position = UDim2.new(
+			(mouse.X - Ripple.AbsolutePosition.X) / obj.AbsoluteSize.X,
+			0,
+			(mouse.Y - Ripple.AbsolutePosition.Y) / obj.AbsoluteSize.Y,
+			0
+		)
+		Tween(Ripple, 0.3, "Linear", "InOut", { Position = UDim2.new(-5.5, 0, -5.5, 0), Size = UDim2.new(12, 0, 12, 0) })
+		wait(0.15)
+		Tween(Ripple, 0.3, "Linear", "InOut", { ImageTransparency = 1 })
+		wait(0.3)
+		Ripple:Destroy()
+	end)
 end
 
 local function autoFitUIScreen(mainFrame)
-local viewportSize = services.Workspace.CurrentCamera.ViewportSize
-
+	local viewportSize = services.Workspace.CurrentCamera.ViewportSize
+	
 	if viewportSize.X < 800 then
 		mainFrame.Size = UDim2.new(0, viewportSize.X - 100, 0, viewportSize.Y - 100)
 	elseif viewportSize.Y < 600 then
@@ -175,63 +175,61 @@ local viewportSize = services.Workspace.CurrentCamera.ViewportSize
 	end
 	
 	mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-
 end
 
 function drag(frame, hold)
-if not hold then
-hold = frame
-end
-local dragging
-local dragInput
-local dragStart
-local startPos
-local function update(input)
-local delta = input.Position - dragStart
-frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-end
-hold.InputBegan:Connect(function(input)
-if input.UserInputType == Enum.UserInputType.MouseButton1 then
-dragging = true
-dragStart = input.Position
-startPos = frame.Position
-input.Changed:Connect(function()
-if input.UserInputState == Enum.UserInputState.End then
-dragging = false
-end
-end)
-end
-end)
-frame.InputChanged:Connect(function(input)
-if input.UserInputType == Enum.UserInputType.MouseMovement then
-dragInput = input
-end
-end)
-services.UserInputService.InputChanged:Connect(function(input)
-if input == dragInput and dragging then
-update(input)
-end
-end)
+	if not hold then
+		hold = frame
+	end
+	local dragging
+	local dragInput
+	local dragStart
+	local startPos
+	local function update(input)
+		local delta = input.Position - dragStart
+		frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
+	hold.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			dragStart = input.Position
+			startPos = frame.Position
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+	frame.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			dragInput = input
+		end
+	end)
+	services.UserInputService.InputChanged:Connect(function(input)
+		if input == dragInput and dragging then
+			update(input)
+		end
+	end)
 end
 
 local function highlightText(originalText, searchTerm, color)
-if searchTerm == "" or not originalText:lower():find(searchTerm:lower(), 1, true) then
-return originalText
-end
-
+	if searchTerm == "" or not originalText:lower():find(searchTerm:lower(), 1, true) then
+		return originalText
+	end
+	
 	local pattern = searchTerm:gsub("([%^%$%(%)%%%.%[%]%*%+%-%?])", "%%%1")
 	local highlighted = originalText:gsub("(" .. pattern .. ")", 
 		'<font color="#4A90E2"><b>%1</b></font>')
 	return highlighted
-
 end
 
 function library.new(library, name, theme)
-for , v in next, services.CoreGui:GetChildren() do
-if v.Name == "REN" then
-v:Destroy()
-end
-end
+	for _, v in next, services.CoreGui:GetChildren() do
+		if v.Name == "REN" then
+			v:Destroy()
+		end
+	end
 
 	local camera = services.Workspace.CurrentCamera
 	local player = services.Players.LocalPlayer
@@ -277,7 +275,7 @@ end
 	Open.BackgroundTransparency = Colors.Transparent
 	Open.Position = UDim2.new(0.01, 0, 0.3, 0)
 	Open.Size = UDim2.new(0, 45, 0, 45)
-	Open.Image = "rbxassetid://10734982320"
+	Open.Image = "rbxassetid://4370341699"
 	Open.ImageColor3 = Colors.Text
 	Open.Active = true
 	Open.Draggable = true
@@ -472,7 +470,7 @@ end
 	LayoutToggleBtn.Position = UDim2.new(1, -35, 0, 10)
 	LayoutToggleBtn.Size = UDim2.new(0, 25, 0, 25)
 	LayoutToggleBtn.Image = "rbxassetid://3926305904"
-	LayoutToggleBtn.ImageRectOffset = Vector2.new(404, 124)
+	LayoutToggleBtn.ImageRectOffset = Vector2.new(124, 444)
 	LayoutToggleBtn.ImageRectSize = Vector2.new(36, 36)
 	LayoutToggleBtn.ImageColor3 = Colors.Text
 	LayoutToggleBtn.ZIndex = 10
@@ -792,6 +790,10 @@ end
             faceCharacterEnabled = config.faceCharacterEnabled
         end
         
+        if config.layoutMode ~= nil then
+            currentLayoutMode = config.layoutMode
+        end
+        
         return true
     end
 
@@ -992,7 +994,7 @@ end
 				
                 if hex == "random" then
                     newColor = Color3.fromRGB(math.random(0,255), math.random(0,255), math.random(0,255))
-                    addChatMessage("已应用随机颜色！", false)
+                    addChatMessage("🎨 已应用随机颜色！", false)
                 else
                     local r = tonumber(hex:sub(2, 3), 16) or 255
                     local g = tonumber(hex:sub(4, 5), 16) or 255
@@ -1110,7 +1112,7 @@ end
                     end
                 end
                 
-				addChatMessage("UI已完全重置为默认设置！", false)
+				addChatMessage("🔄 UI已完全重置为默认设置！", false)
             elseif cmd.type == "save" then
                 local config = getCurrentConfig()
                 if saveConfig(config) then
@@ -1414,45 +1416,34 @@ end
 		end
 	end)
 	
-	local TabBarContainer = Instance.new("Frame")
-	TabBarContainer.Name = "TabBarContainer"
-	TabBarContainer.Parent = Main
-	TabBarContainer.BackgroundColor3 = Colors.Primary
-	TabBarContainer.BackgroundTransparency = 1
-	TabBarContainer.BorderSizePixel = 0
-	TabBarContainer.Position = UDim2.new(0, 15, 0, 95)
-	TabBarContainer.Size = UDim2.new(1, -30, 0, 45)
-	TabBarContainer.Visible = false
+	local TopTabBar = Instance.new("ScrollingFrame")
+	TopTabBar.Name = "TopTabBar"
+	TopTabBar.Parent = Main
+	TopTabBar.BackgroundColor3 = Colors.Secondary
+	TopTabBar.BackgroundTransparency = Colors.Transparent
+	TopTabBar.Position = UDim2.new(0, 15, 0, 95)
+	TopTabBar.Size = UDim2.new(1, -30, 0, 45)
+	TopTabBar.Visible = false
+	TopTabBar.ScrollBarThickness = 2
+	TopTabBar.ScrollBarImageColor3 = Colors.Secondary
 	
-	local TabBarContainerL = Instance.new("UIListLayout")
-	TabBarContainerL.Name = "TabBarContainerL"
-	TabBarContainerL.Parent = TabBarContainer
-	TabBarContainerL.SortOrder = Enum.SortOrder.LayoutOrder
-	TabBarContainerL.FillDirection = Enum.FillDirection.Horizontal
-	TabBarContainerL.HorizontalAlignment = Enum.HorizontalAlignment.Left
-	TabBarContainerL.VerticalAlignment = Enum.VerticalAlignment.Center
-	TabBarContainerL.Padding = UDim.new(0, 8)
+	local TopTabBarC = Instance.new("UICorner")
+	TopTabBarC.CornerRadius = UDim.new(0, 8)
+	TopTabBarC.Parent = TopTabBar
 	
-	local TabBarScroll = Instance.new("ScrollingFrame")
-	TabBarScroll.Name = "TabBarScroll"
-	TabBarScroll.Parent = TabBarContainer
-	TabBarScroll.BackgroundTransparency = 1
-	TabBarScroll.BorderSizePixel = 0
-	TabBarScroll.Size = UDim2.new(1, 0, 1, 0)
-	TabBarScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-	TabBarScroll.ScrollBarThickness = 0
-	TabBarScroll.ScrollBarImageTransparency = 1
-	TabBarScroll.AutomaticCanvasSize = Enum.AutomaticSize.X
-	TabBarScroll.ScrollingDirection = Enum.ScrollingDirection.X
+	CreateGlassEffect(TopTabBar)
 	
-	local TabBarScrollL = Instance.new("UIListLayout")
-	TabBarScrollL.Name = "TabBarScrollL"
-	TabBarScrollL.Parent = TabBarScroll
-	TabBarScrollL.SortOrder = Enum.SortOrder.LayoutOrder
-	TabBarScrollL.FillDirection = Enum.FillDirection.Horizontal
-	TabBarScrollL.HorizontalAlignment = Enum.HorizontalAlignment.Left
-	TabBarScrollL.VerticalAlignment = Enum.VerticalAlignment.Center
-	TabBarScrollL.Padding = UDim.new(0, 5)
+	local TopTabBarL = Instance.new("UIListLayout")
+	TopTabBarL.Name = "TopTabBarL"
+	TopTabBarL.Parent = TopTabBar
+	TopTabBarL.SortOrder = Enum.SortOrder.LayoutOrder
+	TopTabBarL.Padding = UDim.new(0, 8)
+	TopTabBarL.FillDirection = Enum.FillDirection.Horizontal
+	TopTabBarL.HorizontalAlignment = Enum.HorizontalAlignment.Left
+	
+	TopTabBarL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+		TopTabBar.CanvasSize = UDim2.new(0, TopTabBarL.AbsoluteContentSize.X + 10, 0, 0)
+	end)
 	
 	local Content = Instance.new("Frame")
 	Content.Name = "Content"
@@ -1461,91 +1452,8 @@ end
 	Content.Position = UDim2.new(0, 0, 0, 100)
 	Content.Size = UDim2.new(1, 0, 1, -100)
 	
-	local SideBar = Instance.new("Frame")
-	SideBar.Name = "SideBar"
-	SideBar.Parent = Content
-	SideBar.BackgroundColor3 = Colors.Secondary
-	SideBar.BackgroundTransparency = Colors.Transparent
-	SideBar.Size = UDim2.new(0, 140, 1, 0)
-	
-	local SideBarC = Instance.new("UICorner")
-	SideBarC.CornerRadius = UDim.new(0, 8)
-	SideBarC.Parent = SideBar
-	
-	CreateGlassEffect(SideBar)
-	
-	local TabButtons = Instance.new("ScrollingFrame")
-	TabButtons.Name = "TabBts"
-	TabButtons.Parent = SideBar
-	TabButtons.Active = true
-	TabButtons.BackgroundTransparency = 1
-	TabButtons.BorderSizePixel = 0
-	TabButtons.Position = UDim2.new(0, 5, 0, 5)
-	TabButtons.Size = UDim2.new(1, -10, 1, -10)
-	TabButtons.CanvasSize = UDim2.new(0, 0, 0, 0)
-	TabButtons.ScrollBarThickness = 2
-	TabButtons.ScrollBarImageColor3 = Colors.Secondary
-	
-	local TabButtonsL = Instance.new("UIListLayout")
-	TabButtonsL.Name = "TabBtsL"
-	TabButtonsL.Parent = TabButtons
-	TabButtonsL.SortOrder = Enum.SortOrder.LayoutOrder
-	TabButtonsL.Padding = UDim.new(0, 8)
-	
-	TabButtonsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-		TabButtons.CanvasSize = UDim2.new(0, 0, 0, TabButtonsL.AbsoluteContentSize.Y + 10)
-	end)
-	
-	local TabMain = Instance.new("Frame")
-	TabMain.Name = "TabMain"
-	TabMain.Parent = Content
-	TabMain.BackgroundTransparency = 1
-	TabMain.Position = UDim2.new(0, 145, 0, 0)
-	TabMain.Size = UDim2.new(1, -145, 1, 0)
-	
 	local allTabs = {}
 	local tabInfos = {}
-	local layoutMode = "vertical"
-
-	local function updateLayoutMode(mode)
-		layoutMode = mode or layoutMode
-		if layoutMode == "horizontal" then
-			SideBar.Visible = false
-			TabBarContainer.Visible = true
-			Content.Position = UDim2.new(0, 0, 0, 140)
-			Content.Size = UDim2.new(1, 0, 1, -140)
-			TabMain.Position = UDim2.new(0, 0, 0, 0)
-			TabMain.Size = UDim2.new(1, 0, 1, 0)
-		else
-			SideBar.Visible = true
-			TabBarContainer.Visible = false
-			Content.Position = UDim2.new(0, 0, 0, 100)
-			Content.Size = UDim2.new(1, 0, 1, -100)
-			TabMain.Position = UDim2.new(0, 145, 0, 0)
-			TabMain.Size = UDim2.new(1, -145, 1, 0)
-		end
-	end
-	
-	LayoutToggleBtn.MouseButton1Click:Connect(function()
-		spawn(function()
-			Ripple(LayoutToggleBtn)
-		end)
-		
-		layoutMode = layoutMode == "vertical" and "horizontal" or "vertical"
-		updateLayoutMode(layoutMode)
-        
-        local config = getCurrentConfig()
-        config.layoutMode = layoutMode
-        saveConfig(config)
-		
-		if layoutMode == "horizontal" then
-			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
-			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
-		else
-			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
-			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
-		end
-	end)
 	
 	SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
 		local searchText = SearchBox.Text:lower()
@@ -1704,10 +1612,10 @@ end
 	function window.Tab(window, name, icon)
 		local tabButton = Instance.new("Frame")
 		tabButton.Name = "TabButton"
-		tabButton.Parent = TabButtons
+		tabButton.Parent = currentLayoutMode == "horizontal" and TopTabBar or nil
 		tabButton.BackgroundColor3 = Colors.Secondary
 		tabButton.BackgroundTransparency = 0.3
-		tabButton.Size = UDim2.new(1, 0, 0, 40)
+		tabButton.Size = UDim2.new(0, 120, 0, 40)
 		
 		local tabButtonC = Instance.new("UICorner")
 		tabButtonC.CornerRadius = UDim.new(0, 6)
@@ -1745,7 +1653,7 @@ end
 		
 		local tabFrame = Instance.new("ScrollingFrame")
 		tabFrame.Name = "Tab"
-		tabFrame.Parent = TabMain
+		tabFrame.Parent = Content
 		tabFrame.BackgroundTransparency = 1
 		tabFrame.Size = UDim2.new(1, 0, 1, 0)
 		tabFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
@@ -1766,6 +1674,12 @@ end
 			sections = {}
 		}
 		table.insert(allTabs, tabInfo)
+		
+		if currentLayoutMode == "vertical" then
+			tabButton.Parent = nil
+		else
+			tabButton.Parent = TopTabBar
+		end
 		
 		tabBtn.MouseButton1Click:Connect(function()
 			spawn(function()
@@ -1860,14 +1774,23 @@ end
 			Objs.Position = UDim2.new(0, 6, 0, 42)
 			Objs.Size = UDim2.new(1, -12, 0, 0)
 			
-			local ObjsL = Instance.new("UIGridLayout")
+			local ObjsL = Instance.new("UIListLayout")
 			ObjsL.Name = "ObjsL"
 			ObjsL.Parent = Objs
 			ObjsL.SortOrder = Enum.SortOrder.LayoutOrder
-			ObjsL.HorizontalAlignment = Enum.HorizontalAlignment.Center
-			ObjsL.VerticalAlignment = Enum.VerticalAlignment.Top
-			ObjsL.CellSize = UDim2.new(0.48, 0, 0, 40)
-			ObjsL.CellPadding = UDim2.new(0, 8, 0, 8)
+			ObjsL.Padding = UDim.new(0, 8)
+			
+			local gridLayout = Instance.new("UIGridLayout")
+			gridLayout.Name = "GridLayout"
+			gridLayout.Parent = Objs
+			gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
+			gridLayout.Padding = UDim.new(0, 8)
+			gridLayout.CellSize = UDim2.new(0.5, -4, 0, 40)
+			gridLayout.CellPadding = UDim.new(0, 8)
+			gridLayout.FillDirection = Enum.FillDirection.Horizontal
+			gridLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+			gridLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+			gridLayout.Visible = false
 			
 			local open = TabVal
 			if TabVal ~= false then
@@ -1886,7 +1809,18 @@ end
 			
 			ObjsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 				if not open then return end
-				Section.Size = UDim2.new(0.975, 0, 0, 42 + ObjsL.AbsoluteContentSize.Y + 10)
+				if currentLayoutMode == "horizontal" then
+					Section.Size = UDim2.new(0.975, 0, 0, 42 + gridLayout.AbsoluteContentSize.Y + 10)
+				else
+					Section.Size = UDim2.new(0.975, 0, 0, 42 + ObjsL.AbsoluteContentSize.Y + 10)
+				end
+			end)
+			
+			gridLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+				if not open then return end
+				if currentLayoutMode == "horizontal" then
+					Section.Size = UDim2.new(0.975, 0, 0, 42 + gridLayout.AbsoluteContentSize.Y + 10)
+				end
 			end)
 			
 			local sectionInfo = {
@@ -2699,15 +2633,88 @@ end
     if currentConfig.uiFollowEnabled ~= nil then uiFollowEnabled = currentConfig.uiFollowEnabled end
     if currentConfig.dragModeEnabled ~= nil then dragModeEnabled = currentConfig.dragModeEnabled end
     if currentConfig.faceCharacterEnabled ~= nil then faceCharacterEnabled = currentConfig.faceCharacterEnabled end
-    if currentConfig.layoutMode then
-        layoutMode = currentConfig.layoutMode
-        updateLayoutMode(layoutMode)
-        if layoutMode == "horizontal" then
-            LayoutToggleBtn.ImageColor3 = Colors.Accent
-            LayoutToggleBtn.BackgroundTransparency = 0
-        end
-    end
 
+	local function switchLayoutMode()
+		currentLayoutMode = currentLayoutMode == "vertical" and "horizontal" or "vertical"
+		
+		if currentLayoutMode == "horizontal" then
+			TopTabBar.Visible = true
+			Content.Position = UDim2.new(0, 0, 0, 145)
+			Content.Size = UDim2.new(1, 0, 1, -145)
+			
+			for _, tabInfo in ipairs(allTabs) do
+				tabInfo.button.Parent = TopTabBar
+			end
+			
+			for _, tabInfo in ipairs(allTabs) do
+				for _, sectionInfo in ipairs(tabInfo.sections or {}) do
+					local gridLayout = sectionInfo.objsFrame:FindFirstChild("GridLayout")
+					local listLayout = sectionInfo.objsFrame:FindFirstChild("ObjsL")
+					if gridLayout then
+						gridLayout.Visible = true
+					end
+					if listLayout then
+						listLayout.Visible = false
+					end
+					sectionInfo.objsFrame.Size = UDim2.new(1, -12, 0, 0)
+				end
+			end
+			
+			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
+			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
+		else
+			TopTabBar.Visible = false
+			Content.Position = UDim2.new(0, 0, 0, 100)
+			Content.Size = UDim2.new(1, 0, 1, -100)
+			
+			for _, tabInfo in ipairs(allTabs) do
+				tabInfo.button.Parent = nil
+			end
+			
+			for _, tabInfo in ipairs(allTabs) do
+				for _, sectionInfo in ipairs(tabInfo.sections or {}) do
+					local gridLayout = sectionInfo.objsFrame:FindFirstChild("GridLayout")
+					local listLayout = sectionInfo.objsFrame:FindFirstChild("ObjsL")
+					if gridLayout then
+						gridLayout.Visible = false
+					end
+					if listLayout then
+						listLayout.Visible = true
+					end
+					sectionInfo.objsFrame.Size = UDim2.new(1, -12, 0, 0)
+				end
+			end
+			
+			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
+			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
+		end
+		
+		if library.currentTab then
+			library.currentTab.frame.Visible = false
+			library.currentTab = nil
+			for _, tabInfo in ipairs(allTabs) do
+				if tabInfo.button.Visible then
+					switchTab({
+						button = tabInfo.button,
+						frame = tabInfo.frame
+					})
+					break
+				end
+			end
+		end
+		
+		local config = getCurrentConfig()
+		config.layoutMode = currentLayoutMode
+		saveConfig(config)
+	end
+	
+	LayoutToggleBtn.MouseButton1Click:Connect(function()
+		spawn(function()
+			Ripple(LayoutToggleBtn)
+		end)
+		switchLayoutMode()
+	end)
+	
 	FaceBtn.MouseButton1Click:Connect(function()
 		spawn(function()
 			Ripple(FaceBtn)
@@ -2722,10 +2729,6 @@ end
 			Tween(FaceBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
 			Tween(DragModeBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
 			Tween(DragModeBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
-			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
-			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
-			layoutMode = "vertical"
-			updateLayoutMode(layoutMode)
 			TitleBar.Active = false
 		else
 			uiFollowEnabled = true
@@ -2751,10 +2754,6 @@ end
 			Tween(DragModeBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
 			Tween(FaceBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
 			Tween(FaceBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
-			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
-			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
-			layoutMode = "vertical"
-			updateLayoutMode(layoutMode)
 			TitleBar.Active = true
 		else
 			uiFollowEnabled = true
@@ -2826,6 +2825,10 @@ end
 	renderConnection = game:GetService("RunService").RenderStepped:Connect(update3DPosition)
     
     applyFullConfig(currentConfig)
+    
+    if currentLayoutMode == "horizontal" then
+        switchLayoutMode()
+    end
 	
 	Tween(FaceBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
 	Tween(DragModeBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
@@ -2855,7 +2858,6 @@ end
 	end
 
 	return window
-
 end
 
 return library
