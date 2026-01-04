@@ -293,8 +293,10 @@ function library.new(library, name, theme)
 	OpenStroke.Transparency = 0.5
 	OpenStroke.Parent = Open
 
+	local viewportSize = services.Workspace.CurrentCamera.ViewportSize
 	local isComputer = not services.UserInputService.TouchEnabled
-	local scaleFactor = isComputer and 1.3 or 1
+	local isTablet = services.UserInputService.TouchEnabled and viewportSize.X >= 1000
+	local scaleFactor = isComputer and 1.5 or (isTablet and 1.0 or 1.0)
 
 	Colors.Accent = loadColorConfig()
 
@@ -1082,7 +1084,7 @@ function library.new(library, name, theme)
 				Colors.Transparent = 0.5
 				saveColorConfig({accentColor = {52, 152, 219}})
                 
-                scaleFactor = isComputer and 1.3 or 1
+                scaleFactor = isComputer and 1.5 or (isTablet and 1.0 or 1.0)
                 Main.Size = UDim2.new(0, 650 * scaleFactor, 0, 400 * scaleFactor)
                 
                 for _, obj in pairs(Main:GetDescendants()) do
@@ -1157,12 +1159,12 @@ function library.new(library, name, theme)
         if lowerMsg:match("开启自定义指令") or lowerMsg:match("切换到自定义模式") then
             aiMode = "custom"
             ModeToggleBtn.Text = "自定义指令模式"
-            addChatMessage("已切换到自定义指令模式，修改UI！", false)
+            addChatMessage("已切换到自定义指令模式，现在可以修改UI了！", false)
             return
         elseif lowerMsg:match("开启聊天模式") or lowerMsg:match("切换到聊天模式") then
             aiMode = "chat"
             ModeToggleBtn.Text = "聊天模式"
-            addChatMessage("已切换到聊天模式，可以进行自然对话了！", false)
+            addChatMessage("已切换到聊天模式，现在可以进行自然对话了！", false)
             return
         end
 		
@@ -1327,7 +1329,7 @@ function library.new(library, name, theme)
 	TitleBar.BackgroundColor3 = Colors.Secondary
 	TitleBar.BackgroundTransparency = Colors.Transparent
 	TitleBar.Size = UDim2.new(1, 0, 0, 45)
-	TitleBar.Active = false
+	TitleBar.Active = true
 	
 	local TitleBarC = Instance.new("UICorner")
 	TitleBarC.CornerRadius = UDim.new(0, 8)
@@ -1496,8 +1498,6 @@ function library.new(library, name, theme)
 	AnimationsGrid.Size = UDim2.new(1, -30, 1, -115)
 	AnimationsGrid.CanvasSize = UDim2.new(0, 0, 0, 0)
 	AnimationsGrid.ScrollBarThickness = 2
-	AnimationsGrid.ScrollingDirection = Enum.ScrollingDirection.Y
-	AnimationsGrid.AutomaticCanvasSize = Enum.AutomaticSize.Y
 	AnimationsGrid.ZIndex = 16
 
 	local GridLayout = Instance.new("UIGridLayout")
@@ -1509,7 +1509,85 @@ function library.new(library, name, theme)
 	GridLayout.FillDirection = Enum.FillDirection.Horizontal
 	GridLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
 	GridLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	GridLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+
+	GridLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+		AnimationsGrid.CanvasSize = UDim2.new(0, 0, 0, GridLayout.AbsoluteContentSize.Y)
+	end)
+
+	local function fetchCatalogItems(itemType, cursor)
+		local HttpService = game:GetService("HttpService")
+		local PROXY_URL = "https://catalog.roblox.com"
+		
+		local endpoint = string.format(
+			"%s/v1/search/items?category=Animations&limit=100&cursor=%s",
+			PROXY_URL,
+			cursor or ""
+		)
+		
+		local success, data = pcall(function()
+			local response = game:HttpGet(endpoint)
+			return HttpService:JSONDecode(response)
+		end)
+		
+		if success then
+			return {
+				items = data.data or {},
+				nextCursor = data.nextPageCursor or ""
+			}
+		else
+			return {items = {}, nextCursor = ""}
+		end
+	end
+
+	local function fetchAssetDetails(assetIds)
+		local HttpService = game:GetService("HttpService")
+		local PROXY_URL = "https://catalog.roblox.com"
+		
+		local endpoint = string.format(
+			"%s/v1/assets?assetIds=%s",
+			PROXY_URL,
+			table.concat(assetIds, ",")
+		)
+		
+		local success, data = pcall(function()
+			local response = game:HttpGet(endpoint)
+			return HttpService:JSONDecode(response)
+		end)
+		
+		if success then
+			return data.data or {}
+		else
+			return {}
+		end
+	end
+
+	local function fetchBundleItems(bundleId)
+		local HttpService = game:GetService("HttpService")
+		local PROXY_URL = "https://catalog.roblox.com"
+		
+		local endpoint = string.format(
+			"%s/v1/bundles/%s/bundleItems",
+			PROXY_URL,
+			bundleId
+		)
+		
+		local success, data = pcall(function()
+			local response = game:HttpGet(endpoint)
+			return HttpService:JSONDecode(response)
+		end)
+		
+		if success then
+			local bundledItems = {}
+			for _, item in pairs(data.data or {}) do
+				if item.type == "Asset" then
+					table.insert(bundledItems, item.id)
+				end
+			end
+			return bundledItems
+		else
+			return {}
+		end
+	end
 
 	local function loadAnimations(searchTerm)
 		for _, child in pairs(AnimationsGrid:GetChildren()) do
@@ -1518,189 +1596,105 @@ function library.new(library, name, theme)
 			end
 		end
 		
-		local loadingLabel = Instance.new("TextLabel")
-		loadingLabel.Name = "LoadingLabel"
-		loadingLabel.Parent = AnimationsGrid
-		loadingLabel.BackgroundTransparency = 1
-		loadingLabel.Size = UDim2.new(1, 0, 0, 50)
-		loadingLabel.Font = Enum.Font.Gotham
-		loadingLabel.TextSize = 14
-		loadingLabel.TextColor3 = Colors.Text
-		loadingLabel.Text = "正在加载动画..."
-		loadingLabel.ZIndex = 17
-		
 		spawn(function()
-			local HttpService = game:GetService("HttpService")
-			local attempts = 0
-			local maxAttempts = 3
-			local success = false
-			local data = nil
+			local animationsData = fetchCatalogItems("Animations")
+			local animations = animationsData.items
 			
-			while attempts < maxAttempts and not success do
-				attempts = attempts + 1
-				
-				local requestSuccess, requestData = pcall(function()
-					local url = "https://catalog.roblox.com/v1/search/items/details?Category=11&Limit=100&SortType=2"
-					
-					if searchTerm and searchTerm:match("%S+") then
-						url = url .. "&Keyword=" .. HttpService:UrlEncode(searchTerm)
-					else
-						url = url .. "&Keyword=" .. HttpService:UrlEncode("dance")
-					end
-					
-					url = url .. "&nocache=" .. tick()
-					
-					local response = game:HttpGet(url, true)
-					return HttpService:JSONDecode(response)
-				end)
-				
-				success = requestSuccess
-				data = requestData
-				
-				if not success then
-					wait(1)
-				end
-			end
-			
-			if not success or not data then
-				loadingLabel.Text = "加载失败，请检查网络或稍后重试"
-				addChatMessage("❌ 动画请求失败: " .. (data or "未知错误"), false)
-				wait(3)
-				loadingLabel:Destroy()
+			if #animations == 0 then
+				local errorLabel = Instance.new("TextLabel")
+				errorLabel.Name = "ErrorLabel"
+				errorLabel.Parent = AnimationsGrid
+				errorLabel.BackgroundTransparency = 1
+				errorLabel.Size = UDim2.new(1, 0, 0, 50)
+				errorLabel.Font = Enum.Font.Gotham
+				errorLabel.TextSize = 14
+				errorLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+				errorLabel.Text = "无法加载动画，请检查网络连接"
+				errorLabel.ZIndex = 17
 				return
 			end
 			
-			local animationList = {}
-			if data.data and #data.data > 0 then
-				for _, item in ipairs(data.data) do
-					if item.itemType == "Asset" and item.assetType == 24 then
-						table.insert(animationList, {
-							id = item.id,
-							name = item.name or "未命名动画"
-						})
+			for i, anim in ipairs(animations) do
+				if i <= 100 then
+					local animName = anim.name or "动画"
+					
+					if searchTerm == "" or animName:lower():find(searchTerm:lower(), 1, true) then
+						local animButton = Instance.new("ImageButton")
+						animButton.Name = "Anim_" .. anim.id
+						animButton.Parent = AnimationsGrid
+						animButton.BackgroundColor3 = Colors.Primary
+						animButton.BackgroundTransparency = 0.3
+						animButton.Size = UDim2.new(0, 80, 0, 100)
+						animButton.AutoButtonColor = false
+						animButton.ZIndex = 17
+						
+						animButton.Image = "rbxassetid://10734982320"
+						
+						local animCorner = Instance.new("UICorner")
+						animCorner.CornerRadius = UDim.new(0, 6)
+						animCorner.Parent = animButton
+						
+						local animTitle = Instance.new("TextLabel")
+						animTitle.Parent = animButton
+						animTitle.BackgroundColor3 = Colors.Secondary
+						animTitle.BackgroundTransparency = 0.5
+						animTitle.Position = UDim2.new(0, 0, 0, 80)
+						animTitle.Size = UDim2.new(1, 0, 0, 20)
+						animTitle.Font = Enum.Font.GothamSemibold
+						animTitle.Text = animName
+						animTitle.TextColor3 = Colors.Text
+						animTitle.TextSize = 10
+						animTitle.TextWrapped = true
+						animTitle.ZIndex = 18
+						
+						local titleCorner = Instance.new("UICorner")
+						titleCorner.CornerRadius = UDim.new(0, 6)
+						titleCorner.Parent = animTitle
+						
+						animButton.MouseButton1Click:Connect(function()
+							local character = services.Players.LocalPlayer.Character
+							if character and character:FindFirstChild("Humanoid") then
+								local animation = Instance.new("Animation")
+								animation.AnimationId = "rbxassetid://" .. anim.id
+								
+								local animator = character.Humanoid:FindFirstChildOfClass("Animator")
+								if not animator then
+									animator = Instance.new("Animator")
+									animator.Parent = character.Humanoid
+								end
+								
+								local success, animationTrack = pcall(function()
+									return animator:LoadAnimation(animation)
+								end)
+								
+								if success and animationTrack then
+									animationTrack:Play()
+									addChatMessage("正在播放动画: " .. animName, false)
+								else
+									addChatMessage("❌ 无法加载动画: " .. animName, false)
+								end
+							else
+								addChatMessage("❌ 没有找到角色或Humanoid", false)
+							end
+						end)
+						
+						animButton.MouseEnter:Connect(function()
+							Tween(animButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
+						end)
+						
+						animButton.MouseLeave:Connect(function()
+							Tween(animButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
+						end)
 					end
 				end
 			end
 			
-			if #animationList == 0 then
-				loadingLabel.Text = "未找到动画，加载默认列表..."
-				
-				local defaultAnimations = {
-					{id = 507777826, name = "跳舞1"},
-					{id = 507777269, name = "跳舞2"},
-					{id = 507777093, name = "跳舞3"},
-					{id = 507776043, name = "打招呼"},
-					{id = 507770239, name = "挥手"},
-					{id = 507769043, name = "拍手"}
-				}
-				
-				animationList = defaultAnimations
-				wait(1)
-			end
-			
-			loadingLabel:Destroy()
-			
-			for _, anim in ipairs(animationList) do
-				local animButton = Instance.new("ImageButton")
-				animButton.Name = "Anim_" .. anim.id
-				animButton.Parent = AnimationsGrid
-				animButton.BackgroundColor3 = Colors.Primary
-				animButton.BackgroundTransparency = 0.3
-				animButton.Size = UDim2.new(0, 80, 0, 100)
-				animButton.AutoButtonColor = false
-				animButton.ZIndex = 17
-				
-				animButton.Image = "rbxassetid://" .. anim.id
-				animButton.ScaleType = Enum.ScaleType.Crop
-				
-				local animCorner = Instance.new("UICorner")
-				animCorner.CornerRadius = UDim.new(0, 6)
-				animCorner.Parent = animButton
-				
-				local animTitle = Instance.new("TextLabel")
-				animTitle.Parent = animButton
-				animTitle.BackgroundColor3 = Colors.Secondary
-				animTitle.BackgroundTransparency = 0.5
-				animTitle.Position = UDim2.new(0, 0, 0, 80)
-				animTitle.Size = UDim2.new(1, 0, 0, 20)
-				animTitle.Font = Enum.Font.GothamSemibold
-				local displayName = anim.name
-				if #displayName > 8 then
-					displayName = displayName:sub(1, 8) .. "..."
-				end
-				animTitle.Text = displayName
-				animTitle.TextColor3 = Colors.Text
-				animTitle.TextSize = 10
-				animTitle.TextWrapped = true
-				animTitle.ZIndex = 18
-				
-				local titleCorner = Instance.new("UICorner")
-				titleCorner.CornerRadius = UDim.new(0, 6)
-				titleCorner.Parent = animTitle
-				
-				animButton.MouseButton1Click:Connect(function()
-					Tween(animButton, 0.1, "Sine", "Out", { BackgroundTransparency = 0 })
-					wait(0.1)
-					Tween(animButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
-					
-					local player = services.Players.LocalPlayer
-					local character = player.Character
-					if not character or not character:FindFirstChild("Humanoid") then
-						addChatMessage("❌ 无法播放动画：角色未加载", false)
-						return
-					end
-					
-					local humanoid = character.Humanoid
-					local animator = humanoid:FindFirstChildOfClass("Animator")
-					
-					if not animator then
-						animator = Instance.new("Animator")
-						animator.Parent = humanoid
-					end
-					
-					local animationId = tonumber(anim.id)
-					if not animationId then
-						addChatMessage("❌ 动画ID无效", false)
-						return
-					end
-					
-					local success, animation = pcall(function()
-						local anim = Instance.new("Animation")
-						anim.AnimationId = "rbxassetid://" .. animationId
-						return animator:LoadAnimation(anim)
-					end)
-					
-					if success and animation then
-						animation:Play()
-						addChatMessage("▶️ 正在播放: " .. anim.name, false)
-					else
-						addChatMessage("❌ 动画加载失败", false)
-					end
-				end)
-				
-				animButton.MouseEnter:Connect(function()
-					Tween(animButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
-				end)
-				
-				animButton.MouseLeave:Connect(function()
-					Tween(animButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
-				end)
-			end
+			AnimationsGrid.CanvasSize = UDim2.new(0, 0, 0, GridLayout.AbsoluteContentSize.Y)
 		end)
 	end
 
 	AnimSearchBox:GetPropertyChangedSignal("Text"):Connect(function()
-		local searchText = AnimSearchBox.Text
-		if #searchText > 2 or searchText == "" then
-			wait(0.5)
-			if AnimSearchBox.Text == searchText then
-				xpcall(function()
-					loadAnimations(searchText)
-				end, function(err)
-					addChatMessage("❌ 搜索动画时出错: " .. tostring(err), false)
-				end)
-			end
-		end
+		loadAnimations(AnimSearchBox.Text)
 	end)
 
 	AnimationsBtn.MouseButton1Click:Connect(function()
@@ -1716,10 +1710,7 @@ function library.new(library, name, theme)
 			AnimationsFrame.Visible = true
 			Tween(AnimationsBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
 			Tween(AnimationsBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
-			
-			if #AnimationsGrid:GetChildren() == 0 then
-				loadAnimations("")
-			end
+			loadAnimations("")
 		else
 			AnimationsFrame.Visible = false
 			Content.Visible = true
@@ -2937,7 +2928,6 @@ function library.new(library, name, theme)
 			Tween(FaceBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
 			Tween(DragModeBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
 			Tween(DragModeBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
-			TitleBar.Active = false
 		else
 			uiFollowEnabled = true
 			Tween(FaceBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
@@ -2962,12 +2952,10 @@ function library.new(library, name, theme)
 			Tween(DragModeBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
 			Tween(FaceBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
 			Tween(FaceBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
-			TitleBar.Active = true
 		else
 			uiFollowEnabled = true
 			Tween(DragModeBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
 			Tween(DragModeBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
-			TitleBar.Active = false
 		end
         
         local config = getCurrentConfig()
