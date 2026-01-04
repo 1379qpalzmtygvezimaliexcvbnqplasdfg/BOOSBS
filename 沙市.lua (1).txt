@@ -24,11 +24,9 @@ local function getCurrentConfig()
         dragModeEnabled = false,
         faceCharacterEnabled = false,
         aiPanelEnabled = false,
-        compactLayout = false,
         fontSize = "default",
         buttonStyle = "default",
         animationSpeed = "normal",
-        openButtonImage = "",
         flags = {}
     }
     
@@ -224,7 +222,9 @@ local function highlightText(originalText, searchTerm, color)
 	return highlighted
 end
 
-function library.new(library, name, theme)
+function library.new(library, name, theme, switchIconId)
+	switchIconId = switchIconId or 4370341699
+
 	for _, v in next, services.CoreGui:GetChildren() do
 		if v.Name == "REN" then
 			v:Destroy()
@@ -275,14 +275,12 @@ function library.new(library, name, theme)
 	Open.BackgroundTransparency = Colors.Transparent
 	Open.Position = UDim2.new(0.01, 0, 0.3, 0)
 	Open.Size = UDim2.new(0, 45, 0, 45)
-	Open.Image = ""
+	Open.Image = ("rbxassetid://%s"):format(switchIconId)
+	Open.ImageColor3 = Colors.Text
 	Open.Active = true
 	Open.Draggable = true
 	Open.ZIndex = 100
-	
-	local OpenC = Instance.new("UICorner")
-	OpenC.CornerRadius = UDim.new(0, 6)
-	OpenC.Parent = Open
+	Open.ScaleType = Enum.ScaleType.Fit
 	
 	CreateGlassEffect(Open)
 	
@@ -365,25 +363,6 @@ function library.new(library, name, theme)
 	local CloseBtnC = Instance.new("UICorner")
 	CloseBtnC.CornerRadius = UDim.new(0, 6)
 	CloseBtnC.Parent = CloseBtn
-
-	local LayoutToggleBtn = Instance.new("ImageButton")
-	LayoutToggleBtn.Name = "LayoutToggleBtn"
-	LayoutToggleBtn.Parent = Main
-	LayoutToggleBtn.BackgroundColor3 = Colors.Secondary
-	LayoutToggleBtn.BackgroundTransparency = Colors.Transparent
-	LayoutToggleBtn.Position = UDim2.new(1, -185, 0, 10)
-	LayoutToggleBtn.Size = UDim2.new(0, 25, 0, 25)
-	LayoutToggleBtn.Image = "rbxassetid://3926305904"
-	LayoutToggleBtn.ImageRectOffset = Vector2.new(404, 444)
-	LayoutToggleBtn.ImageRectSize = Vector2.new(36, 36)
-	LayoutToggleBtn.ImageColor3 = Colors.Text
-	LayoutToggleBtn.ZIndex = 10
-	
-	local LayoutToggleBtnC = Instance.new("UICorner")
-	LayoutToggleBtnC.CornerRadius = UDim.new(0, 6)
-	LayoutToggleBtnC.Parent = LayoutToggleBtn
-
-	CreateGlassEffect(LayoutToggleBtn)
 
 	local AIPanelBtn = Instance.new("ImageButton")
 	AIPanelBtn.Name = "AIPanelBtn"
@@ -789,14 +768,6 @@ function library.new(library, name, theme)
             faceCharacterEnabled = config.faceCharacterEnabled
         end
         
-        if config.compactLayout ~= nil then
-            compactLayout = config.compactLayout
-        end
-        
-        if config.openButtonImage then
-            Open.Image = config.openButtonImage
-        end
-        
         return true
     end
 
@@ -817,11 +788,13 @@ function library.new(library, name, theme)
         wait(0.05)
         addChatMessage("⚡ 动画速度：动画快/动画慢/动画关闭", false)
         wait(0.05)
+        addChatMessage("💾 保存配置：发送\"保存\"或\"保存配置\"", false)
+        wait(0.05)
         addChatMessage("📋 复制配置：发送\"复制配置\"或\"复制\"", false)
         wait(0.05)
         addChatMessage("🔄 重置UI：发送\"重置\"或\"恢复默认\"", false)
         wait(0.05)
-        addChatMessage("🖼️ 开关图片：设置开关图片为rbxassetid://123456", false)
+        addChatMessage("📱 应用JSON：直接粘贴配置JSON即可", false)
         wait(0.05)
         addChatMessage("💡 提示：你可以组合使用指令，如\"改成红色，紧凑布局，透明度低\"", false)
     end
@@ -932,22 +905,6 @@ function library.new(library, name, theme)
 			elseif lower:match("默认") or lower:match("default") or lower:match("normal") then
 				table.insert(commands, {type = "animation", value = "normal"})
 			end
-		end
-		
-		if lower:match("开关图片") or lower:match("open button image") then
-			local imageId = response:match("rbxassetid://%d+") or response:match("%d+")
-			if imageId then
-				if not imageId:match("rbxassetid://") then
-					imageId = "rbxassetid://" .. imageId
-				end
-				table.insert(commands, {type = "openimage", value = imageId})
-			end
-		end
-		
-		if lower:match("紧凑布局") or lower:match("compact layout") then
-			table.insert(commands, {type = "layout", value = "compact"})
-		elseif lower:match("默认布局") or lower:match("default layout") then
-			table.insert(commands, {type = "layout", value = "default"})
 		end
 		
 		if lower:match("重置") or lower:match("reset") or lower:match("恢复") or lower:match("默认") then
@@ -1129,11 +1086,6 @@ function library.new(library, name, theme)
                     end
                 end
                 
-                compactLayout = false
-                updateLayoutMode()
-                
-                Open.Image = ""
-                
 				addChatMessage("🔄 UI已完全重置为默认设置！", false)
             elseif cmd.type == "save" then
                 local config = getCurrentConfig()
@@ -1160,13 +1112,6 @@ function library.new(library, name, theme)
                 end
             elseif cmd.type == "help" then
                 showAllCommands()
-            elseif cmd.type == "openimage" then
-                Open.Image = cmd.value
-                addChatMessage("开关按钮图片已更新！", false)
-            elseif cmd.type == "layout" then
-                compactLayout = cmd.value == "compact"
-                updateLayoutMode()
-                addChatMessage("布局已切换为 " .. (compactLayout and "紧凑" or "默认") .. " 模式", false)
 			end
 		end
 	end
@@ -1287,7 +1232,6 @@ function library.new(library, name, theme)
 			Main.Visible = not Main.Visible
 		end
 	end)
-	
 	local currentConfig = loadConfig()
 	local autoFitEnabled = currentConfig.autoFitScreen
 	
@@ -1355,42 +1299,45 @@ function library.new(library, name, theme)
 		switchGui.Enabled = false
 	end)
 	
-	local TabContainer = Instance.new("ScrollingFrame")
-	TabContainer.Name = "TabContainer"
-	TabContainer.Parent = Main
-	TabContainer.BackgroundTransparency = 1
-	TabContainer.Position = UDim2.new(0, 0, 0, 100)
-	TabContainer.Size = UDim2.new(1, 0, 0, 50)
-	TabContainer.Visible = false
-	TabContainer.ScrollBarThickness = 2
-	TabContainer.ScrollBarImageColor3 = Colors.Secondary
-	TabContainer.ZIndex = 5
+	local TitleBar = Instance.new("Frame")
+	TitleBar.Name = "TitleBar"
+	TitleBar.Parent = Main
+	TitleBar.BackgroundColor3 = Colors.Secondary
+	TitleBar.BackgroundTransparency = Colors.Transparent
+	TitleBar.Size = UDim2.new(1, 0, 0, 45)
+	TitleBar.Active = false
 	
-	local TabContainerL = Instance.new("UIListLayout")
-	TabContainerL.Name = "TabContainerL"
-	TabContainerL.Parent = TabContainer
-	TabContainerL.SortOrder = Enum.SortOrder.LayoutOrder
-	TabContainerL.Padding = UDim.new(0, 8)
-	TabContainerL.FillDirection = Enum.FillDirection.Horizontal
-	TabContainerL.HorizontalAlignment = Enum.HorizontalAlignment.Left
+	local TitleBarC = Instance.new("UICorner")
+	TitleBarC.CornerRadius = UDim.new(0, 8)
+	TitleBarC.Parent = TitleBar
 	
-	local TabButtons = Instance.new("ScrollingFrame")
-	TabButtons.Name = "TabButtons"
-	TabButtons.Parent = Main
-	TabButtons.Active = true
-	TabButtons.BackgroundTransparency = 1
-	TabButtons.BorderSizePixel = 0
-	TabButtons.Position = UDim2.new(0, 5, 0, 105)
-	TabButtons.Size = UDim2.new(0, 130, 1, -110)
-	TabButtons.CanvasSize = UDim2.new(0, 0, 0, 0)
-	TabButtons.ScrollBarThickness = 2
-	TabButtons.ScrollBarImageColor3 = Colors.Secondary
+	local Title = Instance.new("TextLabel")
+	Title.Name = "ScriptTitle"
+	Title.Parent = TitleBar
+	Title.BackgroundTransparency = 1
+	Title.Position = UDim2.new(0, 15, 0, 0)
+	Title.Size = UDim2.new(1, -30, 1, 0)
+	Title.Font = Enum.Font.GothamBlack
+	Title.Text = name
+	Title.TextColor3 = Colors.Text
+	Title.TextSize = 18
+	Title.TextXAlignment = Enum.TextXAlignment.Left
 	
-	local TabButtonsL = Instance.new("UIListLayout")
-	TabButtonsL.Name = "TabButtonsL"
-	TabButtonsL.Parent = TabButtons
-	TabButtonsL.SortOrder = Enum.SortOrder.LayoutOrder
-	TabButtonsL.Padding = UDim.new(0, 8)
+	local TitleGradient = Instance.new("UIGradient")
+	TitleGradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0.00, Color3.fromRGB(52, 152, 219)),
+		ColorSequenceKeypoint.new(0.50, Color3.fromRGB(41, 128, 185)),
+		ColorSequenceKeypoint.new(1.00, Color3.fromRGB(31, 97, 141)),
+	})
+	TitleGradient.Parent = Title
+	
+	coroutine.wrap(function()
+		while dogent.Parent do
+			Tween(TitleGradient, 7, "Linear", "In", { Rotation = 360 })
+			wait(7)
+			TitleGradient.Rotation = 0
+		end
+	end)()
 	
 	local SearchBar = Instance.new("Frame")
 	SearchBar.Name = "SearchBar"
@@ -1447,56 +1394,53 @@ function library.new(library, name, theme)
 	Content.Name = "Content"
 	Content.Parent = Main
 	Content.BackgroundTransparency = 1
-	Content.Position = UDim2.new(0, 140, 0, 100)
-	Content.Size = UDim2.new(1, -140, 1, -100)
+	Content.Position = UDim2.new(0, 0, 0, 100)
+	Content.Size = UDim2.new(1, 0, 1, -100)
 	
-	local allTabs = {}
-	local tabInfos = {}
-	local compactLayout = false
+	local SideBar = Instance.new("Frame")
+	SideBar.Name = "SideBar"
+	SideBar.Parent = Content
+	SideBar.BackgroundColor3 = Colors.Secondary
+	SideBar.BackgroundTransparency = Colors.Transparent
+	SideBar.Size = UDim2.new(0, 140, 1, 0)
 	
-	local function updateLayoutMode()
-		if compactLayout then
-			TabContainer.Visible = true
-			TabButtons.Visible = false
-			Content.Position = UDim2.new(0, 10, 0, 160)
-			Content.Size = UDim2.new(1, -20, 1, -170)
-			SearchBar.Position = UDim2.new(0, 15, 0, 105)
-		else
-			TabContainer.Visible = false
-			TabButtons.Visible = true
-			Content.Position = UDim2.new(0, 140, 0, 100)
-			Content.Size = UDim2.new(1, -140, 1, -100)
-			SearchBar.Position = UDim2.new(0, 15, 0, 55)
-		end
-	end
+	local SideBarC = Instance.new("UICorner")
+	SideBarC.CornerRadius = UDim.new(0, 8)
+	SideBarC.Parent = SideBar
 	
-	LayoutToggleBtn.MouseButton1Click:Connect(function()
-		spawn(function()
-			Ripple(LayoutToggleBtn)
-		end)
-		
-		compactLayout = not compactLayout
-		updateLayoutMode()
-		
-        local config = getCurrentConfig()
-        saveConfig(config)
-        
-		if compactLayout then
-			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
-			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
-		else
-			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
-			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
-		end
-	end)
+	CreateGlassEffect(SideBar)
+	
+	local TabButtons = Instance.new("ScrollingFrame")
+	TabButtons.Name = "TabBts"
+	TabButtons.Parent = SideBar
+	TabButtons.Active = true
+	TabButtons.BackgroundTransparency = 1
+	TabButtons.BorderSizePixel = 0
+	TabButtons.Position = UDim2.new(0, 5, 0, 5)
+	TabButtons.Size = UDim2.new(1, -10, 1, -10)
+	TabButtons.CanvasSize = UDim2.new(0, 0, 0, 0)
+	TabButtons.ScrollBarThickness = 2
+	TabButtons.ScrollBarImageColor3 = Colors.Secondary
+	
+	local TabButtonsL = Instance.new("UIListLayout")
+	TabButtonsL.Name = "TabBtsL"
+	TabButtonsL.Parent = TabButtons
+	TabButtonsL.SortOrder = Enum.SortOrder.LayoutOrder
+	TabButtonsL.Padding = UDim.new(0, 8)
 	
 	TabButtonsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 		TabButtons.CanvasSize = UDim2.new(0, 0, 0, TabButtonsL.AbsoluteContentSize.Y + 10)
 	end)
 	
-	TabContainerL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-		TabContainer.CanvasSize = UDim2.new(0, TabContainerL.AbsoluteContentSize.X + 20, 0, 0)
-	end)
+	local TabMain = Instance.new("Frame")
+	TabMain.Name = "TabMain"
+	TabMain.Parent = Content
+	TabMain.BackgroundTransparency = 1
+	TabMain.Position = UDim2.new(0, 145, 0, 0)
+	TabMain.Size = UDim2.new(1, -145, 1, 0)
+	
+	local allTabs = {}
+	local tabInfos = {}
 	
 	SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
 		local searchText = SearchBox.Text:lower()
@@ -1506,11 +1450,6 @@ function library.new(library, name, theme)
 				tabInfo.button.Visible = true
 				tabInfo.button.TabText.Text = tabInfo.name 
 				tabInfo.button.TabText.RichText = false
-				if compactLayout then
-					tabInfo.topButton.Visible = true
-					tabInfo.topButton.TabText.Text = tabInfo.name
-					tabInfo.topButton.TabText.RichText = false
-				end
 				
 				for _, sectionInfo in ipairs(tabInfo.sections or {}) do
 					sectionInfo.section.Visible = true
@@ -1520,11 +1459,8 @@ function library.new(library, name, theme)
 					
 					local ObjsL = sectionInfo.objsFrame:FindFirstChild("ObjsL")
 					if ObjsL then
-						if compactLayout then
-							sectionInfo.section.Size = UDim2.new(0.487, 0, 0, 42 + ObjsL.AbsoluteContentSize.Y + 10)
-						else
-							sectionInfo.section.Size = UDim2.new(0.975, 0, 0, 42 + ObjsL.AbsoluteContentSize.Y + 10)
-						end
+						local originalHeight = 42 + ObjsL.AbsoluteContentSize.Y + 10
+						sectionInfo.section.Size = UDim2.new(0.975, 0, 0, originalHeight)
 					end
 					
 					for _, component in ipairs(sectionInfo.objsFrame:GetChildren()) do
@@ -1566,14 +1502,6 @@ function library.new(library, name, theme)
 			tabInfo.button.TabText.RichText = true
 			if tabTextHighlighted ~= tabInfo.name then
 				tabVisible = true
-			end
-			
-			if compactLayout then
-				tabInfo.topButton.TabText.Text = tabTextHighlighted
-				tabInfo.topButton.TabText.RichText = true
-				if tabTextHighlighted ~= tabInfo.name then
-					tabVisible = true
-				end
 			end
 			
 			for _, sectionInfo in ipairs(tabInfo.sections or {}) do
@@ -1623,9 +1551,6 @@ function library.new(library, name, theme)
 			end
 			
 			tabInfo.button.Visible = tabVisible
-			if compactLayout then
-				tabInfo.topButton.Visible = tabVisible
-			end
 			
 			if not tabInfo.button.Visible and library.currentTab and library.currentTab.button == tabInfo.button then
 				for _, otherTabInfo in ipairs(allTabs) do
@@ -1652,10 +1577,6 @@ function library.new(library, name, theme)
 			library.currentTab = new
 			Tween(new.button, 0.15, "Sine", "Out", { BackgroundTransparency = 0 })
 			Tween(new.button.TabText, 0.15, "Sine", "Out", { TextTransparency = 0 })
-			if compactLayout then
-				Tween(new.topButton, 0.15, "Sine", "Out", { BackgroundTransparency = 0 })
-				Tween(new.topButton.TabText, 0.15, "Sine", "Out", { TextTransparency = 0 })
-			end
 			return
 		end
 		if old.button == new.button then return end
@@ -1667,13 +1588,6 @@ function library.new(library, name, theme)
 		Tween(new.button, 0.15, "Sine", "Out", { BackgroundTransparency = 0 })
 		Tween(old.button.TabText, 0.15, "Sine", "Out", { TextTransparency = 0.3 })
 		Tween(new.button.TabText, 0.15, "Sine", "Out", { TextTransparency = 0 })
-		
-		if compactLayout then
-			Tween(old.topButton, 0.15, "Sine", "Out", { BackgroundTransparency = 0.3 })
-			Tween(new.topButton, 0.15, "Sine", "Out", { BackgroundTransparency = 0 })
-			Tween(old.topButton.TabText, 0.15, "Sine", "Out", { TextTransparency = 0.3 })
-			Tween(new.topButton.TabText, 0.15, "Sine", "Out", { TextTransparency = 0 })
-		end
 		
 		old.frame.Visible = false
 		new.frame.Visible = true
@@ -1724,53 +1638,9 @@ function library.new(library, name, theme)
 		tabBtn.Size = UDim2.new(1, 0, 1, 0)
 		tabBtn.Text = ""
 		
-		local topTabButton = nil
-		if compactLayout then
-			topTabButton = Instance.new("Frame")
-			topTabButton.Name = "TopTabButton"
-			topTabButton.Parent = TabContainer
-			topTabButton.BackgroundColor3 = Colors.Secondary
-			topTabButton.BackgroundTransparency = 0.3
-			topTabButton.Size = UDim2.new(0, 120, 0, 40)
-			
-			local topTabButtonC = Instance.new("UICorner")
-			topTabButtonC.CornerRadius = UDim.new(0, 6)
-			topTabButtonC.Parent = topTabButton
-			
-			CreateGlassEffect(topTabButton)
-			
-			local topTabIcon = Instance.new("ImageLabel")
-			topTabIcon.Name = "TabIcon"
-			topTabIcon.Parent = topTabButton
-			topTabIcon.BackgroundTransparency = 1
-			topTabIcon.Position = UDim2.new(0, 10, 0.5, -12)
-			topTabIcon.Size = UDim2.new(0, 24, 0, 24)
-			topTabIcon.Image = ("rbxassetid://%s"):format(icon or 4370341699)
-			topTabIcon.ImageColor3 = Colors.Text
-			
-			local topTabText = Instance.new("TextLabel")
-			topTabText.Name = "TabText"
-			topTabText.Parent = topTabButton
-			topTabText.BackgroundTransparency = 1
-			topTabText.Position = UDim2.new(0, 45, 0, 0)
-			topTabText.Size = UDim2.new(1, -50, 1, 0)
-			topTabText.Font = Enum.Font.GothamSemibold
-			topTabText.Text = name
-			topTabText.TextColor3 = Colors.Text
-			topTabText.TextSize = 14
-			topTabText.TextXAlignment = Enum.TextXAlignment.Left
-			
-			local topTabBtn = Instance.new("TextButton")
-			topTabBtn.Name = "TabBtn"
-			topTabBtn.Parent = topTabButton
-			topTabBtn.BackgroundTransparency = 1
-			topTabBtn.Size = UDim2.new(1, 0, 1, 0)
-			topTabBtn.Text = ""
-		end
-		
 		local tabFrame = Instance.new("ScrollingFrame")
 		tabFrame.Name = "Tab"
-		tabFrame.Parent = Content
+		tabFrame.Parent = TabMain
 		tabFrame.BackgroundTransparency = 1
 		tabFrame.Size = UDim2.new(1, 0, 1, 0)
 		tabFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
@@ -1787,7 +1657,6 @@ function library.new(library, name, theme)
 			name = name,
 			button = tabButton,
 			frame = tabFrame,
-			topButton = topTabButton,
 			searchableComponents = {},
 			sections = {}
 		}
@@ -1799,29 +1668,14 @@ function library.new(library, name, theme)
 			end)
 			switchTab({
 				button = tabButton,
-				frame = tabFrame,
-				topButton = topTabButton
+				frame = tabFrame
 			})
 		end)
-		
-		if topTabButton then
-			topTabBtn.MouseButton1Click:Connect(function()
-				spawn(function()
-					Ripple(topTabButton)
-				end)
-				switchTab({
-					button = tabButton,
-					frame = tabFrame,
-					topButton = topTabButton
-				})
-			end)
-		end
 		
 		if library.currentTab == nil then
 			switchTab({
 				button = tabButton,
-				frame = tabFrame,
-				topButton = topTabButton
+				frame = tabFrame
 			})
 		end
 		
@@ -1840,12 +1694,7 @@ function library.new(library, name, theme)
 			Section.BackgroundTransparency = Colors.Transparent
 			Section.BorderSizePixel = 0
 			Section.ClipsDescendants = true
-			
-			if compactLayout then
-				Section.Size = UDim2.new(0.487, 0, 0, 42)
-			else
-				Section.Size = UDim2.new(0.975, 0, 0, 42)
-			end
+			Section.Size = UDim2.new(0.975, 0, 0, 42)
 			
 			CreateGlassEffect(Section)
 			
@@ -1906,96 +1755,31 @@ function library.new(library, name, theme)
 			Objs.Position = UDim2.new(0, 6, 0, 42)
 			Objs.Size = UDim2.new(1, -12, 0, 0)
 			
-			if compactLayout then
-				local ObjsG = Instance.new("UIGridLayout")
-				ObjsG.Name = "ObjsG"
-				ObjsG.Parent = Objs
-				ObjsG.SortOrder = Enum.SortOrder.LayoutOrder
-				ObjsG.CellSize = UDim2.new(0.485, 0, 0, 40)
-				ObjsG.CellPadding = UDim2.new(0, 8, 0, 8)
-				ObjsG.HorizontalAlignment = Enum.HorizontalAlignment.Left
-				ObjsG.VerticalAlignment = Enum.VerticalAlignment.Top
-			else
-				local ObjsL = Instance.new("UIListLayout")
-				ObjsL.Name = "ObjsL"
-				ObjsL.Parent = Objs
-				ObjsL.SortOrder = Enum.SortOrder.LayoutOrder
-				ObjsL.Padding = UDim.new(0, 8)
-			end
+			local ObjsL = Instance.new("UIListLayout")
+			ObjsL.Name = "ObjsL"
+			ObjsL.Parent = Objs
+			ObjsL.SortOrder = Enum.SortOrder.LayoutOrder
+			ObjsL.Padding = UDim.new(0, 8)
 			
 			local open = TabVal
 			if TabVal ~= false then
-				if compactLayout then
-					local ObjsG = Objs:FindFirstChild("ObjsG")
-					if ObjsG then
-						local xCount = 2
-						local cellCount = 0
-						for _, child in ipairs(Objs:GetChildren()) do
-							if child:IsA("Frame") then
-								cellCount = cellCount + 1
-							end
-						end
-						local rowCount = math.ceil(cellCount / xCount)
-						local height = 42 + rowCount * 48 + 10
-						Section.Size = UDim2.new(0.487, 0, 0, height)
-					end
-				else
-					local ObjsL = Objs:FindFirstChild("ObjsL")
-					if ObjsL then
-						Section.Size = UDim2.new(0.975, 0, 0, 42 + ObjsL.AbsoluteContentSize.Y + 10)
-					end
-				end
+				Section.Size = UDim2.new(0.975, 0, 0, open and 42 + ObjsL.AbsoluteContentSize.Y + 10 or 42)
 				SectionOpened.ImageTransparency = (open and 0 or 1)
 				SectionOpen.ImageTransparency = (open and 1 or 0)
 			end
 			
 			SectionToggle.MouseButton1Click:Connect(function()
 				open = not open
-				if compactLayout then
-					local ObjsG = Objs:FindFirstChild("ObjsG")
-					if ObjsG then
-						local xCount = 2
-						local cellCount = 0
-						for _, child in ipairs(Objs:GetChildren()) do
-							if child:IsA("Frame") then
-								cellCount = cellCount + 1
-							end
-						end
-						local rowCount = math.ceil(cellCount / xCount)
-						local height = 42 + rowCount * 48 + 10
-						Section.Size = UDim2.new(0.487, 0, 0, open and height or 42)
-					end
-				else
-					local ObjsL = Objs:FindFirstChild("ObjsL")
-					if ObjsL then
-						Section.Size = UDim2.new(0.975, 0, 0, open and 42 + ObjsL.AbsoluteContentSize.Y + 10 or 42)
-					end
-				end
+				Section.Size = UDim2.new(0.975, 0, 0, open and 42 + ObjsL.AbsoluteContentSize.Y + 10 or 42)
 				SectionOpened.ImageTransparency = (open and 0 or 1)
 				SectionOpen.ImageTransparency = (open and 1 or 0)
 				Tween(Section, 0.2, "Sine", "Out", { BackgroundTransparency = open and 0.25 or 0 })
 			end)
 			
-			if compactLayout then
-				ObjsG:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-					if not open then return end
-					local xCount = 2
-					local cellCount = 0
-					for _, child in ipairs(Objs:GetChildren()) do
-						if child:IsA("Frame") then
-							cellCount = cellCount + 1
-						end
-					end
-					local rowCount = math.ceil(cellCount / xCount)
-					local height = 42 + rowCount * 48 + 10
-					Section.Size = UDim2.new(0.487, 0, 0, height)
-				end)
-			else
-				ObjsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-					if not open then return end
-					Section.Size = UDim2.new(0.975, 0, 0, 42 + ObjsL.AbsoluteContentSize.Y + 10)
-				end)
-			end
+			ObjsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+				if not open then return end
+				Section.Size = UDim2.new(0.975, 0, 0, 42 + ObjsL.AbsoluteContentSize.Y + 10)
+			end)
 			
 			local sectionInfo = {
 				name = name,
@@ -2807,11 +2591,7 @@ function library.new(library, name, theme)
     if currentConfig.uiFollowEnabled ~= nil then uiFollowEnabled = currentConfig.uiFollowEnabled end
     if currentConfig.dragModeEnabled ~= nil then dragModeEnabled = currentConfig.dragModeEnabled end
     if currentConfig.faceCharacterEnabled ~= nil then faceCharacterEnabled = currentConfig.faceCharacterEnabled end
-    if currentConfig.compactLayout ~= nil then compactLayout = currentConfig.compactLayout end
-    if currentConfig.openButtonImage then Open.Image = currentConfig.openButtonImage end
-    
-    updateLayoutMode()
-	
+
 	FaceBtn.MouseButton1Click:Connect(function()
 		spawn(function()
 			Ripple(FaceBtn)
@@ -2921,13 +2701,6 @@ function library.new(library, name, theme)
 	
 	renderConnection = game:GetService("RunService").RenderStepped:Connect(update3DPosition)
     
-    if compactLayout then
-        Tween(LayoutToggleBtn, 0, "Sine", "Out", { ImageColor3 = Colors.Accent })
-		Tween(LayoutToggleBtn, 0, "Sine", "Out", { BackgroundTransparency = 0 })
-    else
-        Tween(LayoutToggleBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
-    end
-    
     applyFullConfig(currentConfig)
 	
 	Tween(FaceBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
@@ -2954,13 +2727,6 @@ function library.new(library, name, theme)
 		if switchGui then
 			switchGui:Destroy()
 		end
-	end
-	
-	function window:SetOpenButtonImage(imageId)
-		Open.Image = imageId
-		local config = getCurrentConfig()
-		config.openButtonImage = imageId
-		saveConfig(config)
 	end
 
 	return window
