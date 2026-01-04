@@ -275,7 +275,7 @@ function library.new(library, name, theme, switchIconId)
 	Open.BackgroundTransparency = Colors.Transparent
 	Open.Position = UDim2.new(0.01, 0, 0.3, 0)
 	Open.Size = UDim2.new(0, 45, 0, 45)
-	Open.Image = ("rbxassetid://%s"):format(switchIconId)
+	Open.Image = "rbxassetid://104756179251351"
 	Open.ImageColor3 = Colors.Text
 	Open.Active = true
 	Open.Draggable = false
@@ -2572,7 +2572,6 @@ function library.new(library, name, theme, switchIconId)
                 end
             end
 			
-			-- 修复：在section表创建后添加别名
 			section.TextBox = section.Textbox
 			section.textbox = section.Textbox
 			section.KeyBind = section.Keybind
@@ -2734,7 +2733,6 @@ function library.new(library, name, theme, switchIconId)
 		end
 	end
 
-	-- 2D拖动功能实现
 	local dragging2D = false
 	local dragStartPos2D = nil
 	local startPos2D = nil
