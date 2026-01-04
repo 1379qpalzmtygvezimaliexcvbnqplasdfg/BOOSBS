@@ -27,6 +27,7 @@ local function getCurrentConfig()
         fontSize = "default",
         buttonStyle = "default",
         animationSpeed = "normal",
+        horizontalLayout = false,
         flags = {}
     }
     
@@ -293,10 +294,8 @@ function library.new(library, name, theme)
 	OpenStroke.Transparency = 0.5
 	OpenStroke.Parent = Open
 
-	local viewportSize = services.Workspace.CurrentCamera.ViewportSize
 	local isComputer = not services.UserInputService.TouchEnabled
-	local isTablet = services.UserInputService.TouchEnabled and viewportSize.X >= 1000
-	local scaleFactor = isComputer and 1.5 or (isTablet and 1.0 or 1.0)
+	local scaleFactor = isComputer and 1.3 or 1
 
 	Colors.Accent = loadColorConfig()
 
@@ -369,24 +368,24 @@ function library.new(library, name, theme)
 	CloseBtnC.CornerRadius = UDim.new(0, 6)
 	CloseBtnC.Parent = CloseBtn
 
-	local AnimationsBtn = Instance.new("ImageButton")
-	AnimationsBtn.Name = "AnimationsBtn"
-	AnimationsBtn.Parent = Main
-	AnimationsBtn.BackgroundColor3 = Colors.Secondary
-	AnimationsBtn.BackgroundTransparency = Colors.Transparent
-	AnimationsBtn.Position = UDim2.new(1, -185, 0, 10)
-	AnimationsBtn.Size = UDim2.new(0, 25, 0, 25)
-	AnimationsBtn.Image = "rbxassetid://3926305904"
-	AnimationsBtn.ImageRectOffset = Vector2.new(724, 204)
-	AnimationsBtn.ImageRectSize = Vector2.new(36, 36)
-	AnimationsBtn.ImageColor3 = Colors.Text
-	AnimationsBtn.ZIndex = 10
+	local LayoutToggleBtn = Instance.new("ImageButton")
+	LayoutToggleBtn.Name = "LayoutToggleBtn"
+	LayoutToggleBtn.Parent = Main
+	LayoutToggleBtn.BackgroundColor3 = Colors.Secondary
+	LayoutToggleBtn.BackgroundTransparency = Colors.Transparent
+	LayoutToggleBtn.Position = UDim2.new(1, -185, 0, 10)
+	LayoutToggleBtn.Size = UDim2.new(0, 25, 0, 25)
+	LayoutToggleBtn.Image = "rbxassetid://3926305904"
+	LayoutToggleBtn.ImageRectOffset = Vector2.new(484, 444)
+	LayoutToggleBtn.ImageRectSize = Vector2.new(36, 36)
+	LayoutToggleBtn.ImageColor3 = Colors.Text
+	LayoutToggleBtn.ZIndex = 10
 	
-	local AnimationsBtnC = Instance.new("UICorner")
-	AnimationsBtnC.CornerRadius = UDim.new(0, 6)
-	AnimationsBtnC.Parent = AnimationsBtn
-	
-	CreateGlassEffect(AnimationsBtn)
+	local LayoutToggleBtnC = Instance.new("UICorner")
+	LayoutToggleBtnC.CornerRadius = UDim.new(0, 6)
+	LayoutToggleBtnC.Parent = LayoutToggleBtn
+
+	CreateGlassEffect(LayoutToggleBtn)
 	
 	local AIPanelBtn = Instance.new("ImageButton")
 	AIPanelBtn.Name = "AIPanelBtn"
@@ -791,6 +790,9 @@ function library.new(library, name, theme)
         if config.faceCharacterEnabled ~= nil then
             faceCharacterEnabled = config.faceCharacterEnabled
         end
+        if config.horizontalLayout ~= nil then
+            horizontalLayout = config.horizontalLayout
+        end
         
         return true
     end
@@ -1084,7 +1086,7 @@ function library.new(library, name, theme)
 				Colors.Transparent = 0.5
 				saveColorConfig({accentColor = {52, 152, 219}})
                 
-                scaleFactor = isComputer and 1.5 or (isTablet and 1.0 or 1.0)
+                scaleFactor = isComputer and 1.3 or 1
                 Main.Size = UDim2.new(0, 650 * scaleFactor, 0, 400 * scaleFactor)
                 
                 for _, obj in pairs(Main:GetDescendants()) do
@@ -1329,7 +1331,7 @@ function library.new(library, name, theme)
 	TitleBar.BackgroundColor3 = Colors.Secondary
 	TitleBar.BackgroundTransparency = Colors.Transparent
 	TitleBar.Size = UDim2.new(1, 0, 0, 45)
-	TitleBar.Active = true
+	TitleBar.Active = false
 	
 	local TitleBarC = Instance.new("UICorner")
 	TitleBarC.CornerRadius = UDim.new(0, 8)
@@ -1414,6 +1416,31 @@ function library.new(library, name, theme)
 		end
 	end)
 	
+	local HorizontalTabBar = Instance.new("Frame")
+	HorizontalTabBar.Name = "HorizontalTabBar"
+	HorizontalTabBar.Parent = Main
+	HorizontalTabBar.BackgroundTransparency = 1
+	HorizontalTabBar.Position = UDim2.new(0, 15, 0, 100)
+	HorizontalTabBar.Size = UDim2.new(1, -30, 0, 45)
+	HorizontalTabBar.Visible = false
+	HorizontalTabBar.ZIndex = 10
+	
+	local TabButtonsHorizontal = Instance.new("ScrollingFrame")
+	TabButtonsHorizontal.Name = "TabButtonsHorizontal"
+	TabButtonsHorizontal.Parent = HorizontalTabBar
+	TabButtonsHorizontal.BackgroundTransparency = 1
+	TabButtonsHorizontal.Size = UDim2.new(1, 0, 1, 0)
+	TabButtonsHorizontal.CanvasSize = UDim2.new(0, 0, 0, 0)
+	TabButtonsHorizontal.ScrollBarThickness = 0
+	TabButtonsHorizontal.ScrollingDirection = Enum.ScrollingDirection.X
+	
+	local TabButtonsHorizontalL = Instance.new("UIListLayout")
+	TabButtonsHorizontalL.Name = "TabButtonsHorizontalL"
+	TabButtonsHorizontalL.Parent = TabButtonsHorizontal
+	TabButtonsHorizontalL.SortOrder = Enum.SortOrder.LayoutOrder
+	TabButtonsHorizontalL.Padding = UDim.new(0, 8)
+	TabButtonsHorizontalL.FillDirection = Enum.FillDirection.Horizontal
+	
 	local Content = Instance.new("Frame")
 	Content.Name = "Content"
 	Content.Parent = Main
@@ -1421,303 +1448,12 @@ function library.new(library, name, theme)
 	Content.Position = UDim2.new(0, 0, 0, 100)
 	Content.Size = UDim2.new(1, 0, 1, -100)
 	
-	local AnimationsFrame = Instance.new("Frame")
-	AnimationsFrame.Name = "AnimationsFrame"
-	AnimationsFrame.Parent = Main
-	AnimationsFrame.BackgroundColor3 = Colors.Secondary
-	AnimationsFrame.BackgroundTransparency = Colors.Transparent
-	AnimationsFrame.Position = UDim2.new(0, 0, 0, 100)
-	AnimationsFrame.Size = UDim2.new(1, 0, 1, -100)
-	AnimationsFrame.Visible = false
-	AnimationsFrame.ZIndex = 15
-
-	local AnimationsC = Instance.new("UICorner")
-	AnimationsC.CornerRadius = UDim.new(0, 8)
-	AnimationsC.Parent = AnimationsFrame
-
-	CreateGlassEffect(AnimationsFrame)
-
-	local AnimationsTitle = Instance.new("TextLabel")
-	AnimationsTitle.Name = "AnimationsTitle"
-	AnimationsTitle.Parent = AnimationsFrame
-	AnimationsTitle.BackgroundTransparency = 1
-	AnimationsTitle.Position = UDim2.new(0, 15, 0, 15)
-	AnimationsTitle.Size = UDim2.new(1, -30, 0, 30)
-	AnimationsTitle.Font = Enum.Font.GothamBlack
-	AnimationsTitle.Text = "动画库 - 点击右上角按钮返回"
-	AnimationsTitle.TextColor3 = Colors.Text
-	AnimationsTitle.TextSize = 18
-	AnimationsTitle.TextXAlignment = Enum.TextXAlignment.Left
-	AnimationsTitle.ZIndex = 16
-
-	local AnimSearchBar = Instance.new("Frame")
-	AnimSearchBar.Name = "AnimSearchBar"
-	AnimSearchBar.Parent = AnimationsFrame
-	AnimSearchBar.BackgroundColor3 = Colors.Primary
-	AnimSearchBar.BackgroundTransparency = 0.5
-	AnimSearchBar.Position = UDim2.new(0, 15, 0, 55)
-	AnimSearchBar.Size = UDim2.new(1, -30, 0, 35)
-	AnimSearchBar.ZIndex = 16
-
-	local AnimSearchBarC = Instance.new("UICorner")
-	AnimSearchBarC.CornerRadius = UDim.new(0, 6)
-	AnimSearchBarC.Parent = AnimSearchBar
-
-	local AnimSearchIcon = Instance.new("ImageLabel")
-	AnimSearchIcon.Name = "AnimSearchIcon"
-	AnimSearchIcon.Parent = AnimSearchBar
-	AnimSearchIcon.BackgroundTransparency = 1
-	AnimSearchIcon.Position = UDim2.new(0, 10, 0.5, -10)
-	AnimSearchIcon.Size = UDim2.new(0, 20, 0, 20)
-	AnimSearchIcon.Image = "rbxassetid://3926305904"
-	AnimSearchIcon.ImageRectOffset = Vector2.new(964, 324)
-	AnimSearchIcon.ImageRectSize = Vector2.new(36, 36)
-	AnimSearchIcon.ImageColor3 = Colors.Placeholder
-	AnimSearchIcon.ZIndex = 17
-
-	local AnimSearchBox = Instance.new("TextBox")
-	AnimSearchBox.Name = "AnimSearchBox"
-	AnimSearchBox.Parent = AnimSearchBar
-	AnimSearchBox.BackgroundTransparency = 1
-	AnimSearchBox.Position = UDim2.new(0, 40, 0, 0)
-	AnimSearchBox.Size = UDim2.new(1, -50, 1, 0)
-	AnimSearchBox.Font = Enum.Font.Gotham
-	AnimSearchBox.PlaceholderText = "搜索动作或动画包..."
-	AnimSearchBox.Text = ""
-	AnimSearchBox.TextColor3 = Colors.Text
-	AnimSearchBox.PlaceholderColor3 = Colors.Placeholder
-	AnimSearchBox.TextSize = 14
-	AnimSearchBox.ClearTextOnFocus = false
-	AnimSearchBox.ZIndex = 17
-
-	local AnimationsGrid = Instance.new("ScrollingFrame")
-	AnimationsGrid.Name = "AnimationsGrid"
-	AnimationsGrid.Parent = AnimationsFrame
-	AnimationsGrid.BackgroundTransparency = 1
-	AnimationsGrid.Position = UDim2.new(0, 15, 0, 100)
-	AnimationsGrid.Size = UDim2.new(1, -30, 1, -115)
-	AnimationsGrid.CanvasSize = UDim2.new(0, 0, 0, 0)
-	AnimationsGrid.ScrollBarThickness = 2
-	AnimationsGrid.ZIndex = 16
-
-	local GridLayout = Instance.new("UIGridLayout")
-	GridLayout.Name = "GridLayout"
-	GridLayout.Parent = AnimationsGrid
-	GridLayout.CellSize = UDim2.new(0, 80, 0, 100)
-	GridLayout.CellPadding = UDim2.new(0, 5, 0, 5)
-	GridLayout.StartCorner = Enum.StartCorner.TopLeft
-	GridLayout.FillDirection = Enum.FillDirection.Horizontal
-	GridLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-	GridLayout.SortOrder = Enum.SortOrder.LayoutOrder
-
-	GridLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-		AnimationsGrid.CanvasSize = UDim2.new(0, 0, 0, GridLayout.AbsoluteContentSize.Y)
-	end)
-
-	local function fetchCatalogItems(itemType, cursor)
-		local HttpService = game:GetService("HttpService")
-		local PROXY_URL = "https://catalog.roblox.com"
-		
-		local endpoint = string.format(
-			"%s/v1/search/items?category=Animations&limit=100&cursor=%s",
-			PROXY_URL,
-			cursor or ""
-		)
-		
-		local success, data = pcall(function()
-			local response = game:HttpGet(endpoint)
-			return HttpService:JSONDecode(response)
-		end)
-		
-		if success then
-			return {
-				items = data.data or {},
-				nextCursor = data.nextPageCursor or ""
-			}
-		else
-			return {items = {}, nextCursor = ""}
-		end
-	end
-
-	local function fetchAssetDetails(assetIds)
-		local HttpService = game:GetService("HttpService")
-		local PROXY_URL = "https://catalog.roblox.com"
-		
-		local endpoint = string.format(
-			"%s/v1/assets?assetIds=%s",
-			PROXY_URL,
-			table.concat(assetIds, ",")
-		)
-		
-		local success, data = pcall(function()
-			local response = game:HttpGet(endpoint)
-			return HttpService:JSONDecode(response)
-		end)
-		
-		if success then
-			return data.data or {}
-		else
-			return {}
-		end
-	end
-
-	local function fetchBundleItems(bundleId)
-		local HttpService = game:GetService("HttpService")
-		local PROXY_URL = "https://catalog.roblox.com"
-		
-		local endpoint = string.format(
-			"%s/v1/bundles/%s/bundleItems",
-			PROXY_URL,
-			bundleId
-		)
-		
-		local success, data = pcall(function()
-			local response = game:HttpGet(endpoint)
-			return HttpService:JSONDecode(response)
-		end)
-		
-		if success then
-			local bundledItems = {}
-			for _, item in pairs(data.data or {}) do
-				if item.type == "Asset" then
-					table.insert(bundledItems, item.id)
-				end
-			end
-			return bundledItems
-		else
-			return {}
-		end
-	end
-
-	local function loadAnimations(searchTerm)
-		for _, child in pairs(AnimationsGrid:GetChildren()) do
-			if child:IsA("ImageButton") or child:IsA("TextLabel") then
-				child:Destroy()
-			end
-		end
-		
-		spawn(function()
-			local animationsData = fetchCatalogItems("Animations")
-			local animations = animationsData.items
-			
-			if #animations == 0 then
-				local errorLabel = Instance.new("TextLabel")
-				errorLabel.Name = "ErrorLabel"
-				errorLabel.Parent = AnimationsGrid
-				errorLabel.BackgroundTransparency = 1
-				errorLabel.Size = UDim2.new(1, 0, 0, 50)
-				errorLabel.Font = Enum.Font.Gotham
-				errorLabel.TextSize = 14
-				errorLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-				errorLabel.Text = "无法加载动画，请检查网络连接"
-				errorLabel.ZIndex = 17
-				return
-			end
-			
-			for i, anim in ipairs(animations) do
-				if i <= 100 then
-					local animName = anim.name or "动画"
-					
-					if searchTerm == "" or animName:lower():find(searchTerm:lower(), 1, true) then
-						local animButton = Instance.new("ImageButton")
-						animButton.Name = "Anim_" .. anim.id
-						animButton.Parent = AnimationsGrid
-						animButton.BackgroundColor3 = Colors.Primary
-						animButton.BackgroundTransparency = 0.3
-						animButton.Size = UDim2.new(0, 80, 0, 100)
-						animButton.AutoButtonColor = false
-						animButton.ZIndex = 17
-						
-						animButton.Image = "rbxassetid://10734982320"
-						
-						local animCorner = Instance.new("UICorner")
-						animCorner.CornerRadius = UDim.new(0, 6)
-						animCorner.Parent = animButton
-						
-						local animTitle = Instance.new("TextLabel")
-						animTitle.Parent = animButton
-						animTitle.BackgroundColor3 = Colors.Secondary
-						animTitle.BackgroundTransparency = 0.5
-						animTitle.Position = UDim2.new(0, 0, 0, 80)
-						animTitle.Size = UDim2.new(1, 0, 0, 20)
-						animTitle.Font = Enum.Font.GothamSemibold
-						animTitle.Text = animName
-						animTitle.TextColor3 = Colors.Text
-						animTitle.TextSize = 10
-						animTitle.TextWrapped = true
-						animTitle.ZIndex = 18
-						
-						local titleCorner = Instance.new("UICorner")
-						titleCorner.CornerRadius = UDim.new(0, 6)
-						titleCorner.Parent = animTitle
-						
-						animButton.MouseButton1Click:Connect(function()
-							local character = services.Players.LocalPlayer.Character
-							if character and character:FindFirstChild("Humanoid") then
-								local animation = Instance.new("Animation")
-								animation.AnimationId = "rbxassetid://" .. anim.id
-								
-								local animator = character.Humanoid:FindFirstChildOfClass("Animator")
-								if not animator then
-									animator = Instance.new("Animator")
-									animator.Parent = character.Humanoid
-								end
-								
-								local success, animationTrack = pcall(function()
-									return animator:LoadAnimation(animation)
-								end)
-								
-								if success and animationTrack then
-									animationTrack:Play()
-									addChatMessage("正在播放动画: " .. animName, false)
-								else
-									addChatMessage("❌ 无法加载动画: " .. animName, false)
-								end
-							else
-								addChatMessage("❌ 没有找到角色或Humanoid", false)
-							end
-						end)
-						
-						animButton.MouseEnter:Connect(function()
-							Tween(animButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
-						end)
-						
-						animButton.MouseLeave:Connect(function()
-							Tween(animButton, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
-						end)
-					end
-				end
-			end
-			
-			AnimationsGrid.CanvasSize = UDim2.new(0, 0, 0, GridLayout.AbsoluteContentSize.Y)
-		end)
-	end
-
-	AnimSearchBox:GetPropertyChangedSignal("Text"):Connect(function()
-		loadAnimations(AnimSearchBox.Text)
-	end)
-
-	AnimationsBtn.MouseButton1Click:Connect(function()
-		spawn(function()
-			Ripple(AnimationsBtn)
-		end)
-		
-		local showAnimations = not AnimationsFrame.Visible
-		
-		if showAnimations then
-			Content.Visible = false
-			AIPanelFrame.Visible = false
-			AnimationsFrame.Visible = true
-			Tween(AnimationsBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
-			Tween(AnimationsBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
-			loadAnimations("")
-		else
-			AnimationsFrame.Visible = false
-			Content.Visible = true
-			Tween(AnimationsBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
-			Tween(AnimationsBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
-		end
-	end)
+	local TabMain = Instance.new("Frame")
+	TabMain.Name = "TabMain"
+	TabMain.Parent = Content
+	TabMain.BackgroundTransparency = 1
+	TabMain.Position = UDim2.new(0, 145, 0, 0)
+	TabMain.Size = UDim2.new(1, -145, 1, 0)
 	
 	local SideBar = Instance.new("Frame")
 	SideBar.Name = "SideBar"
@@ -1754,15 +1490,9 @@ function library.new(library, name, theme)
 		TabButtons.CanvasSize = UDim2.new(0, 0, 0, TabButtonsL.AbsoluteContentSize.Y + 10)
 	end)
 	
-	local TabMain = Instance.new("Frame")
-	TabMain.Name = "TabMain"
-	TabMain.Parent = Content
-	TabMain.BackgroundTransparency = 1
-	TabMain.Position = UDim2.new(0, 145, 0, 0)
-	TabMain.Size = UDim2.new(1, -145, 1, 0)
-	
 	local allTabs = {}
 	local tabInfos = {}
+	local horizontalLayout = false
 	
 	SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
 		local searchText = SearchBox.Text:lower()
@@ -1918,13 +1648,47 @@ function library.new(library, name, theme)
 		switchingTabs = false
 	end
 	
+	function updateLayout()
+		horizontalLayout = not horizontalLayout
+		
+		if horizontalLayout then
+			SideBar.Visible = false
+			TabMain.Position = UDim2.new(0, 0, 0, 0)
+			TabMain.Size = UDim2.new(1, 0, 1, 0)
+			HorizontalTabBar.Visible = true
+			Content.Position = UDim2.new(0, 0, 0, 145)
+			Content.Size = UDim2.new(1, 0, 1, -145)
+			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Accent })
+			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
+		else
+			SideBar.Visible = true
+			TabMain.Position = UDim2.new(0, 145, 0, 0)
+			TabMain.Size = UDim2.new(1, -145, 1, 0)
+			HorizontalTabBar.Visible = false
+			Content.Position = UDim2.new(0, 0, 0, 100)
+			Content.Size = UDim2.new(1, 0, 1, -100)
+			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
+			Tween(LayoutToggleBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
+		end
+		
+		local config = getCurrentConfig()
+		config.horizontalLayout = horizontalLayout
+		saveConfig(config)
+	end
+	
+	LayoutToggleBtn.MouseButton1Click:Connect(function()
+		spawn(function()
+			Ripple(LayoutToggleBtn)
+		end)
+		updateLayout()
+	end)
+	
 	function window.Tab(window, name, icon)
 		local tabButton = Instance.new("Frame")
 		tabButton.Name = "TabButton"
-		tabButton.Parent = TabButtons
 		tabButton.BackgroundColor3 = Colors.Secondary
 		tabButton.BackgroundTransparency = 0.3
-		tabButton.Size = UDim2.new(1, 0, 0, 40)
+		tabButton.Size = horizontalLayout and UDim2.new(0, 120, 0, 40) or UDim2.new(1, 0, 0, 40)
 		
 		local tabButtonC = Instance.new("UICorner")
 		tabButtonC.CornerRadius = UDim.new(0, 6)
@@ -1945,13 +1709,13 @@ function library.new(library, name, theme)
 		tabText.Name = "TabText"
 		tabText.Parent = tabButton
 		tabText.BackgroundTransparency = 1
-		tabText.Position = UDim2.new(0, 45, 0, 0)
+		tabText.Position = horizontalLayout and UDim2.new(0.5, 0, 0, 0) or UDim2.new(0, 45, 0, 0)
 		tabText.Size = UDim2.new(1, -50, 1, 0)
 		tabText.Font = Enum.Font.GothamSemibold
 		tabText.Text = name
 		tabText.TextColor3 = Colors.Text
 		tabText.TextSize = 14
-		tabText.TextXAlignment = Enum.TextXAlignment.Left
+		tabText.TextXAlignment = horizontalLayout and Enum.TextXAlignment.Center or Enum.TextXAlignment.Left
 		
 		local tabBtn = Instance.new("TextButton")
 		tabBtn.Name = "TabBtn"
@@ -1962,7 +1726,6 @@ function library.new(library, name, theme)
 		
 		local tabFrame = Instance.new("ScrollingFrame")
 		tabFrame.Name = "Tab"
-		tabFrame.Parent = TabMain
 		tabFrame.BackgroundTransparency = 1
 		tabFrame.Size = UDim2.new(1, 0, 1, 0)
 		tabFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
@@ -1975,11 +1738,18 @@ function library.new(library, name, theme)
 		tabL.SortOrder = Enum.SortOrder.LayoutOrder
 		tabL.Padding = UDim.new(0, 8)
 		
+		if horizontalLayout then
+			tabButton.Parent = TabButtonsHorizontal
+			tabFrame.Parent = TabMain
+		else
+			tabButton.Parent = TabButtons
+			tabFrame.Parent = TabMain
+		end
+		
 		local tabInfo = {
 			name = name,
 			button = tabButton,
 			frame = tabFrame,
-			searchableComponents = {},
 			sections = {}
 		}
 		table.insert(allTabs, tabInfo)
@@ -2017,6 +1787,7 @@ function library.new(library, name, theme)
 			Section.BorderSizePixel = 0
 			Section.ClipsDescendants = true
 			Section.Size = UDim2.new(0.975, 0, 0, 42)
+			Section.LayoutOrder = #tabInfo.sections
 			
 			CreateGlassEffect(Section)
 			
@@ -2077,11 +1848,13 @@ function library.new(library, name, theme)
 			Objs.Position = UDim2.new(0, 6, 0, 42)
 			Objs.Size = UDim2.new(1, -12, 0, 0)
 			
-			local ObjsL = Instance.new("UIListLayout")
+			local ObjsL = Instance.new("UIGridLayout")
 			ObjsL.Name = "ObjsL"
 			ObjsL.Parent = Objs
 			ObjsL.SortOrder = Enum.SortOrder.LayoutOrder
 			ObjsL.Padding = UDim.new(0, 8)
+			ObjsL.CellSize = horizontalLayout and UDim2.new(0.5, -4, 0, 40) or UDim2.new(1, 0, 0, 40)
+			ObjsL.FillDirection = Enum.FillDirection.Horizontal
 			
 			local open = TabVal
 			if TabVal ~= false then
@@ -2101,6 +1874,7 @@ function library.new(library, name, theme)
 			ObjsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 				if not open then return end
 				Section.Size = UDim2.new(0.975, 0, 0, 42 + ObjsL.AbsoluteContentSize.Y + 10)
+				tabFrame.CanvasSize = UDim2.new(0, 0, 0, tabL.AbsoluteContentSize.Y + 16)
 			end)
 			
 			local sectionInfo = {
@@ -2132,7 +1906,7 @@ function library.new(library, name, theme)
 				Btn.Size = UDim2.new(1, 0, 1, 0)
 				Btn.AutoButtonColor = false
 				Btn.Font = Enum.Font.GothamSemibold
-				Btn.Text = "   " .. text
+				Btn.Text = horizontalLayout and text or ("   " .. text)
 				Btn.TextColor3 = Colors.Text
 				Btn.TextSize = 15
 				Btn.TextXAlignment = Enum.TextXAlignment.Left
@@ -2199,7 +1973,7 @@ function library.new(library, name, theme)
 				ToggleModule.Name = "ToggleModule"
 				ToggleModule.Parent = Objs
 				ToggleModule.BackgroundTransparency = 1
-				ToggleModule.Size = UDim2.new(1, 0, 0, 40)
+				ToggleModule.Size = UDim.new(1, 0, 0, 40)
 				
 				local ToggleBtn = Instance.new("TextButton")
 				ToggleBtn.Name = "ToggleBtn"
@@ -2209,7 +1983,7 @@ function library.new(library, name, theme)
 				ToggleBtn.Size = UDim2.new(1, 0, 1, 0)
 				ToggleBtn.AutoButtonColor = false
 				ToggleBtn.Font = Enum.Font.GothamSemibold
-				ToggleBtn.Text = "   " .. text
+				ToggleBtn.Text = horizontalLayout and text or ("   " .. text)
 				ToggleBtn.TextColor3 = Colors.Text
 				ToggleBtn.TextSize = 15
 				ToggleBtn.TextXAlignment = Enum.TextXAlignment.Left
@@ -2326,7 +2100,7 @@ function library.new(library, name, theme)
 				KeybindBtn.Size = UDim2.new(1, 0, 1, 0)
 				KeybindBtn.AutoButtonColor = false
 				KeybindBtn.Font = Enum.Font.GothamSemibold
-				KeybindBtn.Text = "   " .. text
+				KeybindBtn.Text = horizontalLayout and text or ("   " .. text)
 				KeybindBtn.TextColor3 = Colors.Text
 				KeybindBtn.TextSize = 15
 				KeybindBtn.TextXAlignment = Enum.TextXAlignment.Left
@@ -2425,7 +2199,7 @@ function library.new(library, name, theme)
 				TextboxBack.Size = UDim2.new(1, 0, 1, 0)
 				TextboxBack.AutoButtonColor = false
 				TextboxBack.Font = Enum.Font.GothamSemibold
-				TextboxBack.Text = "   " .. text
+				TextboxBack.Text = horizontalLayout and text or ("   " .. text)
 				TextboxBack.TextColor3 = Colors.Text
 				TextboxBack.TextSize = 15
 				TextboxBack.TextXAlignment = Enum.TextXAlignment.Left
@@ -2542,7 +2316,7 @@ function library.new(library, name, theme)
 				SliderBack.Size = UDim2.new(1, 0, 1, 0)
 				SliderBack.AutoButtonColor = false
 				SliderBack.Font = Enum.Font.GothamSemibold
-				SliderBack.Text = "   " .. text
+				SliderBack.Text = horizontalLayout and text or ("   " .. text)
 				SliderBack.TextColor3 = Colors.Text
 				SliderBack.TextSize = 15
 				SliderBack.TextXAlignment = Enum.TextXAlignment.Left
@@ -2913,6 +2687,12 @@ function library.new(library, name, theme)
     if currentConfig.uiFollowEnabled ~= nil then uiFollowEnabled = currentConfig.uiFollowEnabled end
     if currentConfig.dragModeEnabled ~= nil then dragModeEnabled = currentConfig.dragModeEnabled end
     if currentConfig.faceCharacterEnabled ~= nil then faceCharacterEnabled = currentConfig.faceCharacterEnabled end
+    if currentConfig.horizontalLayout ~= nil then 
+    	horizontalLayout = currentConfig.horizontalLayout
+    	if horizontalLayout then
+    		updateLayout()
+    	end
+    end
 
 	FaceBtn.MouseButton1Click:Connect(function()
 		spawn(function()
@@ -2928,6 +2708,7 @@ function library.new(library, name, theme)
 			Tween(FaceBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
 			Tween(DragModeBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
 			Tween(DragModeBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
+			TitleBar.Active = false
 		else
 			uiFollowEnabled = true
 			Tween(FaceBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
@@ -2952,10 +2733,12 @@ function library.new(library, name, theme)
 			Tween(DragModeBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0 })
 			Tween(FaceBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
 			Tween(FaceBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
+			TitleBar.Active = true
 		else
 			uiFollowEnabled = true
 			Tween(DragModeBtn, 0.2, "Sine", "Out", { ImageColor3 = Colors.Text })
 			Tween(DragModeBtn, 0.2, "Sine", "Out", { BackgroundTransparency = 0.3 })
+			TitleBar.Active = false
 		end
         
         local config = getCurrentConfig()
@@ -3025,6 +2808,7 @@ function library.new(library, name, theme)
 	Tween(FaceBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
 	Tween(DragModeBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
 	Tween(AIPanelBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
+	Tween(LayoutToggleBtn, 0, "Sine", "Out", { BackgroundTransparency = 0.3 })
 
 	drag(Main, TitleBar)
 
