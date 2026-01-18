@@ -27,7 +27,7 @@ local Tab = Window:MakeTab({
 Tab:AddButton({
 	Name = "BS",
 	Callback = function()
-loadstring(game:HttpGet("https://pastebin.com/raw/69KZqhER"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/1379qpalzmtygvezimaliexcvbnqplasdfg/BOOSBS/refs/heads/main/%E4%B9%B1%E7%A0%81%E9%BB%91%E6%B4%9E.txt"))()
 end
 })
 local Tab = Window:MakeTab({
