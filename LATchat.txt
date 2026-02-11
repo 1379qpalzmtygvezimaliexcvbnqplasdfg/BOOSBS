@@ -1,0 +1,1463 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
+local CoreGui = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
+
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+local API_KEY = "YOUR_API_KEY_HERE"
+local BASE_URL = "https://latlat.lat/chat/api/v1/"
+local FIXED_ROOM = "1"
+local FIXED_API_KEY = "i-Chat-APIKEY-CCat-LAT"
+
+local currentRoom = nil
+local userName = LocalPlayer.Name
+local isPolling = false
+local messageCache = {}
+local pendingSelfMessages = {}
+local selfMessageWindow = 10
+local avatarCache = {}
+local defaultAvatarUrl = "rbxassetid://0"
+local currentTimeFilter = 0
+local useXenoMode = false
+
+local particleCount = 40
+local connectionDistance = 80
+local maxLines = 60
+
+local accentColor = Color3.fromRGB(96, 120, 255)
+local accentColorLight = Color3.fromRGB(132, 155, 255)
+local accentColorDark = Color3.fromRGB(72, 90, 210)
+local backgroundColor = Color3.fromRGB(40, 42, 54)
+local backgroundSecondary = Color3.fromRGB(52, 55, 68)
+local backgroundTertiary = Color3.fromRGB(64, 68, 84)
+local textColor = Color3.fromRGB(255, 255, 255)
+local textMuted = Color3.fromRGB(200, 206, 220)
+local successColor = Color3.fromRGB(87, 242, 135)
+local errorColor = Color3.fromRGB(237, 66, 69)
+local messageSentColor = accentColor
+local messageReceivedColor = Color3.fromRGB(58, 61, 74)
+
+local backgroundGradient = ColorSequence.new(Color3.fromRGB(40, 42, 54), Color3.fromRGB(76, 82, 102))
+local strokeGradient = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 84, 104)),
+    ColorSequenceKeypoint.new(0.1522491425, Color3.fromRGB(72, 76, 96)),
+    ColorSequenceKeypoint.new(0.4723183513, Color3.fromRGB(132, 155, 255)),
+    ColorSequenceKeypoint.new(0.7577854991, Color3.fromRGB(72, 76, 96)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(64, 68, 88))
+}
+local accentGradient = ColorSequence.new(accentColorLight, accentColorDark)
+
+local glowGradient = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 100, 200)),
+    ColorSequenceKeypoint.new(0.25, Color3.fromRGB(150, 180, 255)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(200, 220, 255)),
+    ColorSequenceKeypoint.new(0.75, Color3.fromRGB(150, 180, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 100, 200))
+}
+
+local glowConnections = {}
+
+local function createMainGui()
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "CCATChatLATNB"
+    screenGui.ResetOnSpawn = false
+    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    screenGui.DisplayOrder = 999
+    screenGui.IgnoreGuiInset = true
+    local guiParent = PlayerGui
+    if gethui then
+        guiParent = gethui()
+    elseif syn and syn.protect_gui then
+        syn.protect_gui(screenGui)
+        guiParent = CoreGui
+    end
+    screenGui.Parent = guiParent
+    return screenGui
+end
+
+local function addUICorner(parent, radius)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = radius or UDim.new(0, 8)
+    corner.Parent = parent
+    return corner
+end
+
+local function addUIStroke(parent, color, thickness, transparency)
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = color or Color3.fromRGB(255, 255, 255)
+    stroke.Thickness = thickness or 1
+    stroke.Transparency = transparency or 0.8
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Parent = parent
+    return stroke
+end
+
+local function addUIGradient(parent, colorSequence, rotation, transparency)
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = colorSequence
+    if rotation then
+        gradient.Rotation = rotation
+    end
+    if transparency then
+        gradient.Transparency = transparency
+    end
+    gradient.Parent = parent
+    return gradient
+end
+
+local function addStrokeGradient(stroke, colorSequence, rotation)
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = colorSequence
+    gradient.Rotation = rotation or 0
+    gradient.Parent = stroke
+    return gradient
+end
+
+local function addButtonStroke(button, rotation, transparency)
+    local stroke = addUIStroke(button, Color3.fromRGB(255, 255, 255), 1.1, transparency or 0.4)
+    addStrokeGradient(stroke, strokeGradient, rotation or 180)
+    return stroke
+end
+
+local function addRotatingGlow(parent, cornerRadius)
+    local glowStroke = Instance.new("UIStroke")
+    glowStroke.Name = "GlowStroke"
+    glowStroke.Thickness = 4
+    glowStroke.Transparency = 0.08
+    glowStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    glowStroke.Parent = parent
+    
+    local glowGrad = Instance.new("UIGradient")
+    glowGrad.Color = glowGradient
+    glowGrad.Rotation = 0
+    glowGrad.Parent = glowStroke
+    
+    local connection = RunService.Heartbeat:Connect(function(dt)
+        glowGrad.Rotation = (glowGrad.Rotation + 60 * dt) % 360
+    end)
+    table.insert(glowConnections, connection)
+    
+    return glowStroke, glowGrad
+end
+
+local function addUIPadding(parent, padding)
+    local pad = Instance.new("UIPadding")
+    pad.PaddingTop = UDim.new(0, padding)
+    pad.PaddingBottom = UDim.new(0, padding)
+    pad.PaddingLeft = UDim.new(0, padding)
+    pad.PaddingRight = UDim.new(0, padding)
+    pad.Parent = parent
+    return pad
+end
+
+local function addShadow(parent)
+    local shadow = Instance.new("ImageLabel")
+    shadow.Name = "Shadow"
+    shadow.BackgroundTransparency = 1
+    shadow.Image = "rbxassetid://6015897843"
+    shadow.ImageColor3 = Color3.new(0, 0, 0)
+    shadow.ImageTransparency = 0.6
+    shadow.ScaleType = Enum.ScaleType.Slice
+    shadow.SliceCenter = Rect.new(49, 49, 450, 450)
+    shadow.Size = UDim2.new(1, 30, 1, 30)
+    shadow.Position = UDim2.new(0, -15, 0, -15)
+    shadow.ZIndex = parent.ZIndex - 1
+    shadow.Parent = parent
+    return shadow
+end
+
+local function getUserAvatar(playerName)
+    if avatarCache[playerName] then
+        return avatarCache[playerName]
+    end
+    local success, userId = pcall(function()
+        return Players:GetUserIdFromNameAsync(playerName)
+    end)
+    if success and userId then
+        local thumbSuccess, thumbUrl = pcall(function()
+            local content, isReady = Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
+            return content
+        end)
+        if thumbSuccess and thumbUrl then
+            avatarCache[playerName] = thumbUrl
+            return thumbUrl
+        end
+    end
+    avatarCache[playerName] = defaultAvatarUrl
+    return defaultAvatarUrl
+end
+
+local function tweenProperty(object, properties, duration, style, direction)
+    local tween = TweenService:Create(
+        object,
+        TweenInfo.new(duration or 0.3, style or Enum.EasingStyle.Cubic, direction or Enum.EasingDirection.Out),
+        properties
+    )
+    tween:Play()
+    return tween
+end
+
+local function createParticle()
+    local dot = Instance.new("Frame")
+    dot.BackgroundColor3 = accentColor
+    dot.BorderSizePixel = 0
+    dot.AnchorPoint = Vector2.new(0.5, 0.5)
+    dot.ZIndex = 2
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(1, 0)
+    corner.Parent = dot
+    return dot
+end
+
+local function spawnParticlesInFrame(layer, width, height)
+    local particles = {}
+    for i = 1, particleCount do
+        local dot = createParticle()
+        local size = math.random() * 2 + 1.5
+        dot.Size = UDim2.new(0, size, 0, size)
+        dot.BackgroundTransparency = 0.5
+        local x = math.random(10, math.floor(width - 10))
+        local y = math.random(10, math.floor(height - 10))
+        dot.Position = UDim2.new(0, x, 0, y)
+        dot.Parent = layer
+        particles[i] = {
+            dot = dot,
+            x = x,
+            y = y,
+            size = size,
+            vx = (math.random() - 0.5) * 0.4,
+            vy = (math.random() - 0.5) * 0.4,
+        }
+    end
+    return particles
+end
+
+local function createLine(lineLayer)
+    local line = Instance.new("Frame")
+    line.BackgroundColor3 = accentColor
+    line.BorderSizePixel = 0
+    line.AnchorPoint = Vector2.new(0.5, 0.5)
+    line.Size = UDim2.new(0, 0, 0, 1)
+    line.Visible = false
+    line.ZIndex = 1
+    line.Parent = lineLayer
+    return line
+end
+
+local function updateParticlesInFrame(particles, width, height)
+    for _, particle in ipairs(particles) do
+        particle.x = particle.x + particle.vx
+        particle.y = particle.y + particle.vy
+        if particle.x < 5 or particle.x > width - 5 then
+            particle.vx = -particle.vx
+            particle.x = math.clamp(particle.x, 5, width - 5)
+        end
+        if particle.y < 5 or particle.y > height - 5 then
+            particle.vy = -particle.vy
+            particle.y = math.clamp(particle.y, 5, height - 5)
+        end
+        particle.dot.Position = UDim2.new(0, particle.x, 0, particle.y)
+    end
+end
+
+local function updateLines(particles, lineLayer, pool)
+    local active = 0
+    for i = 1, #particles do
+        for j = i + 1, #particles do
+            local p1 = particles[i]
+            local p2 = particles[j]
+            local dx = p1.x - p2.x
+            local dy = p1.y - p2.y
+            local distance = math.sqrt(dx * dx + dy * dy)
+            if distance < connectionDistance then
+                active = active + 1
+                if active > maxLines then break end
+                local line = pool[active]
+                if not line then
+                    line = createLine(lineLayer)
+                    pool[active] = line
+                end
+                line.Visible = true
+                local midX = (p1.x + p2.x) / 2
+                local midY = (p1.y + p2.y) / 2
+                line.Size = UDim2.new(0, distance, 0, 1)
+                line.Position = UDim2.new(0, midX, 0, midY)
+                line.Rotation = math.deg(math.atan2(dy, dx))
+                line.BackgroundTransparency = 0.6 + (distance / connectionDistance) * 0.3
+            end
+        end
+        if active >= maxLines then break end
+    end
+    for i = active + 1, #pool do
+        if pool[i] then pool[i].Visible = false end
+    end
+end
+
+local function createButton(parent, text, size, position, isPrimary)
+    local button = Instance.new("TextButton")
+    button.Name = text .. "Button"
+    button.Size = size
+    button.Position = position
+    button.AnchorPoint = Vector2.new(0.5, 0)
+    button.BackgroundColor3 = isPrimary and accentColor or backgroundTertiary
+    button.BackgroundTransparency = 0
+    button.BorderSizePixel = 0
+    button.Font = Enum.Font.GothamBold
+    button.Text = text
+    button.TextColor3 = textColor
+    button.TextSize = 13
+    button.AutoButtonColor = false
+    button.Parent = parent
+    addUICorner(button, UDim.new(0, 6))
+    addUIGradient(button, isPrimary and accentGradient or backgroundGradient, 68)
+    addButtonStroke(button, 180, 0.35)
+    local originalTransparency = button.BackgroundTransparency
+    button.MouseEnter:Connect(function()
+        tweenProperty(button, {BackgroundTransparency = 0.35}, 0.15)
+    end)
+    button.MouseLeave:Connect(function()
+        tweenProperty(button, {BackgroundTransparency = originalTransparency}, 0.15)
+    end)
+    return button
+end
+
+local function createTextBox(parent, placeholder, size, position)
+    local container = Instance.new("Frame")
+    container.Name = "TextBoxContainer"
+    container.Size = size
+    container.Position = position
+    container.AnchorPoint = Vector2.new(0.5, 0)
+    container.BackgroundColor3 = backgroundSecondary
+    container.BorderSizePixel = 0
+    container.Parent = parent
+    addUICorner(container, UDim.new(0, 6))
+    local containerStroke = addUIStroke(container, Color3.fromRGB(255, 255, 255), 1.1, 0.55)
+    addStrokeGradient(containerStroke, strokeGradient, 180)
+    addUIGradient(container, backgroundGradient, 68)
+    local textBox = Instance.new("TextBox")
+    textBox.Name = "Input"
+    textBox.Size = UDim2.new(1, -16, 1, 0)
+    textBox.Position = UDim2.new(0, 8, 0, 0)
+    textBox.BackgroundTransparency = 1
+    textBox.Font = Enum.Font.Gotham
+    textBox.PlaceholderText = placeholder
+    textBox.PlaceholderColor3 = textMuted
+    textBox.Text = ""
+    textBox.TextColor3 = textColor
+    textBox.TextSize = 13
+    textBox.TextXAlignment = Enum.TextXAlignment.Left
+    textBox.ClearTextOnFocus = false
+    textBox.Parent = container
+    textBox.Focused:Connect(function()
+        tweenProperty(container:FindFirstChildOfClass("UIStroke"), {Color = accentColor, Transparency = 0.3}, 0.15)
+    end)
+    textBox.FocusLost:Connect(function()
+        tweenProperty(container:FindFirstChildOfClass("UIStroke"), {Color = Color3.fromRGB(70, 70, 70), Transparency = 0.5}, 0.15)
+    end)
+    return container, textBox
+end
+
+local function createMessageBubble(parent, message, name, time, isSelf, layoutOrder, animate)
+    local container = Instance.new("Frame")
+    container.Name = "MessageContainer"
+    container.Size = UDim2.new(1, -10, 0, 0)
+    container.AutomaticSize = Enum.AutomaticSize.Y
+    container.BackgroundTransparency = 1
+    container.LayoutOrder = layoutOrder or 0
+    container.Parent = parent
+
+    local avatarSize = 28
+    local avatarMargin = 6
+
+    if not isSelf then
+        local avatarFrame = Instance.new("ImageLabel")
+        avatarFrame.Name = "Avatar"
+        avatarFrame.Size = UDim2.new(0, avatarSize, 0, avatarSize)
+        avatarFrame.Position = UDim2.new(0, 0, 0, 0)
+        avatarFrame.BackgroundColor3 = backgroundTertiary
+        avatarFrame.BorderSizePixel = 0
+        avatarFrame.Image = defaultAvatarUrl
+        avatarFrame.Parent = container
+        addUICorner(avatarFrame, UDim.new(1, 0))
+        task.spawn(function()
+            local displayName = name
+            if displayName == nil or displayName == "" then
+                displayName = "Roblox"
+            end
+            local avatarUrl = getUserAvatar(displayName)
+            avatarFrame.Image = avatarUrl
+        end)
+    end
+
+    local bubble = Instance.new("Frame")
+    bubble.Name = "Bubble"
+    bubble.Size = UDim2.new(0, 0, 0, 0)
+    bubble.AutomaticSize = Enum.AutomaticSize.XY
+    bubble.Position = isSelf and UDim2.new(1, 0, 0, 0) or UDim2.new(0, avatarSize + avatarMargin, 0, 0)
+    bubble.AnchorPoint = isSelf and Vector2.new(1, 0) or Vector2.new(0, 0)
+    bubble.BackgroundColor3 = isSelf and messageSentColor or messageReceivedColor
+    bubble.BorderSizePixel = 0
+    bubble.ClipsDescendants = true
+    bubble.Parent = container
+
+    addUICorner(bubble, UDim.new(0, 10))
+    local bubbleStroke = addUIStroke(bubble, Color3.fromRGB(255, 255, 255), 1.1, isSelf and 0.5 or 0.6)
+    addStrokeGradient(bubbleStroke, strokeGradient, -44)
+
+    local contentLayout = Instance.new("UIListLayout")
+    contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    contentLayout.Padding = UDim.new(0, 2)
+    contentLayout.Parent = bubble
+
+    local bubblePadding = Instance.new("UIPadding")
+    bubblePadding.PaddingTop = UDim.new(0, 6)
+    bubblePadding.PaddingBottom = UDim.new(0, 6)
+    bubblePadding.PaddingLeft = UDim.new(0, 10)
+    bubblePadding.PaddingRight = UDim.new(0, 10)
+    bubblePadding.Parent = bubble
+
+    local maxWidth = Instance.new("UISizeConstraint")
+    maxWidth.MaxSize = Vector2.new(180, math.huge)
+    maxWidth.Parent = bubble
+
+    if not isSelf then
+        local displayName = name
+        if displayName == nil or displayName == "" then
+            displayName = "匿名"
+        end
+        local nameLabel = Instance.new("TextLabel")
+        nameLabel.Name = "Name"
+        nameLabel.Size = UDim2.new(0, 0, 0, 14)
+        nameLabel.AutomaticSize = Enum.AutomaticSize.X
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.Font = Enum.Font.GothamBold
+        nameLabel.Text = tostring(displayName)
+        nameLabel.TextColor3 = accentColorLight
+        nameLabel.TextSize = 11
+        nameLabel.LayoutOrder = 1
+        nameLabel.Parent = bubble
+    end
+
+    local messageLabel = Instance.new("TextLabel")
+    messageLabel.Name = "Message"
+    messageLabel.Size = UDim2.new(0, 0, 0, 0)
+    messageLabel.AutomaticSize = Enum.AutomaticSize.XY
+    messageLabel.BackgroundTransparency = 1
+    messageLabel.Font = Enum.Font.Gotham
+    messageLabel.Text = message
+    messageLabel.TextColor3 = textColor
+    messageLabel.TextSize = 12
+    messageLabel.TextWrapped = true
+    messageLabel.LayoutOrder = 2
+    messageLabel.Parent = bubble
+
+    local timeLabel = Instance.new("TextLabel")
+    timeLabel.Name = "Time"
+    timeLabel.Size = UDim2.new(0, 0, 0, 10)
+    timeLabel.AutomaticSize = Enum.AutomaticSize.X
+    timeLabel.BackgroundTransparency = 1
+    timeLabel.Font = Enum.Font.Gotham
+    timeLabel.Text = time
+    timeLabel.TextColor3 = isSelf and Color3.fromRGB(180, 190, 255) or textMuted
+    timeLabel.TextSize = 9
+    timeLabel.TextTransparency = 0.4
+    timeLabel.LayoutOrder = 3
+    timeLabel.Parent = bubble
+
+    local shouldAnimate = animate ~= false
+    local scale = Instance.new("UIScale")
+    scale.Scale = shouldAnimate and 0.85 or 1
+    scale.Parent = bubble
+    bubble.BackgroundTransparency = shouldAnimate and 1 or 0
+
+    if shouldAnimate then
+        task.spawn(function()
+            task.wait(0.02)
+            tweenProperty(scale, {Scale = 1}, 0.25, Enum.EasingStyle.Back)
+            tweenProperty(bubble, {BackgroundTransparency = 0}, 0.2)
+        end)
+    end
+
+    return container
+end
+
+local function createNotification(parent, text, isError)
+    local notification = Instance.new("Frame")
+    notification.Name = "Notification"
+    notification.Size = UDim2.new(0, 220, 0, 36)
+    notification.Position = UDim2.new(0.5, 0, 0, -50)
+    notification.AnchorPoint = Vector2.new(0.5, 0)
+    notification.BackgroundColor3 = isError and errorColor or successColor
+    notification.ZIndex = 100
+    notification.Parent = parent
+    addUICorner(notification, UDim.new(0, 8))
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -16, 1, 0)
+    label.Position = UDim2.new(0, 8, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Font = Enum.Font.GothamBold
+    label.Text = text
+    label.TextColor3 = Color3.new(1, 1, 1)
+    label.TextSize = 12
+    label.Parent = notification
+    tweenProperty(notification, {Position = UDim2.new(0.5, 0, 0, 10)}, 0.3, Enum.EasingStyle.Back)
+    task.delay(2.5, function()
+        tweenProperty(notification, {Position = UDim2.new(0.5, 0, 0, -50)}, 0.25)
+        task.wait(0.25)
+        notification:Destroy()
+    end)
+    return notification
+end
+
+local function parseApiError(body)
+    if type(body) ~= "string" then
+        return nil
+    end
+    local err = body:match("\"error\"%s*,%s*\"(.-)\"")
+    return err
+end
+
+local function performHttpRequest(url)
+    local reqFunc = request or http_request or (syn and syn.request) or (fluxus and fluxus.request)
+    local success, response = pcall(function()
+        if useXenoMode or not reqFunc then
+            return HttpService:RequestAsync({
+                Url = url,
+                Method = "GET"
+            })
+        end
+        return reqFunc({
+            Url = url,
+            Method = "GET",
+        })
+    end)
+    if not success then
+        return false, nil, response
+    end
+    if not response then
+        return false, nil, "请求失败"
+    end
+    if response.Success == false then
+        return false, response, response.StatusMessage or "请求失败"
+    end
+    return true, response, nil
+end
+
+local function sendMessage(room, message, name, apiKey)
+    local url = string.format("%ssend-msg/?chat-in=%s&msg=%s&name=%s&apikey=%s",
+        BASE_URL,
+        HttpService:UrlEncode(room),
+        HttpService:UrlEncode(message),
+        HttpService:UrlEncode(name),
+        HttpService:UrlEncode(apiKey)
+    )
+    
+    local success, response, errMessage = performHttpRequest(url)
+    if not success then
+        return false, errMessage or "请求失败"
+    end
+
+    local parseSuccess, data = pcall(function()
+        return HttpService:JSONDecode(response.Body)
+    end)
+    
+    if parseSuccess and type(data) == "table" and data[1] == "success" then
+        return true, data[2] or "发送成功"
+    end
+    
+    return false, response.Body or "未知错误"
+end
+
+local function getMessages(room, apiKey)
+    local url = string.format("%sget-msg/?chat-in=%s&apikey=%s",
+        BASE_URL,
+        HttpService:UrlEncode(room),
+        HttpService:UrlEncode(apiKey)
+    )
+    
+    local success, response, errMessage = performHttpRequest(url)
+    if not success then
+        return false, nil, errMessage or "接收失败"
+    end
+
+    local parseSuccess, data = pcall(function()
+        return HttpService:JSONDecode(response.Body)
+    end)
+    
+    if parseSuccess and type(data) == "table" then
+        return true, data, nil
+    end
+    
+    return false, nil, "解析失败: " .. response.Body
+end
+
+local gui = createMainGui()
+
+local loginPanel = Instance.new("Frame")
+loginPanel.Name = "LoginPanel"
+loginPanel.Size = UDim2.new(0, 280, 0, 320)
+loginPanel.Position = UDim2.new(0.5, 0, 0.5, 0)
+loginPanel.AnchorPoint = Vector2.new(0.5, 0.5)
+loginPanel.BackgroundColor3 = backgroundSecondary
+loginPanel.BorderSizePixel = 0
+loginPanel.ZIndex = 10
+loginPanel.ClipsDescendants = false
+loginPanel.Parent = gui
+
+addUICorner(loginPanel, UDim.new(0, 16))
+local loginStroke = addUIStroke(loginPanel, Color3.fromRGB(255, 255, 255), 2.4, 0.2)
+addStrokeGradient(loginStroke, strokeGradient, 180)
+addRotatingGlow(loginPanel)
+addShadow(loginPanel)
+
+local loginBgLayer = Instance.new("Frame")
+loginBgLayer.Name = "BgLayer"
+loginBgLayer.Size = UDim2.fromScale(1, 1)
+loginBgLayer.BackgroundColor3 = backgroundColor
+loginBgLayer.BackgroundTransparency = 0.3
+loginBgLayer.BorderSizePixel = 0
+loginBgLayer.ZIndex = 1
+loginBgLayer.Parent = loginPanel
+
+addUIGradient(loginBgLayer, backgroundGradient, 68)
+addUICorner(loginBgLayer, UDim.new(0, 16))
+
+local loginLineLayer = Instance.new("Frame")
+loginLineLayer.Name = "LineLayer"
+loginLineLayer.Size = UDim2.fromScale(1, 1)
+loginLineLayer.BackgroundTransparency = 1
+loginLineLayer.ZIndex = 2
+loginLineLayer.Parent = loginPanel
+
+local loginParticleLayer = Instance.new("Frame")
+loginParticleLayer.Name = "ParticleLayer"
+loginParticleLayer.Size = UDim2.fromScale(1, 1)
+loginParticleLayer.BackgroundTransparency = 1
+loginParticleLayer.ZIndex = 3
+loginParticleLayer.Parent = loginPanel
+
+local loginContent = Instance.new("Frame")
+loginContent.Name = "Content"
+loginContent.Size = UDim2.fromScale(1, 1)
+loginContent.BackgroundTransparency = 1
+loginContent.ZIndex = 10
+loginContent.Parent = loginPanel
+
+local logoContainer = Instance.new("Frame")
+logoContainer.Name = "LogoContainer"
+logoContainer.Size = UDim2.new(0, 50, 0, 50)
+logoContainer.Position = UDim2.new(0.5, 0, 0, 20)
+logoContainer.AnchorPoint = Vector2.new(0.5, 0)
+logoContainer.BackgroundColor3 = accentColor
+logoContainer.BorderSizePixel = 0
+logoContainer.ZIndex = 11
+logoContainer.Parent = loginContent
+
+addUICorner(logoContainer, UDim.new(0, 12))
+
+local logoText = Instance.new("TextLabel")
+logoText.Size = UDim2.fromScale(1, 1)
+logoText.BackgroundTransparency = 1
+logoText.Font = Enum.Font.GothamBlack
+logoText.Text = "LAT"
+logoText.TextColor3 = textColor
+logoText.TextSize = 18
+logoText.ZIndex = 12
+logoText.Parent = logoContainer
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Name = "Title"
+titleLabel.Size = UDim2.new(1, 0, 0, 24)
+titleLabel.Position = UDim2.new(0, 0, 0, 78)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.Text = "LAT Chat"
+titleLabel.TextColor3 = textColor
+titleLabel.TextSize = 18
+titleLabel.ZIndex = 11
+titleLabel.Parent = loginContent
+
+local subtitleLabel = Instance.new("TextLabel")
+subtitleLabel.Name = "Subtitle"
+subtitleLabel.Size = UDim2.new(1, 0, 0, 16)
+subtitleLabel.Position = UDim2.new(0, 0, 0, 102)
+subtitleLabel.BackgroundTransparency = 1
+subtitleLabel.Font = Enum.Font.Gotham
+subtitleLabel.Text = "Credit to lat"
+subtitleLabel.TextColor3 = textMuted
+subtitleLabel.TextSize = 11
+subtitleLabel.ZIndex = 11
+subtitleLabel.Parent = loginContent
+
+local loginFoldButton = Instance.new("TextButton")
+loginFoldButton.Name = "FoldButton"
+loginFoldButton.Size = UDim2.new(0, 24, 0, 24)
+loginFoldButton.Position = UDim2.new(1, -32, 0, 10)
+loginFoldButton.BackgroundColor3 = backgroundTertiary
+loginFoldButton.BorderSizePixel = 0
+loginFoldButton.Font = Enum.Font.GothamBold
+loginFoldButton.Text = "—"
+loginFoldButton.TextColor3 = textColor
+loginFoldButton.TextSize = 14
+loginFoldButton.AutoButtonColor = false
+loginFoldButton.ZIndex = 12
+loginFoldButton.Parent = loginContent
+
+addUICorner(loginFoldButton, UDim.new(0, 6))
+addUIGradient(loginFoldButton, backgroundGradient, 68)
+addButtonStroke(loginFoldButton, 180, 0.45)
+
+loginFoldButton.MouseEnter:Connect(function()
+    tweenProperty(loginFoldButton, {BackgroundTransparency = 0.35}, 0.15)
+end)
+
+loginFoldButton.MouseLeave:Connect(function()
+    tweenProperty(loginFoldButton, {BackgroundTransparency = 0}, 0.15)
+end)
+
+local roomContainer, roomInput = createTextBox(loginContent, "房间号", UDim2.new(0.85, 0, 0, 32), UDim2.new(0.5, 0, 0, 135))
+roomContainer.ZIndex = 11
+roomInput.ZIndex = 12
+
+local joinButton = createButton(loginContent, "加入房间", UDim2.new(0.85, 0, 0, 36), UDim2.new(0.5, 0, 0, 177), true)
+joinButton.ZIndex = 11
+
+local hintLabel = Instance.new("TextLabel")
+hintLabel.Name = "HintLabel"
+hintLabel.Size = UDim2.new(1, 0, 0, 20)
+hintLabel.Position = UDim2.new(0, 0, 1, 8)
+hintLabel.AnchorPoint = Vector2.new(0, 0)
+hintLabel.BackgroundTransparency = 1
+hintLabel.Font = Enum.Font.Gotham
+hintLabel.Text = "按 ] 输入消息或输入房间号，按 ' 隐藏"
+hintLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+hintLabel.TextSize = 10
+hintLabel.TextTransparency = 0.3
+hintLabel.ZIndex = 11
+hintLabel.Parent = loginPanel
+
+local chatPanel = Instance.new("Frame")
+chatPanel.Name = "ChatPanel"
+chatPanel.Size = UDim2.new(0, 360, 0, 420)
+chatPanel.Position = UDim2.new(0.5, 0, 0.5, 0)
+chatPanel.AnchorPoint = Vector2.new(0.5, 0.5)
+chatPanel.BackgroundColor3 = backgroundSecondary
+chatPanel.BorderSizePixel = 0
+chatPanel.Visible = false
+chatPanel.ZIndex = 10
+chatPanel.ClipsDescendants = false
+chatPanel.Parent = gui
+
+addUICorner(chatPanel, UDim.new(0, 18))
+local chatStroke = addUIStroke(chatPanel, Color3.fromRGB(255, 255, 255), 2.4, 0.2)
+addStrokeGradient(chatStroke, strokeGradient, 180)
+addRotatingGlow(chatPanel)
+addShadow(chatPanel)
+
+local chatBgLayer = Instance.new("Frame")
+chatBgLayer.Name = "BgLayer"
+chatBgLayer.Size = UDim2.fromScale(1, 1)
+chatBgLayer.BackgroundColor3 = backgroundColor
+chatBgLayer.BackgroundTransparency = 0.3
+chatBgLayer.BorderSizePixel = 0
+chatBgLayer.ZIndex = 1
+chatBgLayer.Parent = chatPanel
+
+addUIGradient(chatBgLayer, backgroundGradient, 68)
+addUICorner(chatBgLayer, UDim.new(0, 18))
+
+local chatLineLayer = Instance.new("Frame")
+chatLineLayer.Name = "LineLayer"
+chatLineLayer.Size = UDim2.fromScale(1, 1)
+chatLineLayer.BackgroundTransparency = 1
+chatLineLayer.ZIndex = 2
+chatLineLayer.Parent = chatPanel
+
+local chatParticleLayer = Instance.new("Frame")
+chatParticleLayer.Name = "ParticleLayer"
+chatParticleLayer.Size = UDim2.fromScale(1, 1)
+chatParticleLayer.BackgroundTransparency = 1
+chatParticleLayer.ZIndex = 3
+chatParticleLayer.Parent = chatPanel
+
+local chatContent = Instance.new("Frame")
+chatContent.Name = "Content"
+chatContent.Size = UDim2.fromScale(1, 1)
+chatContent.BackgroundTransparency = 1
+chatContent.ZIndex = 10
+chatContent.Parent = chatPanel
+
+local headerBar = Instance.new("Frame")
+headerBar.Name = "Header"
+headerBar.Size = UDim2.new(1, 0, 0, 44)
+headerBar.BackgroundColor3 = backgroundTertiary
+headerBar.BackgroundTransparency = 0.3
+headerBar.BorderSizePixel = 0
+headerBar.ZIndex = 11
+headerBar.Parent = chatContent
+
+addUICorner(headerBar, UDim.new(0, 14))
+addUIGradient(headerBar, backgroundGradient, 68)
+
+local headerMask = Instance.new("Frame")
+headerMask.Size = UDim2.new(1, 0, 0, 20)
+headerMask.Position = UDim2.new(0, 0, 1, -20)
+headerMask.BackgroundColor3 = backgroundTertiary
+headerMask.BackgroundTransparency = 0.3
+headerMask.BorderSizePixel = 0
+headerMask.ZIndex = 11
+headerMask.Parent = headerBar
+
+addUIGradient(headerMask, backgroundGradient, 68)
+
+local roomTitle = Instance.new("TextLabel")
+roomTitle.Name = "RoomTitle"
+roomTitle.Size = UDim2.new(0.6, 0, 0, 20)
+roomTitle.Position = UDim2.new(0, 12, 0, 8)
+roomTitle.BackgroundTransparency = 1
+roomTitle.Font = Enum.Font.GothamBold
+roomTitle.Text = "房间: ---"
+roomTitle.TextColor3 = textColor
+roomTitle.TextSize = 14
+roomTitle.TextXAlignment = Enum.TextXAlignment.Left
+roomTitle.ZIndex = 12
+roomTitle.Parent = headerBar
+
+local statusIndicator = Instance.new("Frame")
+statusIndicator.Name = "StatusIndicator"
+statusIndicator.Size = UDim2.new(0, 8, 0, 8)
+statusIndicator.Position = UDim2.new(0, 12, 0, 30)
+statusIndicator.BackgroundColor3 = successColor
+statusIndicator.BorderSizePixel = 0
+statusIndicator.ZIndex = 12
+statusIndicator.Parent = headerBar
+
+addUICorner(statusIndicator, UDim.new(1, 0))
+
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Name = "StatusLabel"
+statusLabel.Size = UDim2.new(0.4, 0, 0, 12)
+statusLabel.Position = UDim2.new(0, 24, 0, 28)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Font = Enum.Font.Gotham
+statusLabel.Text = "已连接"
+statusLabel.TextColor3 = textMuted
+statusLabel.TextSize = 10
+statusLabel.TextXAlignment = Enum.TextXAlignment.Left
+statusLabel.ZIndex = 12
+statusLabel.Parent = headerBar
+
+local foldButton = Instance.new("TextButton")
+foldButton.Name = "FoldButton"
+foldButton.Size = UDim2.new(0, 28, 0, 28)
+foldButton.Position = UDim2.new(1, -70, 0, 8)
+foldButton.BackgroundColor3 = backgroundTertiary
+foldButton.BorderSizePixel = 0
+foldButton.Font = Enum.Font.GothamBold
+foldButton.Text = "—"
+foldButton.TextColor3 = textColor
+foldButton.TextSize = 14
+foldButton.AutoButtonColor = false
+foldButton.ZIndex = 12
+foldButton.Parent = headerBar
+
+addUICorner(foldButton, UDim.new(0, 6))
+addUIGradient(foldButton, backgroundGradient, 68)
+addButtonStroke(foldButton, 180, 0.45)
+
+foldButton.MouseEnter:Connect(function()
+    tweenProperty(foldButton, {BackgroundTransparency = 0.35}, 0.15)
+end)
+foldButton.MouseLeave:Connect(function()
+    tweenProperty(foldButton, {BackgroundTransparency = 0}, 0.15)
+end)
+
+local leaveButton = Instance.new("TextButton")
+leaveButton.Name = "LeaveButton"
+leaveButton.Size = UDim2.new(0, 28, 0, 28)
+leaveButton.Position = UDim2.new(1, -38, 0, 8)
+leaveButton.BackgroundColor3 = errorColor
+leaveButton.BorderSizePixel = 0
+leaveButton.Font = Enum.Font.GothamBold
+leaveButton.Text = "X"
+leaveButton.TextColor3 = textColor
+leaveButton.TextSize = 14
+leaveButton.AutoButtonColor = false
+leaveButton.ZIndex = 12
+leaveButton.Parent = headerBar
+
+addUICorner(leaveButton, UDim.new(0, 6))
+addUIGradient(leaveButton, ColorSequence.new(Color3.fromRGB(255, 120, 120), errorColor), 68)
+addButtonStroke(leaveButton, 180, 0.45)
+
+leaveButton.MouseEnter:Connect(function()
+    tweenProperty(leaveButton, {BackgroundTransparency = 0.35}, 0.15)
+end)
+leaveButton.MouseLeave:Connect(function()
+    tweenProperty(leaveButton, {BackgroundTransparency = 0}, 0.15)
+end)
+
+local messageArea = Instance.new("ScrollingFrame")
+messageArea.Name = "MessageArea"
+messageArea.Size = UDim2.new(1, -16, 1, -102)
+messageArea.Position = UDim2.new(0, 8, 0, 48)
+messageArea.BackgroundColor3 = backgroundColor
+messageArea.BackgroundTransparency = 0.5
+messageArea.BorderSizePixel = 0
+messageArea.ScrollBarThickness = 4
+messageArea.ScrollBarImageColor3 = accentColor
+messageArea.ScrollBarImageTransparency = 0.4
+messageArea.CanvasSize = UDim2.new(0, 0, 0, 0)
+messageArea.AutomaticCanvasSize = Enum.AutomaticSize.Y
+messageArea.ScrollingDirection = Enum.ScrollingDirection.Y
+messageArea.ElasticBehavior = Enum.ElasticBehavior.Always
+messageArea.ZIndex = 11
+messageArea.Parent = chatContent
+
+addUICorner(messageArea, UDim.new(0, 12))
+addUIPadding(messageArea, 6)
+local messageStroke = addUIStroke(messageArea, Color3.fromRGB(255, 255, 255), 1.2, 0.5)
+addStrokeGradient(messageStroke, strokeGradient, -44)
+addUIGradient(messageArea, backgroundGradient, 68)
+
+local messageLayout = Instance.new("UIListLayout")
+messageLayout.SortOrder = Enum.SortOrder.LayoutOrder
+messageLayout.Padding = UDim.new(0, 6)
+messageLayout.Parent = messageArea
+
+local messageCount = 0
+
+local loadMessages
+
+local inputArea = Instance.new("Frame")
+inputArea.Name = "InputArea"
+inputArea.Size = UDim2.new(1, -16, 0, 40)
+inputArea.Position = UDim2.new(0, 8, 1, -48)
+inputArea.BackgroundTransparency = 1
+inputArea.ZIndex = 11
+inputArea.Parent = chatContent
+
+local emojiToggle = Instance.new("TextButton")
+emojiToggle.Name = "EmojiToggle"
+emojiToggle.Size = UDim2.new(0, 32, 0, 32)
+emojiToggle.Position = UDim2.new(0, 0, 0.5, 0)
+emojiToggle.AnchorPoint = Vector2.new(0, 0.5)
+emojiToggle.BackgroundColor3 = backgroundTertiary
+emojiToggle.BorderSizePixel = 0
+emojiToggle.Font = Enum.Font.SourceSans
+emojiToggle.Text = "😊"
+emojiToggle.TextSize = 16
+emojiToggle.AutoButtonColor = false
+emojiToggle.ZIndex = 12
+emojiToggle.Parent = inputArea
+
+addUICorner(emojiToggle, UDim.new(0, 10))
+addUIGradient(emojiToggle, backgroundGradient, 68)
+addButtonStroke(emojiToggle, 180, 0.45)
+
+local messageInputContainer = Instance.new("Frame")
+messageInputContainer.Name = "MessageInputContainer"
+messageInputContainer.Size = UDim2.new(1, -90, 0, 32)
+messageInputContainer.Position = UDim2.new(0, 38, 0.5, 0)
+messageInputContainer.AnchorPoint = Vector2.new(0, 0.5)
+messageInputContainer.BackgroundColor3 = backgroundTertiary
+messageInputContainer.BorderSizePixel = 0
+messageInputContainer.ZIndex = 12
+messageInputContainer.Parent = inputArea
+
+addUICorner(messageInputContainer, UDim.new(0, 12))
+local inputStroke = addUIStroke(messageInputContainer, Color3.fromRGB(255, 255, 255), 1.1, 0.55)
+addStrokeGradient(inputStroke, strokeGradient, 180)
+addUIGradient(messageInputContainer, backgroundGradient, 68)
+
+local messageInput = Instance.new("TextBox")
+messageInput.Name = "MessageInput"
+messageInput.Size = UDim2.new(1, -16, 1, 0)
+messageInput.Position = UDim2.new(0, 8, 0, 0)
+messageInput.BackgroundTransparency = 1
+messageInput.Font = Enum.Font.Gotham
+messageInput.PlaceholderText = "输入消息..."
+messageInput.PlaceholderColor3 = textMuted
+messageInput.Text = ""
+messageInput.TextColor3 = textColor
+messageInput.TextSize = 12
+messageInput.TextXAlignment = Enum.TextXAlignment.Left
+messageInput.ClearTextOnFocus = false
+messageInput.ZIndex = 13
+messageInput.Parent = messageInputContainer
+
+messageInput.Focused:Connect(function()
+    tweenProperty(messageInputContainer:FindFirstChildOfClass("UIStroke"), {Color = accentColor, Transparency = 0.3}, 0.15)
+end)
+messageInput.FocusLost:Connect(function()
+    tweenProperty(messageInputContainer:FindFirstChildOfClass("UIStroke"), {Color = Color3.fromRGB(70, 70, 70), Transparency = 0.5}, 0.15)
+end)
+
+local sendButton = Instance.new("TextButton")
+sendButton.Name = "SendButton"
+sendButton.Size = UDim2.new(0, 42, 0, 32)
+sendButton.Position = UDim2.new(1, -42, 0.5, 0)
+sendButton.AnchorPoint = Vector2.new(0, 0.5)
+sendButton.BackgroundColor3 = accentColor
+sendButton.BorderSizePixel = 0
+sendButton.Font = Enum.Font.GothamBold
+sendButton.Text = "→"
+sendButton.TextColor3 = textColor
+sendButton.TextSize = 18
+sendButton.AutoButtonColor = false
+sendButton.ZIndex = 12
+sendButton.Parent = inputArea
+
+addUICorner(sendButton, UDim.new(0, 12))
+addUIGradient(sendButton, accentGradient, 68)
+addButtonStroke(sendButton, 180, 0.35)
+
+sendButton.MouseEnter:Connect(function()
+    tweenProperty(sendButton, {BackgroundTransparency = 0.35}, 0.15)
+end)
+sendButton.MouseLeave:Connect(function()
+    tweenProperty(sendButton, {BackgroundTransparency = 0}, 0.15)
+end)
+
+local emojiPanel = Instance.new("Frame")
+emojiPanel.Name = "EmojiPanel"
+emojiPanel.Size = UDim2.new(0, 200, 0, 140)
+emojiPanel.Position = UDim2.new(0, 0, 1, -190)
+emojiPanel.BackgroundColor3 = backgroundTertiary
+emojiPanel.BorderSizePixel = 0
+emojiPanel.Visible = false
+emojiPanel.ZIndex = 20
+emojiPanel.Parent = chatContent
+
+addUICorner(emojiPanel, UDim.new(0, 10))
+local emojiStroke = addUIStroke(emojiPanel, Color3.fromRGB(255, 255, 255), 1.1, 0.55)
+addStrokeGradient(emojiStroke, strokeGradient, 180)
+addUIGradient(emojiPanel, backgroundGradient, 68)
+
+local emojiScroll = Instance.new("ScrollingFrame")
+emojiScroll.Size = UDim2.new(1, -12, 1, -12)
+emojiScroll.Position = UDim2.new(0, 6, 0, 6)
+emojiScroll.BackgroundTransparency = 1
+emojiScroll.ScrollBarThickness = 3
+emojiScroll.ScrollBarImageColor3 = accentColor
+emojiScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+emojiScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+emojiScroll.ZIndex = 21
+emojiScroll.Parent = emojiPanel
+
+local emojiGrid = Instance.new("UIGridLayout")
+emojiGrid.CellSize = UDim2.new(0, 30, 0, 30)
+emojiGrid.CellPadding = UDim2.new(0, 4, 0, 4)
+emojiGrid.Parent = emojiScroll
+
+local emojis = {"😀", "😂", "😍", "🥺", "😎", "🤔", "👍", "👎", "❤️", "🔥", "✨", "🎉", "💯", "🙏", "😊", "😢", "😡", "🤣", "😘", "🥰"}
+
+for _, emoji in ipairs(emojis) do
+    local emojiButton = Instance.new("TextButton")
+    emojiButton.Size = UDim2.new(0, 30, 0, 30)
+    emojiButton.BackgroundColor3 = backgroundColor
+    emojiButton.BorderSizePixel = 0
+    emojiButton.Text = emoji
+    emojiButton.TextSize = 18
+    emojiButton.AutoButtonColor = false
+    emojiButton.ZIndex = 22
+    emojiButton.Parent = emojiScroll
+    addUICorner(emojiButton, UDim.new(0, 6))
+    emojiButton.MouseEnter:Connect(function()
+        tweenProperty(emojiButton, {BackgroundColor3 = backgroundSecondary}, 0.1)
+    end)
+    emojiButton.MouseLeave:Connect(function()
+        tweenProperty(emojiButton, {BackgroundColor3 = backgroundColor}, 0.1)
+    end)
+    emojiButton.MouseButton1Click:Connect(function()
+        messageInput.Text = messageInput.Text .. emoji
+        emojiPanel.Visible = false
+    end)
+end
+
+emojiToggle.MouseButton1Click:Connect(function()
+    emojiPanel.Visible = not emojiPanel.Visible
+end)
+
+local loginParticles = spawnParticlesInFrame(loginParticleLayer, 280, 320)
+local loginLinePool = {}
+local chatParticles = spawnParticlesInFrame(chatParticleLayer, 320, 400)
+local chatLinePool = {}
+
+local particleConnection
+particleConnection = RunService.RenderStepped:Connect(function()
+    if loginPanel.Visible then
+        updateParticlesInFrame(loginParticles, 280, 320)
+        updateLines(loginParticles, loginLineLayer, loginLinePool)
+    end
+    if chatPanel.Visible then
+        updateParticlesInFrame(chatParticles, 320, 400)
+        updateLines(chatParticles, chatLineLayer, chatLinePool)
+    end
+end)
+
+local function addMessageToUI(msg, name, time, isSelf, animate)
+    messageCount = messageCount + 1
+    createMessageBubble(messageArea, msg, name, time, isSelf, messageCount, animate)
+    if animate ~= false then
+        task.wait(0.05)
+        messageArea.CanvasPosition = Vector2.new(0, math.max(0, messageArea.AbsoluteCanvasSize.Y - messageArea.AbsoluteSize.Y))
+    end
+end
+
+local function parseMessageTime(timeStr)
+    if type(timeStr) ~= "string" then
+        return nil
+    end
+    local year, month, day, hour, min, sec = timeStr:match("(%d+)%-(%d+)%-(%d+)%s+(%d+):(%d+):(%d+)")
+    if year and month and day and hour and min and sec then
+        return os.time({year = tonumber(year), month = tonumber(month), day = tonumber(day), hour = tonumber(hour), min = tonumber(min), sec = tonumber(sec)})
+    end
+    local hourOnly, minOnly, secOnly = timeStr:match("(%d+):(%d+):(%d+)")
+    if hourOnly and minOnly and secOnly then
+        local now = os.date("*t")
+        local msgTime = os.time({year = now.year, month = now.month, day = now.day, hour = tonumber(hourOnly), min = tonumber(minOnly), sec = tonumber(secOnly)})
+        if msgTime > os.time() then
+            msgTime = msgTime - 86400
+        end
+        return msgTime
+    end
+    local hourSimple, minSimple = timeStr:match("(%d+):(%d+)")
+    if hourSimple and minSimple then
+        local now = os.date("*t")
+        local msgTime = os.time({year = now.year, month = now.month, day = now.day, hour = tonumber(hourSimple), min = tonumber(minSimple), sec = 0})
+        if msgTime > os.time() then
+            msgTime = msgTime - 86400
+        end
+        return msgTime
+    end
+    return nil
+end
+
+local function processIncomingMessages(messages, animate)
+    local now = os.time()
+    local filterSeconds = currentTimeFilter * 3600
+    for _, msg in ipairs(messages) do
+        local msgTime = msg.time or ""
+        local msgName = msg.name or ""
+        local msgText = msg.msg or ""
+        local msgKey = msgTime .. msgName .. msgText
+        if not messageCache[msgKey] then
+            local parsedTime = parseMessageTime(msgTime)
+            local passFilter = true
+            if parsedTime and currentTimeFilter > 0 then
+                passFilter = (now - parsedTime) <= filterSeconds
+            end
+            if passFilter then
+                messageCache[msgKey] = true
+                local isSelf = msgName == userName
+                if isSelf then
+                    local pendingKey = msgName .. "|" .. msgText
+                    local sentAt = pendingSelfMessages[pendingKey]
+                    if sentAt and (os.time() - sentAt) <= selfMessageWindow then
+                        pendingSelfMessages[pendingKey] = nil
+                    else
+                        addMessageToUI(msgText, msgName, msgTime, true, animate)
+                    end
+                else
+                    addMessageToUI(msgText, msgName, msgTime, false, animate)
+                end
+            end
+        end
+    end
+end
+
+loadMessages = function(animate)
+    local success, messages, errMessage = getMessages(currentRoom, API_KEY)
+    if success and messages then
+        processIncomingMessages(messages, animate)
+        if animate == false then
+            task.defer(function()
+                messageArea.CanvasPosition = Vector2.new(0, math.max(0, messageArea.AbsoluteCanvasSize.Y - messageArea.AbsoluteSize.Y))
+            end)
+        end
+    elseif errMessage then
+        createNotification(gui, errMessage, true)
+    end
+end
+
+local function startPolling()
+    isPolling = true
+    task.spawn(function()
+        while isPolling and currentRoom do
+            task.wait(3)
+            if not isPolling or not currentRoom then break end
+            local success, messages, errMessage = getMessages(currentRoom, API_KEY)
+            if success and messages then
+                processIncomingMessages(messages, true)
+                if statusLabel then
+                    statusLabel.Text = "轮询: 成功"
+                    statusLabel.TextColor3 = Color3.fromRGB(87, 242, 135)
+                end
+                if statusIndicator then
+                    statusIndicator.BackgroundColor3 = Color3.fromRGB(87, 242, 135)
+                end
+            else
+                if statusLabel then
+                    statusLabel.Text = "轮询: 失败"
+                    statusLabel.TextColor3 = Color3.fromRGB(237, 66, 69)
+                end
+                if statusIndicator then
+                    statusIndicator.BackgroundColor3 = Color3.fromRGB(237, 66, 69)
+                end
+            end
+        end
+    end)
+end
+
+local function stopPolling()
+    isPolling = false
+end
+
+local function joinRoom()
+    userName = LocalPlayer.Name
+    API_KEY = FIXED_API_KEY
+    local inputRoom = roomInput.Text
+    if inputRoom == nil or inputRoom == "" then
+        createNotification(gui, "请输入房间号", true)
+        return
+    end
+    currentRoom = inputRoom
+    roomTitle.Text = "房间: " .. currentRoom
+    tweenProperty(loginPanel, {Position = UDim2.new(0.5, 0, 1.5, 0)}, 0.35, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+    task.wait(0.25)
+    loginPanel.Visible = false
+    chatPanel.Visible = true
+    chatPanel.Position = UDim2.new(0.5, 0, 1.5, 0)
+    tweenProperty(chatPanel, {Position = UDim2.new(0.5, 0, 0.5, 0)}, 0.35, Enum.EasingStyle.Back)
+    createNotification(gui, "已加入: " .. currentRoom, false)
+    loadMessages(false)
+    startPolling()
+end
+
+local function leaveRoom()
+    stopPolling()
+    currentRoom = nil
+    messageCache = {}
+    messageCount = 0
+    for _, child in ipairs(messageArea:GetChildren()) do
+        if child:IsA("Frame") and child.Name == "MessageContainer" then
+            child:Destroy()
+        end
+    end
+    tweenProperty(chatPanel, {Position = UDim2.new(0.5, 0, 1.5, 0)}, 0.35, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+    task.wait(0.25)
+    chatPanel.Visible = false
+    loginPanel.Visible = true
+    loginPanel.Position = UDim2.new(0.5, 0, -0.5, 0)
+    tweenProperty(loginPanel, {Position = UDim2.new(0.5, 0, 0.5, 0)}, 0.35, Enum.EasingStyle.Back)
+end
+
+local function sendMessageAction()
+    local msg = messageInput.Text
+    if msg == "" or not currentRoom then return end
+    messageInput.Text = ""
+    local time = os.date("%H:%M")
+    addMessageToUI(msg, userName, time, true)
+    local pendingKey = userName .. "|" .. msg
+    pendingSelfMessages[pendingKey] = os.time()
+    task.spawn(function()
+        local success, result = sendMessage(currentRoom, msg, userName, API_KEY)
+        if not success then
+            local errorText = result
+            if errorText == nil or errorText == "" then
+                errorText = "请求失败"
+            else
+                errorText = "请求失败: " .. tostring(errorText)
+            end
+            createNotification(gui, errorText, true)
+            pendingSelfMessages[pendingKey] = nil
+        end
+        local recvSuccess, messages, errMessage = getMessages(currentRoom, API_KEY)
+        if recvSuccess and messages then
+            processIncomingMessages(messages, true)
+        end
+    end)
+end
+
+joinButton.MouseButton1Click:Connect(joinRoom)
+leaveButton.MouseButton1Click:Connect(leaveRoom)
+sendButton.MouseButton1Click:Connect(sendMessageAction)
+messageInput.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        sendMessageAction()
+    end
+end)
+
+local function setupSmoothDrag(dragHandle, targetFrame)
+    local dragging = false
+    local dragStartPos = nil
+    local frameStartPos = nil
+    
+    local function onInputBegan(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStartPos = input.Position
+            frameStartPos = targetFrame.Position
+        end
+    end
+    
+    local function onInputEnded(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end
+    
+    local function onInputChanged(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStartPos
+            local newX = frameStartPos.X.Offset + delta.X
+            local newY = frameStartPos.Y.Offset + delta.Y
+            local targetPos = UDim2.new(frameStartPos.X.Scale, newX, frameStartPos.Y.Scale, newY)
+            tweenProperty(targetFrame, {Position = targetPos}, 0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        end
+    end
+    
+    dragHandle.InputBegan:Connect(onInputBegan)
+    dragHandle.InputEnded:Connect(onInputEnded)
+    UserInputService.InputChanged:Connect(onInputChanged)
+    UserInputService.InputEnded:Connect(onInputEnded)
+end
+
+setupSmoothDrag(headerBar, chatPanel)
+setupSmoothDrag(loginContent, loginPanel)
+
+local minimizeButton = Instance.new("TextButton")
+minimizeButton.Name = "MinimizeButton"
+minimizeButton.Size = UDim2.new(0, 40, 0, 40)
+minimizeButton.Position = UDim2.new(1, -55, 1, -55)
+minimizeButton.BackgroundColor3 = accentColor
+minimizeButton.BorderSizePixel = 0
+minimizeButton.Font = Enum.Font.SourceSans
+minimizeButton.Text = "💬"
+minimizeButton.TextSize = 20
+minimizeButton.AutoButtonColor = false
+minimizeButton.Visible = false
+minimizeButton.ZIndex = 100
+minimizeButton.Parent = gui
+
+addUICorner(minimizeButton, UDim.new(1, 0))
+addUIGradient(minimizeButton, accentGradient, 68)
+addButtonStroke(minimizeButton, 180, 0.35)
+
+minimizeButton.MouseEnter:Connect(function()
+    tweenProperty(minimizeButton, {Size = UDim2.new(0, 44, 0, 44)}, 0.15)
+end)
+minimizeButton.MouseLeave:Connect(function()
+    tweenProperty(minimizeButton, {Size = UDim2.new(0, 40, 0, 40)}, 0.15)
+end)
+
+local isMinimized = false
+
+local function toggleMinimize()
+    isMinimized = not isMinimized
+    if isMinimized then
+        if chatPanel.Visible then
+            tweenProperty(chatPanel, {Position = UDim2.new(1.5, 0, 0.5, 0)}, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+        end
+        if loginPanel.Visible then
+            tweenProperty(loginPanel, {Position = UDim2.new(1.5, 0, 0.5, 0)}, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+        end
+        minimizeButton.Visible = true
+    else
+        minimizeButton.Visible = false
+        if chatPanel.Visible then
+            tweenProperty(chatPanel, {Position = UDim2.new(0.5, 0, 0.5, 0)}, 0.3, Enum.EasingStyle.Back)
+        end
+        if loginPanel.Visible then
+            tweenProperty(loginPanel, {Position = UDim2.new(0.5, 0, 0.5, 0)}, 0.3, Enum.EasingStyle.Back)
+        end
+    end
+end
+
+foldButton.MouseButton1Click:Connect(toggleMinimize)
+loginFoldButton.MouseButton1Click:Connect(toggleMinimize)
+
+minimizeButton.MouseButton1Click:Connect(function()
+    isMinimized = true
+    toggleMinimize()
+end)
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if input.KeyCode == Enum.KeyCode.Quote then
+        toggleMinimize()
+        return
+    end
+    if input.KeyCode == Enum.KeyCode.RightBracket or input.KeyCode == Enum.KeyCode.LeftBracket then
+        if loginPanel.Visible and not isMinimized then
+            roomInput:CaptureFocus()
+        elseif chatPanel.Visible and not isMinimized then
+            messageInput:CaptureFocus()
+        end
+        return
+    end
+    if gameProcessed then return end
+end)
+
+task.spawn(function()
+    while true do
+        if statusIndicator and statusIndicator.Parent then
+            tweenProperty(statusIndicator, {BackgroundTransparency = 0.4}, 0.6)
+            task.wait(0.6)
+            tweenProperty(statusIndicator, {BackgroundTransparency = 0}, 0.6)
+            task.wait(0.6)
+        else
+            break
+        end
+    end
+end)
+
+print("成功")
+
+local _antihttpspy = (function()
+    if not hookfunction or not isfunctionhooked or not restorefunction then
+        return
+    end
+    
+    local shit = function()
+        pcall(function() game.Players.LocalPlayer:Kick() end)
+        pcall(game.Shutdown, game)
+    end
+
+    local fuck = function() return "a" end
+    local hookOk = pcall(hookfunction, fuck, function() return "b" end)
+    if not hookOk then return end
+    if not isfunctionhooked(fuck) then shit() return end
+
+    local bitch = game.HttpGet
+    local hookOk2 = pcall(hookfunction, bitch, function() end)
+    if not hookOk2 then return end
+    if not isfunctionhooked(bitch) then shit() return end
+    pcall(restorefunction, bitch)
+    if isfunctionhooked(bitch) then shit() return end
+
+    local cunt = request or http_request or (syn and syn.request) or (fluxus and fluxus.request)
+
+    spawn(function()
+        while task.wait(0.5) do
+            pcall(function()
+                if isfunctionhooked(game.HttpGet) then shit() end
+                if isfunctionhooked(game.HttpPost) then shit() end
+                if isfunctionhooked(tostring) then shit() end
+                if setclipboard and isfunctionhooked(setclipboard) then shit() end
+                if cunt and isfunctionhooked(cunt) then shit() end
+                if isfolder and (isfolder("HttpGetFolder") or isfolder("WebhookFolder") or isfolder("RequestFolder")) then shit() end
+            end)
+        end
+    end)
+
+    if getgenv then
+        for _, dick in pairs({"rconsoleprint", "rconsolewarn", "rconsoleinfo", "rconsoleerr", "rconsoletitle", "clonefunction"}) do
+            getgenv()[dick] = nil
+        end
+    end
+end)()
